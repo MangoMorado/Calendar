@@ -31,7 +31,25 @@ if (mysqli_query($conn, $sql)) {
     )";
     
     if (!mysqli_query($conn, $sql)) {
-        echo "Error al crear tabla: " . mysqli_error($conn);
+        echo "Error al crear tabla de citas: " . mysqli_error($conn);
+    }
+    
+    // Crear tabla de usuarios si no existe
+    $sql = "CREATE TABLE IF NOT EXISTS users (
+        id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        role ENUM('admin', 'user') NOT NULL DEFAULT 'user',
+        history TEXT,
+        reset_token VARCHAR(255) DEFAULT NULL,
+        reset_token_expiry DATETIME DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )";
+    
+    if (!mysqli_query($conn, $sql)) {
+        echo "Error al crear tabla de usuarios: " . mysqli_error($conn);
     }
 } else {
     echo "Error al crear base de datos: " . mysqli_error($conn);
