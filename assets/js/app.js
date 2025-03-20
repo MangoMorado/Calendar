@@ -2,9 +2,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const calendarEl = document.getElementById('calendar');
     const eventTooltip = document.getElementById('eventTooltip');
     const upcomingList = document.getElementById('upcomingAppointmentsList');
+    const calendarTypeSelector = document.getElementById('calendarTypeSelector');
     
     // Obtener eventos del objeto global
     const events = window.calendarEvents || [];
+    const currentCalendarType = window.currentCalendarType || 'general';
+    
+    // Colores para los diferentes tipos de calendario
+    const calendarColors = {
+        'estetico': '#8E44AD', // Púrpura para estético
+        'veterinario': '#2E86C1', // Azul para veterinario
+        'general': '#5D69F7' // Color original
+    };
+    
+    // Nombres legibles para los tipos de calendario
+    const calendarNames = {
+        'estetico': 'Estético',
+        'veterinario': 'Veterinario',
+        'general': 'General'
+    };
     
     // Mostrar próximas citas
     displayUpcomingAppointments(events);
@@ -40,11 +56,16 @@ document.addEventListener('DOMContentLoaded', function() {
             endTime: '18:00',
         },
         events: events,
-        eventColor: '#5D69F7',
         eventTimeFormat: {
             hour: '2-digit',
             minute: '2-digit',
             hour12: false
+        },
+        // Personalizar la renderización de eventos
+        eventDidMount: function(info) {
+            // Aplicar clase específica al evento según el tipo de calendario
+            const calendarType = info.event.extendedProps.calendarType || 'general';
+            info.el.classList.add(`calendar-${calendarType}`);
         },
         // Tooltip personalizado para eventos
         eventMouseEnter: function(info) {
@@ -58,11 +79,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const formattedEnd = end.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'});
             const formattedDate = start.toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'long'});
             
+            // Obtener el tipo de calendario para mostrar en el tooltip
+            const calendarType = info.event.extendedProps.calendarType || 'general';
+            const calendarName = calendarNames[calendarType] || 'General';
+            
             // Contenido del tooltip
             eventTooltip.innerHTML = `
                 <div class="tooltip-title">${info.event.title}</div>
                 <div class="tooltip-time"><i class="bi bi-clock"></i> ${formattedStart} - ${formattedEnd}</div>
                 <div class="tooltip-date"><i class="bi bi-calendar-event"></i> ${formattedDate}</div>
+                <div class="tooltip-calendar"><i class="bi bi-calendar3"></i> ${calendarName}</div>
                 ${info.event.extendedProps.description ? `<div class="tooltip-desc">${info.event.extendedProps.description}</div>` : ''}
             `;
             
@@ -79,8 +105,22 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('startTime').value = info.startStr.replace(/:\d+\.\d+Z$/, '');
             document.getElementById('endTime').value = info.endStr.replace(/:\d+\.\d+Z$/, '');
             
+            // Mostrar el tipo de calendario apropiado en el selector
+            if (currentCalendarType !== 'general') {
+                const calendarTypeSelect = document.getElementById('calendarType');
+                if (calendarTypeSelect) {
+                    [...calendarTypeSelect.options].forEach(option => {
+                        if (option.value === currentCalendarType) {
+                            option.selected = true;
+                        }
+                    });
+                }
+            }
+            
             document.getElementById('modalTitle').innerHTML = '<i class="bi bi-calendar-plus"></i> Crear Cita';
             document.getElementById('deleteAppointment').style.display = 'none';
+            window.isEditMode = false;
+            window.currentAppointmentId = null;
             openModal();
         },
         // Evento al hacer clic en una cita existente
@@ -93,6 +133,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('description').value = data.description;
                     document.getElementById('startTime').value = data.start_time;
                     document.getElementById('endTime').value = data.end_time;
+                    
+                    // Seleccionar el tipo de calendario correcto
+                    const calendarTypeSelect = document.getElementById('calendarType');
+                    if (calendarTypeSelect) {
+                        [...calendarTypeSelect.options].forEach(option => {
+                            if (option.value === data.calendar_type) {
+                                option.selected = true;
+                            }
+                        });
+                    }
                     
                     document.getElementById('modalTitle').innerHTML = '<i class="bi bi-calendar-check"></i> Editar Cita';
                     document.getElementById('deleteAppointment').style.display = 'inline-flex';
@@ -111,6 +161,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     calendar.render();
     
+    // Selector de tipo de calendario
+    if (calendarTypeSelector) {
+        calendarTypeSelector.addEventListener('change', function() {
+            const selectedCalendarType = this.value;
+            // Redirigir a la misma página con el tipo de calendario seleccionado
+            window.location.href = `index.php?calendar=${selectedCalendarType}`;
+        });
+    }
+    
     // Función para mostrar próximas citas
     function displayUpcomingAppointments(events) {
         if (!upcomingList) return;
@@ -120,7 +179,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Filtrar eventos futuros (a partir de hoy)
         const now = new Date();
-        const upcomingEvents = sortedEvents.filter(event => new Date(event.start) >= now).slice(0, 5);
+        let upcomingEvents = sortedEvents.filter(event => new Date(event.start) >= now);
+        
+        // Si no estamos en la vista general, filtrar solo las citas del tipo seleccionado
+        if (currentCalendarType !== 'general') {
+            upcomingEvents = upcomingEvents.filter(event => event.calendarType === currentCalendarType);
+        }
+        
+        // Tomar solo los primeros 5 eventos
+        upcomingEvents = upcomingEvents.slice(0, 5);
         
         if (upcomingEvents.length === 0) {
             upcomingList.innerHTML = '<p class="no-events">No hay citas próximas</p>';
@@ -134,15 +201,40 @@ document.addEventListener('DOMContentLoaded', function() {
             const formattedDate = start.toLocaleDateString('es-ES', {weekday: 'short', day: 'numeric', month: 'short'});
             const formattedTime = start.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
             
+            // Obtener el tipo de calendario
+            const calendarType = event.calendarType || 'general';
+            let calendarName = '';
+            let calendarClass = '';
+            let calendarColor = '';
+            
+            switch (calendarType) {
+                case 'estetico':
+                    calendarName = 'Estético';
+                    calendarClass = 'calendar-estetico';
+                    calendarColor = '#8E44AD';
+                    break;
+                case 'veterinario':
+                    calendarName = 'Veterinario';
+                    calendarClass = 'calendar-veterinario';
+                    calendarColor = '#2E86C1';
+                    break;
+                default:
+                    calendarName = 'General';
+                    calendarClass = 'calendar-general';
+                    calendarColor = '#5D69F7';
+            }
+            
             const eventEl = document.createElement('div');
-            eventEl.className = 'appointment-item';
+            eventEl.className = `appointment-item ${calendarClass}`;
             eventEl.innerHTML = `
                 <div class="appointment-date">
+                    <div class="calendar-indicator" style="background-color: ${calendarColor};"></div>
                     <span class="day">${formattedDate}</span>
                     <span class="time">${formattedTime}</span>
                 </div>
                 <div class="appointment-details">
                     <div class="appointment-title">${event.title}</div>
+                    <div class="appointment-calendar">${calendarName}</div>
                     ${event.description ? `<div class="appointment-desc">${event.description.substring(0, 60)}${event.description.length > 60 ? '...' : ''}</div>` : ''}
                 </div>
             `;
@@ -193,6 +285,33 @@ document.addEventListener('DOMContentLoaded', function() {
             
             document.getElementById('startTime').value = now.toISOString().substring(0, 16);
             document.getElementById('endTime').value = later.toISOString().substring(0, 16);
+            
+            // Configurar el tipo de calendario según la página actual
+            const calendarTypeSelect = document.getElementById('calendarType');
+            if (calendarTypeSelect) {
+                // Si el botón tiene un atributo data-calendar-type, usarlo
+                const buttonCalendarType = this.getAttribute('data-calendar-type');
+                if (buttonCalendarType) {
+                    // Para páginas con tipo fijo (estetico.php, veterinario.php)
+                    if (calendarTypeSelect.tagName === 'INPUT' && calendarTypeSelect.type === 'hidden') {
+                        calendarTypeSelect.value = buttonCalendarType;
+                    } else {
+                        // Para el caso del dropdown
+                        [...calendarTypeSelect.options].forEach(option => {
+                            if (option.value === buttonCalendarType) {
+                                option.selected = true;
+                            }
+                        });
+                    }
+                } else if (currentCalendarType && currentCalendarType !== 'general') {
+                    // Para la vista general, preseleccionar según el último tipo usado
+                    [...calendarTypeSelect.options].forEach(option => {
+                        if (option.value === currentCalendarType) {
+                            option.selected = true;
+                        }
+                    });
+                }
+            }
             
             openModal();
         });

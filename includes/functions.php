@@ -5,15 +5,24 @@ require_once __DIR__ . '/../config/database.php';
 /**
  * Obtener todas las citas para un rango de fechas
  */
-function getAppointments($startDate, $endDate) {
+function getAppointments($startDate, $endDate, $calendarType = null) {
     global $conn;
     
     $sql = "SELECT * FROM appointments 
-            WHERE start_time >= ? AND start_time <= ? 
-            ORDER BY start_time ASC";
+            WHERE start_time >= ? AND start_time <= ?";
     
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "ss", $startDate, $endDate);
+    // Si se especifica un tipo de calendario, filtrar por ese tipo
+    // Para el calendario general, obtener todas las citas
+    if ($calendarType && $calendarType !== 'general') {
+        $sql .= " AND calendar_type = ?";
+        
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "sss", $startDate, $endDate, $calendarType);
+    } else {
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ss", $startDate, $endDate);
+    }
+    
     mysqli_stmt_execute($stmt);
     
     $result = mysqli_stmt_get_result($stmt);
@@ -46,14 +55,14 @@ function getAppointmentById($id) {
 /**
  * Crear una nueva cita
  */
-function createAppointment($title, $description, $startTime, $endTime) {
+function createAppointment($title, $description, $startTime, $endTime, $calendarType = 'general') {
     global $conn;
     
-    $sql = "INSERT INTO appointments (title, description, start_time, end_time) 
-            VALUES (?, ?, ?, ?)";
+    $sql = "INSERT INTO appointments (title, description, start_time, end_time, calendar_type) 
+            VALUES (?, ?, ?, ?, ?)";
     
     $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "ssss", $title, $description, $startTime, $endTime);
+    mysqli_stmt_bind_param($stmt, "sssss", $title, $description, $startTime, $endTime, $calendarType);
     
     if (mysqli_stmt_execute($stmt)) {
         return mysqli_insert_id($conn);
@@ -65,15 +74,25 @@ function createAppointment($title, $description, $startTime, $endTime) {
 /**
  * Actualizar una cita existente
  */
-function updateAppointment($id, $title, $description, $startTime, $endTime) {
+function updateAppointment($id, $title, $description, $startTime, $endTime, $calendarType = null) {
     global $conn;
     
-    $sql = "UPDATE appointments 
-            SET title = ?, description = ?, start_time = ?, end_time = ? 
-            WHERE id = ?";
-    
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "ssssi", $title, $description, $startTime, $endTime, $id);
+    // Si no se proporciona un tipo de calendario, mantener el existente
+    if ($calendarType === null) {
+        $sql = "UPDATE appointments 
+                SET title = ?, description = ?, start_time = ?, end_time = ? 
+                WHERE id = ?";
+        
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ssssi", $title, $description, $startTime, $endTime, $id);
+    } else {
+        $sql = "UPDATE appointments 
+                SET title = ?, description = ?, start_time = ?, end_time = ?, calendar_type = ? 
+                WHERE id = ?";
+        
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "sssssi", $title, $description, $startTime, $endTime, $calendarType, $id);
+    }
     
     return mysqli_stmt_execute($stmt);
 }
@@ -123,5 +142,24 @@ function formatDateTime($dateTime) {
  */
 function formatTime($dateTime) {
     return date('H:i', strtotime($dateTime));
+}
+
+/**
+ * Obtener todos los tipos de calendario disponibles
+ */
+function getCalendarTypes() {
+    return [
+        'general' => 'Calendario General',
+        'estetico' => 'Calendario Estético',
+        'veterinario' => 'Calendario Veterinario'
+    ];
+}
+
+/**
+ * Obtener el nombre del calendario según su tipo
+ */
+function getCalendarName($type) {
+    $types = getCalendarTypes();
+    return isset($types[$type]) ? $types[$type] : 'Calendario';
 }
 ?> 

@@ -7,16 +7,12 @@ require_once 'includes/auth.php';
 // Verificar que el usuario esté autenticado
 requireAuth();
 
+// Tipo de calendario fijo para esta página
+$calendarType = 'estetico';
+
 // Obtener los parámetros de navegación
 $requestedWeek = isset($_GET['week']) ? $_GET['week'] : null;
 $direction = isset($_GET['direction']) ? $_GET['direction'] : null;
-$calendarType = isset($_GET['calendar']) ? $_GET['calendar'] : 'general';
-
-// Validar el tipo de calendario
-$availableCalendars = getCalendarTypes();
-if (!array_key_exists($calendarType, $availableCalendars)) {
-    $calendarType = 'general';
-}
 
 // Determinar las fechas de la semana a mostrar
 if ($requestedWeek && $direction) {
@@ -42,32 +38,19 @@ if ($requestedWeek && $direction) {
 $weekStartStr = $weekStart->format('Y-m-d');
 $weekEndStr = $weekEnd->format('Y-m-d');
 
-// Obtener citas para esta semana y el tipo de calendario seleccionado
+// Obtener citas para esta semana y el tipo de calendario específico
 $appointments = getAppointments($weekStartStr . ' 00:00:00', $weekEndStr . ' 23:59:59', $calendarType);
 
 // Preparar los datos para FullCalendar (formato JSON)
 $events = [];
 foreach ($appointments as $appointment) {
-    // Asignar colores diferentes según el tipo de calendario
-    $color = '';
-    switch ($appointment['calendar_type']) {
-        case 'estetico':
-            $color = '#8E44AD'; // Púrpura para estético
-            break;
-        case 'veterinario':
-            $color = '#2E86C1'; // Azul para veterinario
-            break;
-        default:
-            $color = '#5D69F7'; // Color predeterminado
-    }
-    
     $events[] = [
         'id' => $appointment['id'],
         'title' => $appointment['title'],
         'start' => $appointment['start_time'],
         'end' => $appointment['end_time'],
         'description' => $appointment['description'],
-        'backgroundColor' => $color,
+        'backgroundColor' => '#8E44AD', // Color específico para estético
         'calendarType' => $appointment['calendar_type']
     ];
 }
@@ -78,99 +61,11 @@ $currentUser = getCurrentUser();
 $userId = $currentUser['id'];
 $userDetails = getUserById($userId);
 
-// Definir título de la página según el tipo de calendario
-$pageTitle = getCalendarName($calendarType) . ' | Mundo Animal';
+// Definir título de la página
+$pageTitle = 'Calendario Estético | Mundo Animal';
 
 // Estilos adicionales
-$extraStyles = '<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet" />
-<style>
-/* Estilos para los diferentes tipos de calendario */
-.fc-event.calendar-estetico {
-    background-color: #8E44AD !important;
-    border-color: #8E44AD !important;
-}
-
-.fc-event.calendar-veterinario {
-    background-color: #2E86C1 !important;
-    border-color: #2E86C1 !important;
-}
-
-.fc-event.calendar-general {
-    background-color: #5D69F7 !important;
-    border-color: #5D69F7 !important;
-}
-
-/* Estilos para el selector de calendario */
-.calendar-selector {
-    position: relative;
-    min-width: 200px;
-    flex: 1;
-}
-
-#calendarTypeSelector {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-color: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    color: #2d3748;
-    cursor: pointer;
-    font-size: 0.95rem;
-    height: 42px;
-    padding: 0 15px;
-    width: 100%;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23718096\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 15px center;
-    background-size: 15px;
-}
-
-.calendar-nav {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    flex-wrap: wrap;
-}
-
-/* Leyenda de colores para los calendarios */
-.calendar-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-top: 0;
-    margin-bottom: 20px;
-    padding: 10px 15px;
-    border-radius: 8px;
-    background-color: rgba(243, 244, 246, 0.6);
-}
-
-.calendar-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-    color: #4a5568;
-}
-
-.calendar-legend-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 3px;
-}
-
-.calendar-legend-estetico {
-    background-color: #8E44AD;
-}
-
-.calendar-legend-veterinario {
-    background-color: #2E86C1;
-}
-
-.calendar-legend-general {
-    background-color: #5D69F7;
-}
-</style>';
+$extraStyles = '<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet" />';
 
 // Incluir el header
 include 'includes/header.php';
@@ -179,17 +74,17 @@ include 'includes/header.php';
 <main class="container">
     <div class="calendar-header">
         <div class="calendar-title">
-            <h2>Calendario General</h2>
+            <h2>Calendario Estético</h2>
             <p class="date-range"><?php echo date_format($weekStart, 'd M') . ' - ' . date_format($weekEnd, 'd M Y'); ?></p>
         </div>
         <div class="calendar-nav">
             <div class="calendar-tabs">
-                <a href="index.php" class="calendar-tab active">General</a>
-                <a href="estetico.php" class="calendar-tab">Estético</a>
+                <a href="index.php" class="calendar-tab">General</a>
+                <a href="estetico.php" class="calendar-tab active">Estético</a>
                 <a href="veterinario.php" class="calendar-tab">Veterinario</a>
             </div>
-            <button id="createAppointment" class="btn btn-success">
-                <i class="bi bi-plus-lg"></i> Nueva Cita
+            <button id="createAppointment" class="btn btn-success" data-calendar-type="estetico">
+                <i class="bi bi-plus-lg"></i> Nueva Cita Estética
             </button>
         </div>
     </div>
@@ -199,21 +94,9 @@ include 'includes/header.php';
         <div id="calendar"></div>
     </div>
     
-    <!-- Leyenda de colores para los calendarios -->
-    <div class="calendar-legend">
-        <div class="calendar-legend-item">
-            <div class="calendar-legend-color calendar-legend-estetico"></div>
-            <span>Estético</span>
-        </div>
-        <div class="calendar-legend-item">
-            <div class="calendar-legend-color calendar-legend-veterinario"></div>
-            <span>Veterinario</span>
-        </div>
-    </div>
-    
     <div class="info-panel">
         <div class="upcoming-appointments">
-            <h3><i class="bi bi-clock"></i> Próximas Citas</h3>
+            <h3><i class="bi bi-clock"></i> Próximas Citas Estéticas</h3>
             <div class="appointment-list" id="upcomingAppointmentsList">
                 <!-- Se llenará con JavaScript -->
             </div>
@@ -225,7 +108,7 @@ include 'includes/header.php';
 <div id="appointmentModal" class="modal">
     <div class="modal-content">
         <span class="close"><i class="bi bi-x-lg"></i></span>
-        <h2 id="modalTitle"><i class="bi bi-calendar-plus"></i> Crear Cita</h2>
+        <h2 id="modalTitle"><i class="bi bi-calendar-plus"></i> Crear Cita Estética</h2>
         
         <form id="appointmentForm" method="post">
             <div class="form-group">
@@ -250,13 +133,8 @@ include 'includes/header.php';
                 </div>
             </div>
             
-            <div class="form-group">
-                <label for="calendarType"><i class="bi bi-calendar3"></i> Tipo de Calendario:</label>
-                <select id="calendarType" name="calendar_type" class="form-control">
-                    <option value="estetico">Calendario Estético</option>
-                    <option value="veterinario">Calendario Veterinario</option>
-                </select>
-            </div>
+            <!-- Tipo de calendario oculto -->
+            <input type="hidden" id="calendarType" name="calendar_type" value="estetico">
             
             <div class="form-actions">
                 <button type="button" id="deleteAppointment" class="btn btn-danger" style="display: none;">
@@ -273,6 +151,48 @@ include 'includes/header.php';
 <!-- Tooltip personalizado -->
 <div id="eventTooltip" class="tooltip"></div>
 
+<style>
+/* Estilos para las pestañas de calendarios */
+.calendar-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-right: 1rem;
+}
+
+.calendar-tab {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #4a5568;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    background-color: #f3f4f6;
+}
+
+.calendar-tab:hover {
+    background-color: #e5e7eb;
+}
+
+.calendar-tab.active {
+    background-color: #8E44AD;
+    color: white;
+}
+
+/* Estilo específico para calendario estético */
+.fc-event {
+    background-color: #8E44AD !important;
+    border-color: #8E44AD !important;
+}
+
+#createAppointment {
+    background-color: #8E44AD;
+}
+
+#createAppointment:hover {
+    background-color: #7D3C98;
+}
+</style>
+
 <?php
 // Scripts adicionales
 $extraScripts = '
@@ -288,4 +208,4 @@ $extraScripts = '
 
 // Incluir el footer
 include 'includes/footer.php';
-?>
+?> 

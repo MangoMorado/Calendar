@@ -26,12 +26,21 @@ if (mysqli_query($conn, $sql)) {
         description TEXT,
         start_time DATETIME NOT NULL,
         end_time DATETIME NOT NULL,
+        calendar_type ENUM('estetico', 'veterinario', 'general') DEFAULT 'general',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )";
     
     if (!mysqli_query($conn, $sql)) {
         echo "Error al crear tabla de citas: " . mysqli_error($conn);
+    }
+    
+    // Actualizar la tabla de citas existente si no tiene la columna calendar_type
+    $checkColumn = "SHOW COLUMNS FROM appointments LIKE 'calendar_type'";
+    $result = mysqli_query($conn, $checkColumn);
+    if (mysqli_num_rows($result) == 0) {
+        $alterSql = "ALTER TABLE appointments ADD COLUMN calendar_type ENUM('estetico', 'veterinario', 'general') DEFAULT 'general'";
+        mysqli_query($conn, $alterSql);
     }
     
     // Crear tabla de usuarios si no existe

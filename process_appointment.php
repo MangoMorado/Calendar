@@ -38,6 +38,12 @@ switch ($action) {
         $description = isset($_POST['description']) ? $_POST['description'] : '';
         $startTime = str_replace('T', ' ', $_POST['start_time']);
         $endTime = str_replace('T', ' ', $_POST['end_time']);
+        $calendarType = isset($_POST['calendar_type']) ? $_POST['calendar_type'] : 'general';
+        
+        // Validar el tipo de calendario
+        if (!in_array($calendarType, ['estetico', 'veterinario', 'general'])) {
+            $calendarType = 'general';
+        }
         
         // Validar fechas
         if (strtotime($endTime) <= strtotime($startTime)) {
@@ -46,13 +52,27 @@ switch ($action) {
         }
         
         // Crear la cita
-        $result = createAppointment($title, $description, $startTime, $endTime);
+        $result = createAppointment($title, $description, $startTime, $endTime, $calendarType);
         
         if ($result) {
+            // Determinar el nombre del calendario para el historial
+            $calendarName = '';
+            switch ($calendarType) {
+                case 'estetico':
+                    $calendarName = 'Estético';
+                    break;
+                case 'veterinario':
+                    $calendarName = 'Veterinario';
+                    break;
+                default:
+                    $calendarName = 'General';
+            }
+            
             // Registrar la acción en el historial del usuario con detalles adicionales
-            updateUserHistory($userId, "Creó una cita: '$title'", [
+            updateUserHistory($userId, "Creó una cita: '$title' en el calendario $calendarName", [
                 'id' => $result,
                 'date' => $startTime,
+                'calendar' => $calendarType,
                 'extra' => "Duración: " . round((strtotime($endTime) - strtotime($startTime)) / 60) . " minutos"
             ]);
             
@@ -75,6 +95,12 @@ switch ($action) {
         $description = isset($_POST['description']) ? $_POST['description'] : '';
         $startTime = str_replace('T', ' ', $_POST['start_time']);
         $endTime = str_replace('T', ' ', $_POST['end_time']);
+        $calendarType = isset($_POST['calendar_type']) ? $_POST['calendar_type'] : null;
+        
+        // Validar el tipo de calendario si está establecido
+        if ($calendarType !== null && !in_array($calendarType, ['estetico', 'veterinario', 'general'])) {
+            $calendarType = 'general';
+        }
         
         // Obtener datos de la cita original para el historial
         $originalAppointment = getAppointmentById($id);
@@ -86,13 +112,47 @@ switch ($action) {
         }
         
         // Actualizar la cita
-        $result = updateAppointment($id, $title, $description, $startTime, $endTime);
+        $result = updateAppointment($id, $title, $description, $startTime, $endTime, $calendarType);
         
         if ($result) {
+            // Determinar si el tipo de calendario cambió para el historial
+            $calendarChanged = $calendarType !== null && isset($originalAppointment['calendar_type']) && $calendarType !== $originalAppointment['calendar_type'];
+            $calendarInfo = '';
+            
+            if ($calendarChanged) {
+                // Obtener el nombre de los calendarios para el historial
+                $oldCalendarName = '';
+                switch ($originalAppointment['calendar_type']) {
+                    case 'estetico':
+                        $oldCalendarName = 'Estético';
+                        break;
+                    case 'veterinario':
+                        $oldCalendarName = 'Veterinario';
+                        break;
+                    default:
+                        $oldCalendarName = 'General';
+                }
+                
+                $newCalendarName = '';
+                switch ($calendarType) {
+                    case 'estetico':
+                        $newCalendarName = 'Estético';
+                        break;
+                    case 'veterinario':
+                        $newCalendarName = 'Veterinario';
+                        break;
+                    default:
+                        $newCalendarName = 'General';
+                }
+                
+                $calendarInfo = " (Cambió de calendario $oldCalendarName a $newCalendarName)";
+            }
+            
             // Registrar la acción en el historial del usuario con detalles adicionales
-            updateUserHistory($userId, "Actualizó una cita: '$title'", [
+            updateUserHistory($userId, "Actualizó una cita: '$title'$calendarInfo", [
                 'id' => $id,
                 'date' => $startTime,
+                'calendar' => $calendarType,
                 'extra' => isset($originalAppointment) ? "Original: '{$originalAppointment['title']}'" : ""
             ]);
             
@@ -120,9 +180,23 @@ switch ($action) {
         if ($result) {
             // Registrar la acción en el historial del usuario con detalles adicionales
             if ($appointmentToDelete) {
-                updateUserHistory($userId, "Eliminó una cita: '{$appointmentToDelete['title']}'", [
+                // Determinar el nombre del calendario para el historial
+                $calendarName = '';
+                switch ($appointmentToDelete['calendar_type']) {
+                    case 'estetico':
+                        $calendarName = 'Estético';
+                        break;
+                    case 'veterinario':
+                        $calendarName = 'Veterinario';
+                        break;
+                    default:
+                        $calendarName = 'General';
+                }
+                
+                updateUserHistory($userId, "Eliminó una cita: '{$appointmentToDelete['title']}' del calendario $calendarName", [
                     'id' => $id,
-                    'date' => $appointmentToDelete['start_time']
+                    'date' => $appointmentToDelete['start_time'],
+                    'calendar' => $appointmentToDelete['calendar_type']
                 ]);
             } else {
                 updateUserHistory($userId, "Eliminó una cita (ID: $id)");
