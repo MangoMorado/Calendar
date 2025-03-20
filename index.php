@@ -52,7 +52,16 @@ $eventsJson = json_encode($events);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda de Citas</title>
+    <title>Agenda de Citas | MangoCal</title>
+    
+    <!-- Fuentes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Iconos -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
     <!-- Estilos CSS básicos -->
     <link rel="stylesheet" href="assets/css/style.css">
     
@@ -62,7 +71,10 @@ $eventsJson = json_encode($events);
 <body>
     <header>
         <div class="container">
-            <h1>Agenda de Citas</h1>
+            <div class="header-content">
+                <h1>Mundo Animal</h1>
+                <p class="tagline">Agenda de Citas</p>
+            </div>
         </div>
     </header>
     
@@ -70,235 +82,87 @@ $eventsJson = json_encode($events);
         <div class="calendar-header">
             <div class="calendar-title">
                 <h2>Calendario de Citas</h2>
+                <p class="date-range"><?php echo date_format($weekStart, 'd M') . ' - ' . date_format($weekEnd, 'd M Y'); ?></p>
             </div>
             <div class="calendar-nav">
-                <button id="createAppointment" class="btn btn-success">Nueva Cita</button>
+                <button id="createAppointment" class="btn btn-success">
+                    <i class="bi bi-plus-lg"></i> Nueva Cita
+                </button>
             </div>
         </div>
         
         <!-- Contenedor para FullCalendar -->
-        <div id="calendar"></div>
+        <div id="calendar-container">
+            <div id="calendar"></div>
+        </div>
+        
+        <div class="info-panel">
+            <div class="upcoming-appointments">
+                <h3><i class="bi bi-clock"></i> Próximas Citas</h3>
+                <div class="appointment-list" id="upcomingAppointmentsList">
+                    <!-- Se llenará con JavaScript -->
+                </div>
+            </div>
+        </div>
     </main>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; <?php echo date('Y'); ?> MangoCal. Todos los derechos reservados.</p>
+        </div>
+    </footer>
     
     <!-- Modal para crear/editar citas -->
     <div id="appointmentModal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2 id="modalTitle">Crear Cita</h2>
+            <span class="close"><i class="bi bi-x-lg"></i></span>
+            <h2 id="modalTitle"><i class="bi bi-calendar-plus"></i> Crear Cita</h2>
             
             <form id="appointmentForm" method="post">
                 <div class="form-group">
-                    <label for="title">Título:</label>
-                    <input type="text" id="title" name="title" class="form-control" required>
+                    <label for="title"><i class="bi bi-type"></i> Título:</label>
+                    <input type="text" id="title" name="title" class="form-control" required placeholder="Nombre de la cita">
                 </div>
                 
                 <div class="form-group">
-                    <label for="description">Descripción:</label>
-                    <textarea id="description" name="description" class="form-control" rows="3"></textarea>
+                    <label for="description"><i class="bi bi-text-paragraph"></i> Descripción:</label>
+                    <textarea id="description" name="description" class="form-control" rows="3" placeholder="Detalles adicionales"></textarea>
                 </div>
                 
-                <div class="form-group">
-                    <label for="startTime">Hora de Inicio:</label>
-                    <input type="datetime-local" id="startTime" name="start_time" class="form-control" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="endTime">Hora de Fin:</label>
-                    <input type="datetime-local" id="endTime" name="end_time" class="form-control" required>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="startTime"><i class="bi bi-clock"></i> Hora de Inicio:</label>
+                        <input type="datetime-local" id="startTime" name="start_time" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="endTime"><i class="bi bi-clock-history"></i> Hora de Fin:</label>
+                        <input type="datetime-local" id="endTime" name="end_time" class="form-control" required>
+                    </div>
                 </div>
                 
                 <div class="form-actions">
-                    <button type="button" id="deleteAppointment" class="btn btn-danger" style="display: none;">Eliminar</button>
-                    <button type="submit" class="btn btn-success">Guardar</button>
+                    <button type="button" id="deleteAppointment" class="btn btn-danger" style="display: none;">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg"></i> Guardar
+                    </button>
                 </div>
             </form>
         </div>
     </div>
     
+    <!-- Tooltip personalizado -->
+    <div id="eventTooltip" class="tooltip"></div>
+    
     <!-- Scripts -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/locales-all.min.js'></script>
     <script>
-        // Inicializar FullCalendar cuando el DOM esté cargado
-        document.addEventListener('DOMContentLoaded', function() {
-            const calendarEl = document.getElementById('calendar');
-            
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'timeGridWeek',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-                },
-                locale: 'es',
-                buttonText: {
-                    today: 'Hoy',
-                    month: 'Mes',
-                    week: 'Semana',
-                    day: 'Día',
-                    list: 'Lista'
-                },
-                slotMinTime: '08:00:00',
-                slotMaxTime: '20:00:00',
-                height: 'auto',
-                allDaySlot: false,
-                slotDuration: '00:30:00',
-                nowIndicator: true,
-                navLinks: true,
-                selectable: true,
-                selectMirror: true,
-                events: <?php echo $eventsJson; ?>,
-                // Evento al seleccionar un rango de tiempo
-                select: function(info) {
-                    document.getElementById('startTime').value = info.startStr.replace(/:\d+\.\d+Z$/, '');
-                    document.getElementById('endTime').value = info.endStr.replace(/:\d+\.\d+Z$/, '');
-                    
-                    document.getElementById('modalTitle').textContent = 'Crear Cita';
-                    document.getElementById('deleteAppointment').style.display = 'none';
-                    openModal();
-                },
-                // Evento al hacer clic en una cita existente
-                eventClick: function(info) {
-                    // Obtener los detalles de la cita con AJAX
-                    fetch(`get_appointment.php?id=${info.event.id}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            document.getElementById('title').value = data.title;
-                            document.getElementById('description').value = data.description;
-                            document.getElementById('startTime').value = data.start_time;
-                            document.getElementById('endTime').value = data.end_time;
-                            
-                            document.getElementById('modalTitle').textContent = 'Editar Cita';
-                            document.getElementById('deleteAppointment').style.display = 'inline-block';
-                            
-                            // Configurar variables para modo de edición
-                            window.currentAppointmentId = info.event.id;
-                            window.isEditMode = true;
-                            
-                            openModal();
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                        });
-                }
-            });
-            
-            calendar.render();
-            
-            // Modal
-            const appointmentModal = document.getElementById('appointmentModal');
-            const closeModalBtn = document.querySelector('.close');
-            const createAppointmentBtn = document.getElementById('createAppointment');
-            const deleteAppointmentBtn = document.getElementById('deleteAppointment');
-            const appointmentForm = document.getElementById('appointmentForm');
-            
-            // Variables para el manejo de citas
-            window.currentAppointmentId = null;
-            window.isEditMode = false;
-            
-            // Crear nueva cita
-            if (createAppointmentBtn) {
-                createAppointmentBtn.addEventListener('click', function() {
-                    document.getElementById('modalTitle').textContent = 'Crear Cita';
-                    document.getElementById('deleteAppointment').style.display = 'none';
-                    window.isEditMode = false;
-                    window.currentAppointmentId = null;
-                    appointmentForm.reset();
-                    openModal();
-                });
-            }
-            
-            // Cerrar modal con el botón X
-            if (closeModalBtn) {
-                closeModalBtn.addEventListener('click', function() {
-                    closeModal();
-                });
-            }
-            
-            // Cerrar modal al hacer clic fuera del contenido
-            window.addEventListener('click', function(e) {
-                if (e.target === appointmentModal) {
-                    closeModal();
-                }
-            });
-            
-            // Manejar envío del formulario
-            if (appointmentForm) {
-                appointmentForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    const formData = new FormData(this);
-                    
-                    if (window.isEditMode) {
-                        formData.append('id', window.currentAppointmentId);
-                        formData.append('action', 'update');
-                    } else {
-                        formData.append('action', 'create');
-                    }
-                    
-                    // Enviar datos con AJAX
-                    fetch('process_appointment.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Recargar la página para mostrar los cambios
-                            window.location.reload();
-                        } else {
-                            alert(data.message || 'Ha ocurrido un error.');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
-                });
-            }
-            
-            // Manejar eliminación de cita
-            if (deleteAppointmentBtn) {
-                deleteAppointmentBtn.addEventListener('click', function() {
-                    if (confirm('¿Estás seguro de que deseas eliminar esta cita?')) {
-                        const formData = new FormData();
-                        formData.append('id', window.currentAppointmentId);
-                        formData.append('action', 'delete');
-                        
-                        // Enviar solicitud de eliminación
-                        fetch('process_appointment.php', {
-                            method: 'POST',
-                            body: formData
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                window.location.reload();
-                            } else {
-                                alert(data.message || 'Ha ocurrido un error al eliminar la cita.');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                        });
-                    }
-                });
-            }
-            
-            // Funciones para gestionar el modal
-            function openModal() {
-                appointmentModal.style.display = 'block';
-            }
-            
-            function closeModal() {
-                appointmentModal.style.display = 'none';
-                appointmentForm.reset();
-                window.isEditMode = false;
-                window.currentAppointmentId = null;
-            }
-        });
+        // Pasar los eventos a una variable global para que app.js pueda acceder a ellos
+        window.calendarEvents = <?php echo $eventsJson; ?>;
     </script>
-    
-    <!-- Archivo original de la aplicación (ahora no se usa, lo mantenemos por referencia) -->
-    <!-- <script src="assets/js/app.js"></script> -->
+    <script src="assets/js/app.js"></script>
 </body>
-</html> 
+</html>
