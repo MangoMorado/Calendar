@@ -61,6 +61,20 @@ $currentUser = getCurrentUser();
 $userId = $currentUser['id'];
 $userDetails = getUserById($userId);
 
+// Obtener la configuración del calendario
+$settings = [];
+$sql = "SELECT setting_key, setting_value FROM settings";
+$result = mysqli_query($conn, $sql);
+while ($row = mysqli_fetch_assoc($result)) {
+    $settings[$row['setting_key']] = $row['setting_value'];
+}
+
+// Valores por defecto si no existen en la base de datos
+$settings['slotMinTime'] = $settings['slotMinTime'] ?? '00:00:00';
+$settings['slotMaxTime'] = $settings['slotMaxTime'] ?? '24:00:00';
+$settings['slotDuration'] = $settings['slotDuration'] ?? '00:30:00';
+$settings['timeFormat'] = $settings['timeFormat'] ?? '12h';
+
 // Definir título de la página
 $pageTitle = 'Calendario Estético | Mundo Animal';
 
@@ -196,14 +210,24 @@ include 'includes/header.php';
 <?php
 // Scripts adicionales
 $extraScripts = '
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/locales-all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@5.10.1/main.min.js"></script>
 <script>
-    // Pasar los eventos y tipo de calendario a variables globales para que app.js pueda acceder a ellos
+    // Verificar que FullCalendar esté disponible
+    if (typeof FullCalendar === "undefined") {
+        console.error("Error: FullCalendar no está cargado correctamente");
+    } else {
+        console.log("FullCalendar cargado correctamente");
+    }
+    
+    // Pasar los eventos, tipo de calendario y configuración a variables globales
     window.calendarEvents = ' . $eventsJson . ';
     window.currentCalendarType = "' . $calendarType . '";
+    window.calendarSettings = ' . json_encode($settings) . ';
 </script>
-<script src="assets/js/app.js"></script>
+<script type="module" src="assets/js/app.js"></script>
 ';
 
 // Incluir el footer

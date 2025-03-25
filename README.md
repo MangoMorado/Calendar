@@ -6,13 +6,19 @@ Una aplicación web completa para gestionar citas y reuniones en una clínica ve
 
 - Sistema completo de autenticación y gestión de usuarios
 - Roles de usuario (administrador y usuario regular)
+- Múltiples tipos de calendarios:
+  - Calendario General (todas las citas)
+  - Calendario Estético (citas de estética)
+  - Calendario Veterinario (citas médicas)
 - Vista de calendario interactivo (día, semana, mes)
+- Sistema Drag & Drop para gestión de citas
 - Creación, edición y eliminación de citas
 - Registro de actividades y historial de cambios
 - Perfil de usuario con gestión de información personal
 - Interfaz responsiva y amigable
 - Sistema de recuperación de contraseñas
 - Interfaz multilingüe (español por defecto)
+- Sistema de notificaciones para acciones del usuario
 
 ## Tecnologías
 
@@ -44,11 +50,20 @@ Una aplicación web completa para gestionar citas y reuniones en una clínica ve
 ## Uso
 
 - Inicie sesión con sus credenciales para acceder al sistema
+- Seleccione el tipo de calendario que desea utilizar (General, Estético o Veterinario)
 - Para crear una nueva cita, haga clic en el botón "Nueva Cita" o directamente en una fecha/hora en el calendario
 - Para editar una cita existente, haga clic en la cita que desea modificar
-- Puede cambiar la vista del calendario usando los botones de la parte superior
+- Puede mover citas directamente usando el sistema Drag & Drop
+- Cambie la vista del calendario usando los botones de la parte superior
 - Acceda a su perfil para modificar su información personal o cambiar su contraseña
 - Los administradores pueden acceder al historial completo de actividades del sistema
+
+## Configuración del Calendario
+
+El sistema permite configurar:
+- Hora de inicio y fin del calendario
+- Duración de los slots de tiempo
+- Formato de hora (12 horas / 24 horas)
 
 ## Seguridad
 
@@ -69,13 +84,20 @@ Una aplicación web completa para gestionar citas y reuniones en una clínica ve
   - `auth.php` - Funciones de autenticación y manejo de sesiones
   - `user_functions.php` - Funciones para gestión de usuarios
   - `header.php` y `footer.php` - Componentes de diseño reutilizables
-- `index.php` - Página principal con vista de calendario
+  - `functions.php` - Sistema de funciones modular (appointments, calendar, ui)
+- `index.php` - Página principal con vista de calendario general
+- `estetico.php` - Calendario específico para citas de estética
+- `veterinario.php` - Calendario específico para citas veterinarias
 - `login.php` - Página de inicio de sesión
 - `register.php` - Página de registro de nuevos usuarios
 - `profile.php` - Perfil de usuario y gestión de información personal
 - `historial.php` - Historial de actividades (solo para administradores)
 - `forgot_password.php` y `reset_password.php` - Sistema de recuperación de contraseñas
 - `process_appointment.php` - Procesa creación, actualización y eliminación de citas
+- `get_appointment.php` - Obtiene detalles de citas específicas
+- `config.php` - Configuración general de la aplicación
+- `logout.php` - Cierre de sesión de usuario
+- `unauthorized.php` - Página de acceso no autorizado
 
 ## Agradecimientos
 

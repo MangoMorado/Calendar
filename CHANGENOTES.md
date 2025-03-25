@@ -1,5 +1,19 @@
 # CHANGENOTES - Calendario MundoAnimal
 
+## Versión 0.0.2 - 📅 UX Calendar Update
+- Nuevo sistema de configuración:
+  - Seleccion de hora de inicio / fin
+  - Seleccion de duración de los Slots
+  - Formato de Hora (12 hrs / 24 hrs)
+- Nuevo sistema de funciones modular:
+  - appointments: Manejo de citas
+  - Calendar: Manejo del calendario
+  - ui: manejor de Interfaces
+- Nuevo sistema Drag and Drop
+
+## 🪲 Bug detectados:
+- main.min.js:12  Uncaught SyntaxError: Cannot use import statement outside a module
+
 ## Versión 0.0.1.0 - Calendarios Múltiples
 
 ### Nuevas Funcionalidades

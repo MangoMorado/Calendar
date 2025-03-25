@@ -54,6 +54,9 @@ $pageTitle = isset($pageTitle) ? $pageTitle : 'Agenda de Citas | Mundo Animal';
                             <a href="historial.php" class="dropdown-item">
                                 <i class="bi bi-clock-history"></i> Historial
                             </a>
+                            <a href="config.php" class="dropdown-item">
+                                <i class="bi bi-gear"></i> Configuración
+                            </a>
                             <?php endif; ?>
                             <div class="dropdown-divider"></div>
                             <a href="logout.php" class="dropdown-item">
@@ -66,11 +69,6 @@ $pageTitle = isset($pageTitle) ? $pageTitle : 'Agenda de Citas | Mundo Animal';
                     <a href="index.php" class="nav-item" title="Inicio">
                         <i class="bi bi-house"></i> Inicio
                     </a>
-                    <?php if ($currentUser['role'] === 'admin') : ?>
-                    <a href="historial.php" class="nav-item" title="Historial de Actividades">
-                        <i class="bi bi-clock-history"></i> Historial
-                    </a>
-                    <?php endif; ?>
                 </nav>
             </div>
             <?php endif; ?>
