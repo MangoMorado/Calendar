@@ -26,7 +26,8 @@ if (mysqli_query($conn, $sql)) {
         description TEXT,
         start_time DATETIME NOT NULL,
         end_time DATETIME NOT NULL,
-        calendar_type ENUM('estetico', 'veterinario', 'general') DEFAULT 'general',
+        calendar_type ENUM('estetico', 'veterinario', 'general') DEFAULT 'estetico',
+        all_day TINYINT(1) NOT NULL DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )";
@@ -39,8 +40,16 @@ if (mysqli_query($conn, $sql)) {
     $checkColumn = "SHOW COLUMNS FROM appointments LIKE 'calendar_type'";
     $result = mysqli_query($conn, $checkColumn);
     if (mysqli_num_rows($result) == 0) {
-        $alterSql = "ALTER TABLE appointments ADD COLUMN calendar_type ENUM('estetico', 'veterinario', 'general') DEFAULT 'general'";
+        $alterSql = "ALTER TABLE appointments ADD COLUMN calendar_type ENUM('estetico', 'veterinario', 'general') DEFAULT 'estetico'";
         mysqli_query($conn, $alterSql);
+    }
+    
+    // Actualizar la tabla de citas existente si no tiene la columna all_day
+    $checkAllDayColumn = "SHOW COLUMNS FROM appointments LIKE 'all_day'";
+    $allDayResult = mysqli_query($conn, $checkAllDayColumn);
+    if (mysqli_num_rows($allDayResult) == 0) {
+        $alterAllDaySql = "ALTER TABLE appointments ADD COLUMN all_day TINYINT(1) NOT NULL DEFAULT 0";
+        mysqli_query($conn, $alterAllDaySql);
     }
     
     // Crear tabla de usuarios si no existe
@@ -59,6 +68,18 @@ if (mysqli_query($conn, $sql)) {
     
     if (!mysqli_query($conn, $sql)) {
         echo "Error al crear tabla de usuarios: " . mysqli_error($conn);
+    }
+    
+    // Crear tabla de configuraciones si no existe
+    $sql = "CREATE TABLE IF NOT EXISTS settings (
+        setting_key VARCHAR(255) NOT NULL PRIMARY KEY,
+        setting_value TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )";
+    
+    if (!mysqli_query($conn, $sql)) {
+        echo "Error al crear tabla de configuraciones: " . mysqli_error($conn);
     }
 } else {
     echo "Error al crear base de datos: " . mysqli_error($conn);

@@ -19,13 +19,14 @@ Una aplicación web completa para gestionar citas y reuniones en una clínica ve
 - Sistema de recuperación de contraseñas
 - Interfaz multilingüe (español por defecto)
 - Sistema de notificaciones para acciones del usuario
+- Arquitectura modular para mejor mantenimiento del código
 
 ## Tecnologías
 
 - PHP 7.0 o superior
 - MySQL 5.6 o superior
 - JavaScript (ES6+)
-- [FullCalendar](https://fullcalendar.io/) v5.10.1
+- [FullCalendar](https://fullcalendar.io/) v6.1.15
 - Bootstrap Icons
 - HTML5/CSS3
 
@@ -77,6 +78,8 @@ El sistema permite configurar:
 
 - `assets/` - Contiene archivos CSS, JavaScript e imágenes
   - `css/` - Hojas de estilo CSS
+    - `main.css` - Archivo principal que importa los módulos CSS
+    - `modules/` - Módulos CSS separados por funcionalidad
   - `js/` - Scripts JavaScript
   - `img/` - Imágenes y logotipos
 - `config/` - Configuración de la aplicación y base de datos
@@ -85,6 +88,12 @@ El sistema permite configurar:
   - `user_functions.php` - Funciones para gestión de usuarios
   - `header.php` y `footer.php` - Componentes de diseño reutilizables
   - `functions.php` - Sistema de funciones modular (appointments, calendar, ui)
+  - `calendar/` - Módulos específicos del calendario
+    - `init.php` - Inicialización y coordinación de componentes del calendario
+    - `data.php` - Procesamiento de datos del calendario
+    - `template.php` - Estructura HTML del calendario
+    - `modal.php` - Modal para crear/editar citas
+    - `scripts.php` - Scripts JavaScript del calendario
 - `index.php` - Página principal con vista de calendario general
 - `estetico.php` - Calendario específico para citas de estética
 - `veterinario.php` - Calendario específico para citas veterinarias
@@ -98,6 +107,16 @@ El sistema permite configurar:
 - `config.php` - Configuración general de la aplicación
 - `logout.php` - Cierre de sesión de usuario
 - `unauthorized.php` - Página de acceso no autorizado
+- `api/` - Endpoints de API para operaciones AJAX
+  - `appointments.php` - Gestión de citas vía API
+
+## Arquitectura del Sistema
+
+El sistema utiliza una arquitectura modular que facilita el mantenimiento y la extensión del código:
+
+- **Módulos de Calendario**: Los componentes del calendario están separados en archivos independientes según su funcionalidad.
+- **Separación de Responsabilidades**: Cada módulo tiene una responsabilidad específica siguiendo el principio de responsabilidad única.
+- **Flujo de Datos**: El flujo de datos está claramente definido desde la obtención hasta la presentación.
 
 ## Agradecimientos
 

@@ -52,18 +52,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recuperar Contraseña | MangoCal</title>
+    <title>Recuperar Contraseña | Calendario MangaMorado</title>
     
     <!-- Fuentes -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Iconos -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
-    <!-- Estilos CSS -->
-    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Estilos -->
+    <link rel="stylesheet" href="assets/css/main.css">
     
     <style>
         .auth-container {
@@ -148,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <footer>
         <div class="container">
-            <p>&copy; <?php echo date('Y'); ?> MangoCal. Todos los derechos reservados.</p>
+            <p class="text-muted text-center">&copy; <?php echo date('Y'); ?> Hecho por 🥭 Mango Morado para Mundo Animal. Todos los derechos reservados.</p>
         </div>
     </footer>
 </body>

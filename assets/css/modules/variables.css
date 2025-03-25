@@ -1,0 +1,43 @@
+/* ===============================
+   Variables CSS
+   =============================== */
+
+:root {
+    /* Colores principales */
+    --primary-color: #049D46;
+    --primary-light: #E6F7ED;
+    --primary-dark: #077537;
+    
+    /* Colores secundarios */
+    --secondary-color: #049D46; /* Mismo que primary para mantener coherencia */
+    --estetico-color: #8E44AD;
+    --veterinario-color: #2E86C1;
+    --general-color: #5D69F7;
+    
+    /* Colores de estado */
+    --success-color: #10B981;
+    --danger-color: #EF4444;
+    --warning-color: #F59E0B;
+    --info-color: #3B82F6;
+    
+    /* Colores neutros */
+    --light-color: #F9FAFB;
+    --dark-color: #1F2937;
+    --text-color: #4B5563;
+    --text-muted: #9CA3AF;
+    --border-color: #E5E7EB;
+    --bg-color: #F3F4F6;
+    
+    /* Sombras */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    
+    /* Bordes y formas */
+    --radius-sm: 0.25rem;
+    --radius: 0.5rem;
+    --radius-lg: 0.75rem;
+    
+    /* Animaciones */
+    --transition: all 0.2s ease;
+} 

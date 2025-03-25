@@ -8,21 +8,19 @@ $pageTitle = isset($pageTitle) ? $pageTitle : 'Agenda de Citas | Mundo Animal';
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?></title>
     
     <!-- Fuentes -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Iconos -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
-    <!-- Estilos CSS básicos -->
-    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Estilos -->
+    <link rel="stylesheet" href="assets/css/main.css">
     
-    <?php if (isset($extraStyles)) echo $extraStyles; ?>
+    <?php echo isset($extraStyles) ? $extraStyles : ''; ?>
 </head>
 <body>
     <header>

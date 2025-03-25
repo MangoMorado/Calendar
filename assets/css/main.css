@@ -1,0 +1,37 @@
+/* ===============================
+   Estilos Principales - Calendario
+   Author: MangaMorado
+   Version: 1.0
+   ===============================
+
+/* Importar módulos */
+
+/* Variables globales CSS (colores, sombras, tamaños, etc.) */
+@import 'modules/variables.css';
+
+/* Utilidades CSS comunes (clases reutilizables) */
+@import 'modules/utilities.css';
+
+/* Estilos base para elementos HTML y componentes comunes */
+@import 'modules/base.css';
+
+/* Estilos para el encabezado, navegación y menú de usuario */
+@import 'modules/header.css';
+
+/* Estructura principal y sistema de grid para el layout */
+@import 'modules/layout.css';
+
+/* Estilos específicos del calendario y sus componentes */
+@import 'modules/calendar.css';
+
+/* Estilos para la sección de próximas citas y elementos de cita */
+@import 'modules/appointments.css';
+
+/* Estilos para ventanas modales y diálogos */
+@import 'modules/modal.css';
+
+/* Estilos para notificaciones y tooltips de información */
+@import 'modules/notifications.css';
+
+/* Estilos para la sección de actividad reciente */
+@import 'modules/activity.css'; 

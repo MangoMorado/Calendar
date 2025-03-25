@@ -7,18 +7,16 @@ require_once 'includes/auth.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso No Autorizado | MangoCal</title>
+    <title>Acceso No Autorizado | Calendario MangaMorado</title>
     
     <!-- Fuentes -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Iconos -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
-    <!-- Estilos CSS -->
-    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Estilos -->
+    <link rel="stylesheet" href="assets/css/main.css">
     
     <style>
         .error-container {
@@ -71,7 +69,7 @@ require_once 'includes/auth.php';
         </p>
         <div class="btn-group">
             <?php if (isAuthenticated()): ?>
-                <a href="index.php" class="btn btn-primary">
+                <a href="index.php" class="btn btn-success">
                     <i class="bi bi-house"></i> Ir al Inicio
                 </a>
                 <a href="logout.php" class="btn btn-outline">

@@ -1,5 +1,68 @@
 # CHANGENOTES - Calendario MundoAnimal
 
+## Cambios por implementar:
+- Mejoras de seguridad
+- Agregar Dias laborales a la configuración
+- Bloquear agendas (impedir agendar bajo condiciones personalizables)
+- Agregar panel CRUD de usuarios "Solo para Admins"
+- Agregar sistema CRUD de Calendarios
+- Agregar sistema de notificación por WhatsApp / Correo electronico
+- Mejoras de velocidad de carga
+- Optimización de Consultas: Para mejor rendimiento con grandes volúmenes de datos
+- Mejora de Responsividad: Para mejorar la experiencia en dispositivos móviles
+- Dashboard con estadisticas
+- Integración con Google Calendar
+- Integracion con Vetesoft (https://app.vetesoft.org/login/)
+- Integración con el chatbot
+- Organizar el sistema bajo el modelo MVC
+- Agregar sistema de pruebas automatizadas
+- Documentación extendida
+- Agregar nuevo Sugerencias, panel de sugerencias de nuevas caracteristicas o reporte de errores
+- Agregar sistema de personalización "Skins"
+- Agregar sistema de configuración modular, pensando la app para varios tipos de usuarios (debe modificarse, nombre de la app, footer, logo, favicon)
+- Agregar Favicons
+- Mejoras para PWA
+- Agregar un al modal que sea Responsable: "Listar usuarios"
+- Crear estructura de clases para modelos principales (User, Appointment)
+- Agregar configuración de color en el menu de configuraciones
+- carga lazy de eventos para calendarios con muchas citas
+
+## Versión 0.0.3 - 🪲 Organizando la Casa
+- Busqueda y correciones de bugs
+- Se actualizo FullCalendar a la versión 6.1.15
+- Se dividio en modulos el archivo de estilos
+- Se dividio en modulos la logica del calendario
+- Se actualizo el sistema grid de cuadriculas css
+- Se Desarrollo una nueva API
+- Ahora si se preciona la tecla ESC del teclado con un modal abierto se cierra
+- Vista por defecto en Escritorio: Semana, Vista por defecto en movil: Lista
+- Nueva función: Eventos de todo el dia
+
+### 🏗️ Modularización
+- Implementación de estructura modular para el calendario
+- Separación del código en módulos independientes:
+  - `includes/calendar/init.php`: Inicialización y coordinación de componentes
+  - `includes/calendar/data.php`: Procesamiento de datos del calendario
+  - `includes/calendar/template.php`: Estructura HTML del calendario
+  - `includes/calendar/modal.php`: Modal para crear/editar citas
+  - `includes/calendar/scripts.php`: Scripts JavaScript del calendario
+- Optimización de código con reducción de archivos extensos
+- Mejora de la mantenibilidad y testabilidad del código
+- Se prepara para implementación de patrón MVC, esto puede tomar varias updates 🥲
+- Modularizado el código JavaScript del calendario
+- Creada estructura de módulos en `includes/calendar/js-modules/`
+- Separadas las funcionalidades en archivos específicos
+- Mejorado el rendimiento al cargar solo los scripts necesarios
+- Añadido README con documentación de la estructura
+- Modularizado el sistema de calendario
+- Creados módulos específicos:
+  - `data.php`: Para manejo de datos del calendario
+  - `template.php`: Para la estructura HTML
+  - `modal.php`: Para la ventana modal de citas
+  - `scripts.php`: Para los scripts JavaScript
+  - `init.php`: Para inicializar todo el sistema
+- Mejorada la estructura de archivos para mejor organización
+
 ## Versión 0.0.2 - 📅 UX Calendar Update
 - Nuevo sistema de configuración:
   - Seleccion de hora de inicio / fin

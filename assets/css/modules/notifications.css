@@ -1,0 +1,120 @@
+/* ===============================
+   Estilos para Notificaciones y Tooltips
+   =============================== */
+
+/* Tooltip */
+.tooltip {
+    display: none;
+    position: absolute;
+    background-color: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    padding: 0.75rem;
+    min-width: 220px;
+    max-width: 300px;
+    z-index: 1000;
+    font-size: 0.875rem;
+    border-left: 3px solid var(--primary-color);
+}
+
+.tooltip-title {
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-bottom: 0.5rem;
+}
+
+.tooltip-time, .tooltip-date {
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.tooltip-time i, .tooltip-date i {
+    margin-right: 0.375rem;
+    font-size: 0.75rem;
+}
+
+.tooltip-desc {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--border-color);
+    color: var(--text-color);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+.tooltip-calendar {
+    color: #718096;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+}
+
+/* Notificaciones */
+.notification {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    z-index: 9999;
+    max-width: 350px;
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success {
+    border-left: 4px solid var(--success-color);
+}
+
+.notification.error {
+    border-left: 4px solid var(--danger-color);
+}
+
+.notification-icon {
+    margin-right: 0.75rem;
+    font-size: 1.25rem;
+}
+
+.notification.success .notification-icon {
+    color: var(--success-color);
+}
+
+.notification.error .notification-icon {
+    color: var(--danger-color);
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-content p {
+    margin: 0;
+    color: var(--text-color);
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.25rem;
+    margin-left: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.notification-close:hover {
+    color: var(--text-color);
+} 

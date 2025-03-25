@@ -17,120 +17,135 @@ export function initCalendar(elements, config, state) {
         return null;
     }
     
+    // Debuguear disponibilidad de FullCalendar
+    console.log('FullCalendar global:', window.FullCalendar);
+    console.log('Verificación directa de FullCalendar:', typeof FullCalendar !== 'undefined' ? 'Disponible' : 'No disponible');
+    
     // Asegurar que FullCalendar esté disponible
-    if (typeof FullCalendar === 'undefined') {
-        console.error('Error: FullCalendar no está cargado');
+    if (typeof window.FullCalendar === 'undefined' && typeof FullCalendar === 'undefined') {
+        console.error('Error: FullCalendar no está cargado en ningún ámbito');
         return null;
     }
     
+    // Determinar qué versión de FullCalendar usar
+    const FC = window.FullCalendar || FullCalendar;
+    
     console.log('Configuración aplicada:', settings);
     
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'timeGridWeek',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-        },
-        locale: 'es',
-        buttonText: {
-            today: 'Hoy',
-            month: 'Mes',
-            week: 'Semana',
-            day: 'Día',
-            list: 'Lista'
-        },
-        slotMinTime: settings.slotMinTime,
-        slotMaxTime: settings.slotMaxTime,
-        height: 'auto',
-        allDaySlot: false,
-        slotDuration: settings.slotDuration,
-        nowIndicator: true,
-        navLinks: true,
-        selectable: true,
-        selectMirror: true,
-        dayMaxEvents: true,
-        // Habilitar eventos arrastrables y configuración explícita
-        editable: true,
-        droppable: true,
-        eventStartEditable: true,
-        // Habilitar cambio de duración de eventos
-        eventResizableFromStart: false,
-        eventDurationEditable: true,
-        businessHours: {
-            daysOfWeek: [1, 2, 3, 4, 5, 6, 0], // Todos los días
-            startTime: settings.slotMinTime,
-            endTime: settings.slotMaxTime,
-        },
-        events: events,
-        eventTimeFormat: {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: settings.timeFormat === '12h'
-        },
-        // Personalizar la renderización de eventos
-        eventDidMount: function(info) {
-            // Aplicar clase específica al evento según el tipo de calendario
-            const calendarType = info.event.extendedProps.calendarType || 'general';
-            info.el.classList.add(`calendar-${calendarType}`);
-            
-            // Asegurar que los eventos sean arrastrables agregando data-attributes
-            info.el.setAttribute('draggable', 'true');
-            info.el.dataset.eventId = info.event.id;
-        },
-        // Tooltip personalizado para eventos
-        eventMouseEnter: function(info) {
-            const rect = info.el.getBoundingClientRect();
-            const scrollTop = window.scrollY || document.documentElement.scrollTop;
-            
-            // Formatear fechas
-            const start = new Date(info.event.start);
-            const end = new Date(info.event.end);
-            const formattedStart = start.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit', hour12: true});
-            const formattedEnd = end.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit', hour12: true});
-            const formattedDate = start.toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'long'});
-            
-            // Obtener el tipo de calendario para mostrar en el tooltip
-            const calendarType = info.event.extendedProps.calendarType || 'general';
-            const calendarName = calendarNames[calendarType] || 'General';
-            
-            // Contenido del tooltip
-            eventTooltip.innerHTML = `
-                <div class="tooltip-title">${info.event.title}</div>
-                <div class="tooltip-time"><i class="bi bi-clock"></i> ${formattedStart} - ${formattedEnd}</div>
-                <div class="tooltip-date"><i class="bi bi-calendar-event"></i> ${formattedDate}</div>
-                <div class="tooltip-calendar"><i class="bi bi-calendar3"></i> ${calendarName}</div>
-                ${info.event.extendedProps.description ? `<div class="tooltip-desc">${info.event.extendedProps.description}</div>` : ''}
-            `;
-            
-            // Posicionar y mostrar tooltip
-            eventTooltip.style.left = rect.left + window.scrollX + 'px';
-            eventTooltip.style.top = rect.bottom + scrollTop + 'px';
-            eventTooltip.style.display = 'block';
-        },
-        eventMouseLeave: function() {
-            eventTooltip.style.display = 'none';
-        },
-        // Evento al seleccionar un rango de tiempo
-        select: function(info) {
-            handleTimeSlotSelection(info, elements, settings, state);
-        },
-        // Evento al hacer clic en una cita existente
-        eventClick: function(info) {
-            handleEventClick(info, elements, state);
-        },
-        // Eventos para drag and drop
-        eventDrop: function(info) {
-            handleEventDrop(info, currentCalendarType);
-        },
-        // Evento para redimensionar un evento
-        eventResize: function(info) {
-            handleEventResize(info, currentCalendarType);
-        }
-    });
-    
-    calendar.render();
-    return calendar;
+    try {
+        // Crear instancia de calendario
+        console.log('Intentando crear instancia de calendario con FullCalendar 6.1.15');
+        
+        const calendar = new FC.Calendar(calendarEl, {
+            initialView: 'timeGridWeek',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+            },
+            locale: 'es',
+            buttonText: {
+                today: 'Hoy',
+                month: 'Mes',
+                week: 'Semana',
+                day: 'Día',
+                list: 'Lista'
+            },
+            slotMinTime: settings.slotMinTime,
+            slotMaxTime: settings.slotMaxTime,
+            height: 'auto',
+            allDaySlot: false,
+            slotDuration: settings.slotDuration,
+            nowIndicator: true,
+            navLinks: true,
+            selectable: true,
+            selectMirror: true,
+            dayMaxEvents: true,
+            // Habilitar eventos arrastrables y configuración explícita
+            editable: true,
+            droppable: true,
+            eventStartEditable: true,
+            // Habilitar cambio de duración de eventos
+            eventResizableFromStart: false,
+            eventDurationEditable: true,
+            businessHours: {
+                daysOfWeek: [1, 2, 3, 4, 5, 6, 0], // Todos los días
+                startTime: settings.slotMinTime,
+                endTime: settings.slotMaxTime,
+            },
+            events: events,
+            eventTimeFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: settings.timeFormat === '12h'
+            },
+            // Personalizar la renderización de eventos
+            eventDidMount: function(info) {
+                // Aplicar clase específica al evento según el tipo de calendario
+                const calendarType = info.event.extendedProps.calendarType || 'general';
+                info.el.classList.add(`calendar-${calendarType}`);
+                
+                // Asegurar que los eventos sean arrastrables agregando data-attributes
+                info.el.setAttribute('draggable', 'true');
+                info.el.dataset.eventId = info.event.id;
+            },
+            // Tooltip personalizado para eventos
+            eventMouseEnter: function(info) {
+                const rect = info.el.getBoundingClientRect();
+                const scrollTop = window.scrollY || document.documentElement.scrollTop;
+                
+                // Formatear fechas
+                const start = new Date(info.event.start);
+                const end = new Date(info.event.end);
+                const formattedStart = start.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit', hour12: true});
+                const formattedEnd = end.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit', hour12: true});
+                const formattedDate = start.toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'long'});
+                
+                // Obtener el tipo de calendario para mostrar en el tooltip
+                const calendarType = info.event.extendedProps.calendarType || 'general';
+                const calendarName = calendarNames[calendarType] || 'General';
+                
+                // Contenido del tooltip
+                eventTooltip.innerHTML = `
+                    <div class="tooltip-title">${info.event.title}</div>
+                    <div class="tooltip-time"><i class="bi bi-clock"></i> ${formattedStart} - ${formattedEnd}</div>
+                    <div class="tooltip-date"><i class="bi bi-calendar-event"></i> ${formattedDate}</div>
+                    <div class="tooltip-calendar"><i class="bi bi-calendar3"></i> ${calendarName}</div>
+                    ${info.event.extendedProps.description ? `<div class="tooltip-desc">${info.event.extendedProps.description}</div>` : ''}
+                `;
+                
+                // Posicionar y mostrar tooltip
+                eventTooltip.style.left = rect.left + window.scrollX + 'px';
+                eventTooltip.style.top = rect.bottom + scrollTop + 'px';
+                eventTooltip.style.display = 'block';
+            },
+            eventMouseLeave: function() {
+                eventTooltip.style.display = 'none';
+            },
+            // Evento al seleccionar un rango de tiempo
+            select: function(info) {
+                handleTimeSlotSelection(info, elements, settings, state);
+            },
+            // Evento al hacer clic en una cita existente
+            eventClick: function(info) {
+                handleEventClick(info, elements, state);
+            },
+            // Eventos para drag and drop
+            eventDrop: function(info) {
+                handleEventDrop(info, currentCalendarType);
+            },
+            // Evento para redimensionar un evento
+            eventResize: function(info) {
+                handleEventResize(info, currentCalendarType);
+            }
+        });
+        
+        calendar.render();
+        return calendar;
+    } catch (error) {
+        console.error('Error al crear la instancia de calendario:', error);
+        return null;
+    }
 }
 
 /**

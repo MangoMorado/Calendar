@@ -1,0 +1,84 @@
+/* ===============================
+   Estilos para Actividad Reciente
+   =============================== */
+
+/* Sección de actividad reciente */
+.recent-activity {
+    margin-top: 2rem;
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    list-style: none;
+    padding: 0;
+}
+
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 15px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+    border-left: 3px solid transparent;
+    font-size: 0.9rem;
+}
+
+.activity-icon {
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+}
+
+.activity-icon i {
+    font-size: 1.1rem;
+    margin-right: 0;
+}
+
+.activity-content {
+    flex: 1;
+    overflow: hidden;
+}
+
+.activity-main {
+    font-weight: 500;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-color);
+}
+
+.activity-time {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Estilos para diferentes tipos de actividad */
+.activity-item.action-create {
+    border-left-color: var(--success-color);
+}
+
+.activity-item.action-create i {
+    color: var(--success-color);
+}
+
+.activity-item.action-update {
+    border-left-color: #6366F1;
+}
+
+.activity-item.action-update i {
+    color: #6366F1;
+}
+
+.activity-item.action-delete {
+    border-left-color: var(--danger-color);
+}
+
+.activity-item.action-delete i {
+    color: var(--danger-color);
+} 

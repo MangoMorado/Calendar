@@ -121,8 +121,8 @@ include 'includes/header.php';
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-save"></i> Guardar Configuración
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-save"></i>&nbsp; Guardar Configuración
                 </button>
             </div>
         </form>

@@ -128,6 +128,7 @@ $pageTitle = 'Historial de Actividades | Mundo Animal';
 
 // Estilos adicionales específicos para esta página
 $extraStyles = '
+<link rel="stylesheet" href="assets/css/main.css">
 <link rel="stylesheet" href="assets/css/historial.css">
 ';
 

@@ -8,8 +8,59 @@ import { initUpcomingAppointments } from './modules/appointments.js';
 import { initEventListeners } from './modules/events.js';
 import { showNotification, openModal, closeModal } from './modules/ui.js';
 
+// Funciones auxiliares para verificación
+function checkFullCalendarAvailability() {
+    console.log('Verificando disponibilidad de FullCalendar...');
+    
+    // Verificar en window
+    if (typeof window.FullCalendar !== 'undefined') {
+        console.log('FullCalendar disponible en window.FullCalendar');
+        return window.FullCalendar;
+    }
+    
+    // Verificar como variable global
+    if (typeof FullCalendar !== 'undefined') {
+        console.log('FullCalendar disponible como variable global');
+        window.FullCalendar = FullCalendar; // Asegurar que esté en window también
+        return FullCalendar;
+    }
+    
+    console.error('FullCalendar no está disponible en ningún ámbito');
+    return null;
+}
+
 // Inicializar la aplicación cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', initializeApp);
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado, verificando dependencias...');
+    
+    // Verificar disponibilidad de FullCalendar
+    const FC = checkFullCalendarAvailability();
+    
+    // Verificar que window.calendarEvents exista
+    if (!window.calendarEvents) {
+        console.warn('window.calendarEvents no existe. Usando array vacío.');
+        window.calendarEvents = [];
+    }
+    
+    // Verificar que window.calendarSettings exista
+    if (!window.calendarSettings) {
+        console.warn('window.calendarSettings no existe. Usando valores por defecto.');
+        window.calendarSettings = {
+            slotMinTime: '00:00:00',
+            slotMaxTime: '24:00:00',
+            slotDuration: '00:30:00',
+            timeFormat: '12h'
+        };
+    }
+    
+    // Inicializar solo si FullCalendar está disponible
+    if (FC) {
+        initializeApp();
+    } else {
+        console.error('No se puede inicializar la aplicación: FullCalendar no está disponible');
+        showNotification('Error al cargar el calendario. Por favor, recarga la página.', 'error');
+    }
+});
 
 /**
  * Inicializa la aplicación del calendario

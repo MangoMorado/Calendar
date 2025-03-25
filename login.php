@@ -49,71 +49,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión | Mundo Animal</title>
+    <title>Iniciar Sesión | Calendario MangaMorado</title>
     
     <!-- Fuentes -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Iconos -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
-    <!-- Estilos CSS -->
-    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Estilos -->
+    <link rel="stylesheet" href="assets/css/main.css">
     
     <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        
         .auth-container {
             max-width: 450px;
-            margin: 80px auto;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            background-color: #fff;
+            margin: 2rem auto;
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            background-color: white;
         }
         
         .auth-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 2rem;
         }
         
         .auth-header h1 {
-            color: #5D69F7;
-            margin-bottom: 10px;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
         }
         
         .auth-footer {
             text-align: center;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #e9eaf3;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
         }
         
         .message {
-            padding: 10px 15px;
-            margin-bottom: 20px;
-            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: var(--radius);
             text-align: center;
         }
         
         .message.error {
             background-color: #FEEFEF;
-            color: #EF4444;
+            color: var(--danger-color);
             border: 1px solid #FCDEDE;
         }
         
         .message.success {
             background-color: #EFF8F6;
-            color: #10B981;
+            color: var(--success-color);
             border: 1px solid #D1ECEA;
+        }
+        
+        footer {
+            margin-top: auto;
         }
     </style>
 </head>
-<body>
+<body class="bg-light">
     <div class="auth-container">
         <div class="auth-header">
-            <h1>Mundo Animal</h1>
-            <p>Ingresa a tu cuenta para gestionar citas</p>
+            <img src="assets/img/logo.svg" alt="Logo Mundo Animal" class="auth-logo">
+            <h1 class="text-primary font-bold">Mundo Animal</h1>
+            <p class="text-muted">Ingresa a tu cuenta para gestionar citas</p>
         </div>
         
         <?php if (!empty($message)) : ?>
@@ -142,14 +153,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
         
         <div class="auth-footer">
-            <p><a href="forgot_password.php">¿Olvidaste tu contraseña?</a></p>
-            <p>¿No tienes una cuenta? <a href="register.php">Regístrate</a></p>
+            <p><a href="forgot_password.php" class="text-primary">¿Olvidaste tu contraseña?</a></p>
+            <p>¿No tienes una cuenta? <a href="register.php" class="text-primary">Regístrate</a></p>
         </div>
     </div>
     
     <footer>
         <div class="container">
-            <p>&copy; <?php echo date('Y'); ?> Hecho por 🥭 Mango Morado para Mundo Animal. Todos los derechos reservados.</p>
+            <p class="text-muted text-center">&copy; <?php echo date('Y'); ?> Hecho por 🥭 Mango Morado para Mundo Animal. Todos los derechos reservados.</p>
         </div>
     </footer>
 </body>
