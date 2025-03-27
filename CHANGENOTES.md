@@ -1,16 +1,18 @@
 # CHANGENOTES - Calendario MundoAnimal
 
-## Cambios por implementar:
+## Lista de Cambios por implementar:
+- estado de las citas segun codigo de color (Verde, Amarillo: reprogramar, Rojo)
+- Problema de multiples mensajes
+- Sistema de cola de citas, que el sistema reciba citas del chatbot y que un humano las programe
 - Mejoras de seguridad
 - Agregar Dias laborales a la configuración
 - Bloquear agendas (impedir agendar bajo condiciones personalizables)
-- Agregar panel CRUD de usuarios "Solo para Admins"
 - Agregar sistema CRUD de Calendarios
 - Agregar sistema de notificación por WhatsApp / Correo electronico
 - Mejoras de velocidad de carga
 - Optimización de Consultas: Para mejor rendimiento con grandes volúmenes de datos
 - Mejora de Responsividad: Para mejorar la experiencia en dispositivos móviles
-- Dashboard con estadisticas
+- Dashboard con estadisticas 🥭
 - Integración con Google Calendar
 - Integracion con Vetesoft (https://app.vetesoft.org/login/)
 - Integración con el chatbot
@@ -26,6 +28,15 @@
 - Crear estructura de clases para modelos principales (User, Appointment)
 - Agregar configuración de color en el menu de configuraciones
 - carga lazy de eventos para calendarios con muchas citas
+
+## Versión 0.0.4 - 🕵️ Sherlock
+- Se empezo migración gradual a MVC (Auth, Notes)
+- Agregar panel CRUD de usuarios "Solo para Admins"
+- Colores para diferenciar los profesionales
+- Solución de errores con el sistema de drag and drop
+- Se agregaron logs para depuración
+- Ahora se puede agendar en el calendario "General"
+- Libreta de notas
 
 ## Versión 0.0.3 - 🪲 Organizando la Casa
 - Busqueda y correciones de bugs

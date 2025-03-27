@@ -24,7 +24,9 @@ function initializeCalendar($calendarType = 'general') {
     }
     
     // Obtener datos del calendario
-    $events = getCalendarData($calendarType);
+    $calendarData = getCalendarData($calendarType);
+    $events = $calendarData['events'];
+    $users = $calendarData['users'];
     $eventsJson = json_encode($events);
     
     // Obtener configuración
@@ -39,7 +41,8 @@ function initializeCalendar($calendarType = 'general') {
         'eventsJson' => $eventsJson,
         'settings' => $settings,
         'pageTitle' => $pageTitle,
-        'calendarType' => $calendarType
+        'calendarType' => $calendarType,
+        'users' => $users
     ];
 }
 

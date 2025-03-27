@@ -39,6 +39,7 @@ switch ($action) {
         $startTime = str_replace('T', ' ', $_POST['start_time']);
         $endTime = str_replace('T', ' ', $_POST['end_time']);
         $calendarType = isset($_POST['calendar_type']) ? $_POST['calendar_type'] : 'general';
+        $userId = isset($_POST['user_id']) && !empty($_POST['user_id']) ? intval($_POST['user_id']) : null;
         
         // Validar el tipo de calendario
         if (!in_array($calendarType, ['estetico', 'veterinario', 'general'])) {
@@ -52,7 +53,7 @@ switch ($action) {
         }
         
         // Crear la cita
-        $result = createAppointment($title, $description, $startTime, $endTime, $calendarType);
+        $result = createAppointment($title, $description, $startTime, $endTime, $calendarType, false, $userId);
         
         if ($result) {
             // Determinar el nombre del calendario para el historial
@@ -96,6 +97,7 @@ switch ($action) {
         $startTime = str_replace('T', ' ', $_POST['start_time']);
         $endTime = str_replace('T', ' ', $_POST['end_time']);
         $calendarType = isset($_POST['calendar_type']) ? $_POST['calendar_type'] : null;
+        $userId = isset($_POST['user_id']) && !empty($_POST['user_id']) ? intval($_POST['user_id']) : null;
         
         // Validar el tipo de calendario si está establecido
         if ($calendarType !== null && !in_array($calendarType, ['estetico', 'veterinario', 'general'])) {
@@ -112,7 +114,7 @@ switch ($action) {
         }
         
         // Actualizar la cita
-        $result = updateAppointment($id, $title, $description, $startTime, $endTime, $calendarType);
+        $result = updateAppointment($id, $title, $description, $startTime, $endTime, $calendarType, null, $userId);
         
         if ($result) {
             // Determinar si el tipo de calendario cambió para el historial

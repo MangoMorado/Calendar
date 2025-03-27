@@ -34,4 +34,10 @@
 @import 'modules/notifications.css';
 
 /* Estilos para la sección de actividad reciente */
-@import 'modules/activity.css'; 
+@import 'modules/activity.css';
+
+/* Estilos para la página de gestión de usuarios */
+@import 'modules/users.css';
+
+/* Estilos para la sección de notas */
+@import 'modules/notes.css'; 

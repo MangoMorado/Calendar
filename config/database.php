@@ -81,6 +81,23 @@ if (mysqli_query($conn, $sql)) {
     if (!mysqli_query($conn, $sql)) {
         echo "Error al crear tabla de configuraciones: " . mysqli_error($conn);
     }
+    
+    // Crear tabla de notas si no existe
+    $sql = "CREATE TABLE IF NOT EXISTS notes (
+        id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(100) NOT NULL,
+        content TEXT NOT NULL,
+        type ENUM('nota', 'sugerencia', 'otro') NOT NULL DEFAULT 'nota',
+        visibility ENUM('solo_yo', 'todos') NOT NULL DEFAULT 'solo_yo',
+        user_id INT(11) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )";
+    
+    if (!mysqli_query($conn, $sql)) {
+        echo "Error al crear tabla de notas: " . mysqli_error($conn);
+    }
 } else {
     echo "Error al crear base de datos: " . mysqli_error($conn);
 }

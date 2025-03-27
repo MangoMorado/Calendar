@@ -14,24 +14,37 @@ function getCalendarData($calendarType = 'general') {
         $calendarType = 'general';
     }
     
-    // Obtener citas para mostrar
-    $appointments = getAppointments(null, null, $calendarType);
+    // Obtener todos los usuarios para asignarlos a las citas
+    $usersQuery = "SELECT id, name, color FROM users";
+    $usersResult = mysqli_query($conn, $usersQuery);
+    $users = [];
+    
+    while ($user = mysqli_fetch_assoc($usersResult)) {
+        $users[$user['id']] = $user;
+    }
+    
+    // Construir la consulta SQL para obtener las citas con la información del usuario
+    $sql = "SELECT a.*, u.name as user_name, u.color as user_color 
+            FROM appointments a 
+            LEFT JOIN users u ON a.user_id = u.id";
+    
+    // Filtrar por tipo de calendario si no es el general
+    if ($calendarType !== 'general') {
+        $sql .= " WHERE a.calendar_type = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "s", $calendarType);
+    } else {
+        $stmt = mysqli_prepare($conn, $sql);
+    }
+    
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
     
     // Preparar los datos para FullCalendar (formato JSON)
     $events = [];
-    foreach ($appointments as $appointment) {
-        // Asignar colores diferentes según el tipo de calendario
-        $color = '';
-        switch ($appointment['calendar_type']) {
-            case 'estetico':
-                $color = '#8E44AD'; // Púrpura para estético
-                break;
-            case 'veterinario':
-                $color = '#2E86C1'; // Azul para veterinario
-                break;
-            default:
-                $color = '#5D69F7'; // Color predeterminado
-        }
+    while ($appointment = mysqli_fetch_assoc($result)) {
+        // Usar el color del usuario asignado, o un color predeterminado
+        $color = !empty($appointment['user_color']) ? $appointment['user_color'] : '#0d6efd';
         
         $events[] = [
             'id' => $appointment['id'],
@@ -41,11 +54,18 @@ function getCalendarData($calendarType = 'general') {
             'description' => $appointment['description'],
             'backgroundColor' => $color,
             'borderColor' => $color,
-            'calendarType' => $appointment['calendar_type']
+            'calendarType' => $appointment['calendar_type'],
+            'user_id' => $appointment['user_id'],
+            'user_name' => $appointment['user_name'] ?? 'Sin asignar',
+            'user_color' => $color
         ];
     }
     
-    return $events;
+    // Añadir los usuarios al resultado para que estén disponibles en el modal
+    return [
+        'events' => $events,
+        'users' => array_values($users)
+    ];
 }
 
 // Función para obtener la configuración del calendario

@@ -5,7 +5,32 @@
 
 // Función para formatear fecha para input datetime-local
 function formatDateForInput(date) {
-    return date.toISOString().slice(0, 16);
+    try {
+        // Verificar que date es una instancia válida de Date
+        if (!(date instanceof Date) || isNaN(date.getTime())) {
+            console.error("Fecha inválida recibida:", date);
+            // Usar fecha actual como fallback
+            date = new Date();
+        }
+        
+        // Formatear manualmente para evitar problemas con toISOString
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        
+        // Crear el formato YYYY-MM-DDThh:mm
+        const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+        console.log("Fecha formateada para input:", formattedDate);
+        
+        return formattedDate;
+    } catch (error) {
+        console.error("Error al formatear fecha para input:", error);
+        // En caso de error, devolver ahora mismo
+        const now = new Date();
+        return now.toISOString().slice(0, 16);
+    }
 }
 
 // Función para formatear fecha y hora para mostrar
@@ -43,7 +68,33 @@ function formatDateForDisplay(date) {
 
 // Función para formatear fecha y hora para MySQL
 function formatDateTimeForMySQL(date) {
-    return date.toISOString().slice(0, 19).replace('T', ' ');
+    try {
+        // Verificar que date es una instancia de Date válida
+        if (!(date instanceof Date) || isNaN(date.getTime())) {
+            console.error("Fecha inválida para formatear a MySQL:", date);
+            // Usar fecha actual como fallback
+            date = new Date();
+        }
+        
+        // Formatear manualmente para evitar problemas con toISOString
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        
+        // Crear formato YYYY-MM-DD HH:MM:SS para MySQL
+        const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        console.log("Fecha formateada para MySQL:", formattedDate);
+        
+        return formattedDate;
+    } catch (error) {
+        console.error("Error al formatear fecha para MySQL:", error);
+        // En caso de error, devolver ahora formateado
+        const now = new Date();
+        return now.toISOString().slice(0, 19).replace('T', ' ');
+    }
 }
 
 // Función para formatear solo la hora
@@ -153,6 +204,21 @@ function refreshCalendarEvents() {
                     // Si ya es un objeto, usarlo directamente
                     events = text;
                 }
+                
+                console.log("Eventos actualizados recibidos:", events);
+                
+                // Verificar que los eventos tienen la información del usuario correcta
+                events.forEach(event => {
+                    if (event.extendedProps && event.extendedProps.user_id) {
+                        console.log("Evento con usuario:", 
+                            event.id, 
+                            event.title, 
+                            "Usuario:", 
+                            event.extendedProps.user_id, 
+                            event.extendedProps.user
+                        );
+                    }
+                });
                 
                 // Actualizar el calendario
                 calendar.removeAllEvents();

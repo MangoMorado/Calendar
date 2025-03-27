@@ -6,6 +6,7 @@
 
 // Función para generar los scripts del calendario
 function getCalendarScripts($eventsJson, $settings, $calendarType) {
+    global $calendarData; // Necesitamos acceder a los datos del calendario
     ob_start();
     ?>
 <!-- Dependencias externas -->
@@ -18,6 +19,7 @@ function getCalendarScripts($eventsJson, $settings, $calendarType) {
 <script>
     // Variables globales para ser utilizadas por los módulos
     const eventsJson = <?php echo $eventsJson; ?>;
+    const calendarUsers = <?php echo json_encode($calendarData['users'] ?? []); ?>;
     const calendarSettings = {
         slotMinTime: "<?php echo $settings['slotMinTime']; ?>",
         slotMaxTime: "<?php echo $settings['slotMaxTime']; ?>",

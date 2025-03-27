@@ -8,28 +8,41 @@ require_once __DIR__ . '/../config/database.php';
 function getAppointments($startDate, $endDate, $calendarType = null) {
     global $conn;
     
+    // Construir la consulta base con JOIN
+    $baseQuery = "SELECT 
+                    a.*, 
+                    u.name as user, 
+                    u.color as user_color 
+                  FROM appointments a 
+                  LEFT JOIN users u ON a.user_id = u.id AND a.user_id IS NOT NULL";
+    
+    // Añadir orden por fecha a todas las consultas
+    $orderBy = " ORDER BY a.start_time ASC";
+    
     // Cuando startDate y endDate son null, obtenemos todas las citas o filtramos solo por tipo
     if ($startDate === null || $endDate === null) {
         if ($calendarType && $calendarType !== 'general') {
-            $sql = "SELECT * FROM appointments WHERE calendar_type = ?";
+            $sql = $baseQuery . " WHERE a.calendar_type = ?" . $orderBy;
             $stmt = mysqli_prepare($conn, $sql);
             mysqli_stmt_bind_param($stmt, "s", $calendarType);
         } else {
-            $sql = "SELECT * FROM appointments";
+            $sql = $baseQuery . $orderBy;
             $stmt = mysqli_prepare($conn, $sql);
         }
     } else {
         // Filtrar por rango de fechas
-        $sql = "SELECT * FROM appointments WHERE start_time >= ? AND start_time <= ?";
+        $sql = $baseQuery . " WHERE a.start_time >= ? AND a.start_time <= ?";
         
         // Si se especifica un tipo de calendario, filtrar por ese tipo
         // Para el calendario general, obtener todas las citas
         if ($calendarType && $calendarType !== 'general') {
-            $sql .= " AND calendar_type = ?";
+            $sql .= " AND a.calendar_type = ?";
+            $sql .= $orderBy;
             
             $stmt = mysqli_prepare($conn, $sql);
             mysqli_stmt_bind_param($stmt, "sss", $startDate, $endDate, $calendarType);
         } else {
+            $sql .= $orderBy;
             $stmt = mysqli_prepare($conn, $sql);
             mysqli_stmt_bind_param($stmt, "ss", $startDate, $endDate);
         }
@@ -41,6 +54,11 @@ function getAppointments($startDate, $endDate, $calendarType = null) {
     $appointments = [];
     
     while ($row = mysqli_fetch_assoc($result)) {
+        // Log para depuración
+        error_log("Cita con ID " . $row['id'] . " - Usuario: " . 
+                 (isset($row['user_id']) ? $row['user_id'] : 'NULL') . 
+                 " - Nombre: " . (isset($row['user']) ? $row['user'] : 'NULL'));
+        
         $appointments[] = $row;
     }
     
@@ -67,8 +85,11 @@ function getAppointmentById($id) {
 /**
  * Crear una nueva cita
  */
-function createAppointment($title, $description, $startTime, $endTime, $calendarType = 'general', $allDay = false) {
+function createAppointment($title, $description, $startTime, $endTime, $calendarType = 'general', $allDay = false, $userId = null) {
     global $conn;
+    
+    // Log para depuración
+    error_log("Creando cita: Título=$title, Tipo=$calendarType, UserId=" . var_export($userId, true));
     
     // Si es un evento de todo el día, ajustar las horas para asegurar que se muestre correctamente
     if ($allDay) {
@@ -92,16 +113,19 @@ function createAppointment($title, $description, $startTime, $endTime, $calendar
         }
     }
     
-    $sql = "INSERT INTO appointments (title, description, start_time, end_time, calendar_type, all_day) 
-            VALUES (?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO appointments (title, description, start_time, end_time, calendar_type, all_day, user_id) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)";
     
     $stmt = mysqli_prepare($conn, $sql);
     $allDayInt = $allDay ? 1 : 0;
-    mysqli_stmt_bind_param($stmt, "sssssi", $title, $description, $startTime, $endTime, $calendarType, $allDayInt);
+    mysqli_stmt_bind_param($stmt, "sssssii", $title, $description, $startTime, $endTime, $calendarType, $allDayInt, $userId);
     
     if (mysqli_stmt_execute($stmt)) {
-        return mysqli_insert_id($conn);
+        $newId = mysqli_insert_id($conn);
+        error_log("Cita creada con ID: $newId y Usuario: $userId");
+        return $newId;
     } else {
+        error_log("Error al crear cita: " . mysqli_error($conn));
         return false;
     }
 }
@@ -109,8 +133,11 @@ function createAppointment($title, $description, $startTime, $endTime, $calendar
 /**
  * Actualizar una cita existente
  */
-function updateAppointment($id, $title, $description, $startTime, $endTime, $calendarType = null, $allDay = null) {
+function updateAppointment($id, $title, $description, $startTime, $endTime, $calendarType = null, $allDay = null, $userId = null) {
     global $conn;
+    
+    // Log para depuración
+    error_log("Actualizando cita: ID=$id, Título=$title, Tipo=$calendarType, UserId=" . var_export($userId, true));
     
     // Si es un evento de todo el día, ajustar las horas para asegurar que se muestre correctamente
     if ($allDay === true) {
@@ -134,40 +161,45 @@ function updateAppointment($id, $title, $description, $startTime, $endTime, $cal
         }
     }
     
-    // Si no se proporciona un tipo de calendario, mantener el existente
-    if ($calendarType === null && $allDay === null) {
-        $sql = "UPDATE appointments 
-                SET title = ?, description = ?, start_time = ?, end_time = ? 
-                WHERE id = ?";
-        
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssssi", $title, $description, $startTime, $endTime, $id);
-    } else if ($calendarType !== null && $allDay === null) {
-        $sql = "UPDATE appointments 
-                SET title = ?, description = ?, start_time = ?, end_time = ?, calendar_type = ? 
-                WHERE id = ?";
-        
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sssssi", $title, $description, $startTime, $endTime, $calendarType, $id);
-    } else if ($calendarType === null && $allDay !== null) {
-        $sql = "UPDATE appointments 
-                SET title = ?, description = ?, start_time = ?, end_time = ?, all_day = ? 
-                WHERE id = ?";
-        
-        $allDayInt = $allDay ? 1 : 0;
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssssis", $title, $description, $startTime, $endTime, $allDayInt, $id);
-    } else {
-        $sql = "UPDATE appointments 
-                SET title = ?, description = ?, start_time = ?, end_time = ?, calendar_type = ?, all_day = ? 
-                WHERE id = ?";
-        
-        $allDayInt = $allDay ? 1 : 0;
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sssssis", $title, $description, $startTime, $endTime, $calendarType, $allDayInt, $id);
+    // Construir la consulta SQL basada en los parámetros proporcionados
+    $sql = "UPDATE appointments SET title = ?, description = ?, start_time = ?, end_time = ?";
+    $params = [$title, $description, $startTime, $endTime];
+    $types = "ssss";
+    
+    if ($calendarType !== null) {
+        $sql .= ", calendar_type = ?";
+        $params[] = $calendarType;
+        $types .= "s";
     }
     
-    return mysqli_stmt_execute($stmt);
+    if ($allDay !== null) {
+        $sql .= ", all_day = ?";
+        $allDayInt = $allDay ? 1 : 0;
+        $params[] = $allDayInt;
+        $types .= "i";
+    }
+    
+    if ($userId !== null) {
+        $sql .= ", user_id = ?";
+        $params[] = $userId;
+        $types .= "i";
+    }
+    
+    $sql .= " WHERE id = ?";
+    $params[] = $id;
+    $types .= "i";
+    
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, $types, ...$params);
+    
+    $result = mysqli_stmt_execute($stmt);
+    if ($result) {
+        error_log("Cita ID: $id actualizada correctamente con Usuario: $userId");
+    } else {
+        error_log("Error al actualizar cita: " . mysqli_error($conn));
+    }
+    
+    return $result;
 }
 
 /**
@@ -242,13 +274,39 @@ function getCalendarName($type) {
 function updateAppointmentDates($id, $startTime, $endTime) {
     global $conn;
     
+    // Validar el ID
+    $id = intval($id);
+    if ($id <= 0) {
+        error_log("ID de cita inválido: $id");
+        return false;
+    }
+    
+    // Validar las fechas
+    if (empty($startTime) || empty($endTime)) {
+        error_log("Fechas vacías para cita ID: $id");
+        return false;
+    }
+    
+    // Registrar en el log para depuración
+    error_log("Actualizando fechas para cita ID: $id - Inicio: $startTime - Fin: $endTime");
+    
+    // Ejecutar la consulta de actualización
     $sql = "UPDATE appointments 
-            SET start_time = ?, end_time = ? 
+            SET start_time = ?, end_time = ?, updated_at = NOW() 
             WHERE id = ?";
     
     $stmt = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt, "ssi", $startTime, $endTime, $id);
     
-    return mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_execute($stmt);
+    
+    // Verificar si la actualización fue exitosa
+    if ($result) {
+        error_log("Fechas actualizadas exitosamente para cita ID: $id");
+    } else {
+        error_log("Error al actualizar fechas para cita ID: $id - " . mysqli_error($conn));
+    }
+    
+    return $result;
 }
 ?> 

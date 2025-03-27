@@ -25,17 +25,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             // Convertir el valor de all_day a booleano para JavaScript
             $isAllDay = isset($appointment['all_day']) && ($appointment['all_day'] == 1);
             
+            // Determinar el color según el usuario (si existe) o usar el color por defecto
+            $color = !empty($appointment['user_color']) ? $appointment['user_color'] : '#0d6efd';
+            
             $events[] = [
                 'id' => $appointment['id'],
                 'title' => $appointment['title'],
                 'start' => $appointment['start_time'],
                 'end' => $appointment['end_time'],
                 'description' => $appointment['description'],
-                'calendar_type' => $appointment['calendar_type'],
+                'backgroundColor' => $color,
+                'borderColor' => $color,
                 'allDay' => $isAllDay,
                 'extendedProps' => [
-                    'calendar_type' => $appointment['calendar_type'],
-                    'description' => $appointment['description']
+                    'calendarType' => $appointment['calendar_type'],
+                    'description' => $appointment['description'],
+                    'user_id' => $appointment['user_id'],
+                    'userId' => $appointment['user_id'],
+                    'user' => $appointment['user'] ?? 'Sin asignar',
+                    'user_name' => $appointment['user'] ?? 'Sin asignar',
+                    'user_color' => $color
                 ]
             ];
         }
@@ -80,16 +89,29 @@ switch ($action) {
         $endTime = $_POST['end_time'];
         $calendarType = isset($_POST['calendar_type']) ? $_POST['calendar_type'] : 'estetico';
         
-        // Asegurarse de que no se use 'general' como tipo de calendario
-        if ($calendarType === 'general') {
-            $calendarType = 'estetico';
+        // Manejo específico del user_id para asegurar que se guarde correctamente
+        $userId = null;
+        if (isset($_POST['user_id']) && $_POST['user_id'] !== '' && $_POST['user_id'] !== '0') {
+            $userId = intval($_POST['user_id']);
+            // Validar que sea un ID válido
+            if ($userId <= 0) {
+                $userId = null;
+            }
         }
+        
+        // Para debug
+        error_log("USER ID en create: " . var_export($userId, true));
+        
+        // Ya no impedimos el uso de 'general' como tipo de calendario
+        // Comentado: if ($calendarType === 'general') {
+        //     $calendarType = 'estetico';
+        // }
         
         // Para checkbox, verificar si existe, ya que solo se envía cuando está marcado
         $allDay = isset($_POST['all_day']) ? ($_POST['all_day'] === 'on' || $_POST['all_day'] === '1' || $_POST['all_day'] === 'true') : false;
         
         // Crear la cita
-        $appointmentId = createAppointment($title, $description, $startTime, $endTime, $calendarType, $allDay);
+        $appointmentId = createAppointment($title, $description, $startTime, $endTime, $calendarType, $allDay, $userId);
         
         if ($appointmentId) {
             echo json_encode([
@@ -120,16 +142,29 @@ switch ($action) {
         $endTime = $_POST['end_time'];
         $calendarType = isset($_POST['calendar_type']) ? $_POST['calendar_type'] : null;
         
-        // Asegurarse de que no se use 'general' como tipo de calendario
-        if ($calendarType === 'general') {
-            $calendarType = 'estetico';
+        // Manejo específico del user_id para asegurar que se guarde correctamente
+        $userId = null;
+        if (isset($_POST['user_id']) && $_POST['user_id'] !== '' && $_POST['user_id'] !== '0') {
+            $userId = intval($_POST['user_id']);
+            // Validar que sea un ID válido
+            if ($userId <= 0) {
+                $userId = null;
+            }
         }
+        
+        // Para debug
+        error_log("USER ID en update: " . var_export($userId, true) . " para la cita ID: " . $id);
+        
+        // Ya no impedimos el uso de 'general' como tipo de calendario
+        // Comentado: if ($calendarType === 'general') {
+        //     $calendarType = 'estetico';
+        // }
         
         // Para checkbox, verificar si existe, ya que solo se envía cuando está marcado
         $allDay = isset($_POST['all_day']) ? ($_POST['all_day'] === 'on' || $_POST['all_day'] === '1' || $_POST['all_day'] === 'true') : false;
         
         // Actualizar la cita
-        $success = updateAppointment($id, $title, $description, $startTime, $endTime, $calendarType, $allDay);
+        $success = updateAppointment($id, $title, $description, $startTime, $endTime, $calendarType, $allDay, $userId);
         
         if ($success) {
             echo json_encode([

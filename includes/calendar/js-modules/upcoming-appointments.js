@@ -44,8 +44,16 @@ function displayUpcomingAppointments() {
         const calType = event.extendedProps.calendarType || "general";
         eventElement.dataset.calendarType = calType;
         
-        // Obtener el color del calendario
-        const calColor = calendarColors[calType] || calendarColors.general;
+        // Color del calendario (ahora usamos el color del usuario si está disponible)
+        const userAssigned = event.extendedProps.user_id && event.extendedProps.user;
+        const calColor = userAssigned ? event.extendedProps.user_color : (calendarColors[calType] || calendarColors.general);
+        
+        // Crear el HTML con la información del usuario si existe
+        const userInfo = userAssigned ? 
+            `<span class="appointment-user">
+                <i class="bi bi-person"></i> ${event.extendedProps.user}
+            </span>` :
+            '';
         
         eventElement.innerHTML = `
             <div class="appointment-color" style="background-color: ${calColor}"></div>
@@ -61,6 +69,7 @@ function displayUpcomingAppointments() {
                     <span class="appointment-calendar">
                         <i class="bi bi-calendar3"></i> ${calendarNames[calType]}
                     </span>
+                    ${userInfo}
                 </div>
             </div>
             <div class="appointment-actions">

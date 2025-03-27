@@ -15,6 +15,8 @@ function renderAppointmentModal() {
             <h2 id="modalTitle"><i class="bi bi-calendar-plus"></i> Crear Cita</h2>
             
             <form id="appointmentForm" method="post">
+                <input type="hidden" name="id" id="appointmentId">
+                
                 <div class="form-group">
                     <label for="title"><i class="bi bi-type"></i> Título:</label>
                     <input type="text" id="title" name="title" class="form-control" required placeholder="Nombre de la cita">
@@ -23,6 +25,20 @@ function renderAppointmentModal() {
                 <div class="form-group">
                     <label for="description"><i class="bi bi-text-paragraph"></i> Descripción:</label>
                     <textarea id="description" name="description" class="form-control" rows="3" placeholder="Detalles adicionales"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user_id"><i class="bi bi-person"></i> Usuario Asignado:</label>
+                    <select id="user_id" name="user_id" class="form-control">
+                        <option value="">-- Selecciona un usuario --</option>
+                        <?php 
+                        // Los usuarios se cargarán dinámicamente desde JavaScript
+                        ?>
+                    </select>
+                    <div id="colorPreview" class="color-preview mt-2">
+                        <span class="color-circle"></span>
+                        <span class="color-code"></span>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -47,6 +63,7 @@ function renderAppointmentModal() {
                 <div class="form-group">
                     <label for="calendarType"><i class="bi bi-calendar3"></i> Tipo de Calendario:</label>
                     <select id="calendarType" name="calendar_type" class="form-control">
+                        <option value="general">Calendario General</option>
                         <option value="estetico">Calendario Estético</option>
                         <option value="veterinario">Calendario Veterinario</option>
                     </select>
