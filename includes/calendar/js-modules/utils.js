@@ -207,25 +207,36 @@ function refreshCalendarEvents() {
                 
                 console.log("Eventos actualizados recibidos:", events);
                 
+                // Extraer los eventos del objeto de respuesta
+                const eventData = events.data || events;
+                
                 // Verificar que los eventos tienen la información del usuario correcta
-                events.forEach(event => {
-                    if (event.extendedProps && event.extendedProps.user_id) {
-                        console.log("Evento con usuario:", 
-                            event.id, 
-                            event.title, 
-                            "Usuario:", 
-                            event.extendedProps.user_id, 
-                            event.extendedProps.user
-                        );
-                    }
-                });
-                
-                // Actualizar el calendario
-                calendar.removeAllEvents();
-                calendar.addEventSource(events);
-                
-                // Actualizar también las próximas citas
-                displayUpcomingAppointments();
+                if (Array.isArray(eventData)) {
+                    eventData.forEach(event => {
+                        if (event.extendedProps && event.extendedProps.user_id) {
+                            // Asegurarse de que el nombre del usuario no sea null o undefined
+                            if (event.extendedProps.user === null || event.extendedProps.user === undefined) {
+                                event.extendedProps.user = 'Sin asignar';
+                            }
+                            console.log("Evento con usuario:", 
+                                event.id, 
+                                event.title, 
+                                "Usuario:", 
+                                event.extendedProps.user_id, 
+                                event.extendedProps.user
+                            );
+                        }
+                    });
+                    
+                    // Actualizar el calendario
+                    calendar.removeAllEvents();
+                    calendar.addEventSource(eventData);
+                    
+                    // Actualizar también las próximas citas
+                    displayUpcomingAppointments();
+                } else {
+                    throw new Error('Los datos de eventos no son un array válido');
+                }
             } catch (e) {
                 console.error("Error al parsear eventos:", e);
                 console.error("Texto recibido:", text);

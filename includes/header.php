@@ -36,6 +36,9 @@ $pageTitle = isset($pageTitle) ? $pageTitle : 'Agenda de Citas | Mundo Animal';
             </div>
             <?php if ($currentUser): ?>
             <div class="user-menu">
+                <button id="mobileMenuBtn" class="mobile-menu-btn" aria-label="Menú">
+                    <i class="bi bi-list"></i>
+                </button>
                 <div class="user-info">
                     <div class="user-dropdown">
                         <button class="dropdown-toggle">
@@ -78,5 +81,18 @@ $pageTitle = isset($pageTitle) ? $pageTitle : 'Agenda de Citas | Mundo Animal';
             <?php endif; ?>
         </div>
     </header>
+    
+    <!-- Menú móvil y overlay -->
+    <div class="mobile-menu-overlay"></div>
+    <div id="mobileMenu" class="mobile-menu">
+        <nav class="mobile-nav">
+            <a href="index.php" class="mobile-nav-item" title="Inicio">
+                <i class="bi bi-house"></i> Inicio
+            </a>
+            <a href="notes.php" class="mobile-nav-item" title="Libreta de Notas">
+                <i class="bi bi-journal-text"></i> Libreta de Notas
+            </a>
+        </nav>
+    </div>
 </body>
 </html> 

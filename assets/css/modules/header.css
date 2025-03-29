@@ -10,7 +10,7 @@ header {
     margin-bottom: 2rem;
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 1000;
 }
 
 header .container {
@@ -212,6 +212,82 @@ header h1 {
     padding: 0.5rem 0;
 }
 
+/* Botón de menú móvil */
+.mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+}
+
+.mobile-menu-btn:hover {
+    background-color: var(--light-color);
+}
+
+/* Overlay para el menú móvil */
+.mobile-menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1001;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.mobile-menu-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Menú móvil */
+.mobile-menu {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 80%;
+    max-width: 300px;
+    height: 100vh;
+    background-color: white;
+    box-shadow: var(--shadow-lg);
+    z-index: 1002;
+    transition: left 0.3s ease;
+    padding: 2rem 1rem;
+    overflow-y: auto;
+}
+
+.mobile-menu.show {
+    left: 0;
+}
+
+.mobile-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.mobile-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    text-decoration: none;
+    color: var(--text-color);
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     header .container {
@@ -220,18 +296,32 @@ header h1 {
         padding: 0 0.75rem;
     }
     
+    .mobile-menu-btn {
+        display: block;
+        order: 1;
+        position: relative;
+        z-index: 1003;
+    }
+    
     .user-menu {
         width: 100%;
         justify-content: space-between;
+        position: relative;
+        z-index: 1003;
     }
     
     .main-nav {
         display: none;
     }
     
+    .mobile-menu, .mobile-menu-overlay {
+        display: block;
+    }
+    
     .dropdown-menu {
         width: 220px;
         right: -50%;
+        z-index: 1004;
     }
     
     .logo {

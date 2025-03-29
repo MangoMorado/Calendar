@@ -11,7 +11,10 @@ require_once __DIR__ . '/user_functions.php';
  * Verificar si el usuario está autenticado
  */
 function isAuthenticated() {
-    return isset($_SESSION['user']) && !empty($_SESSION['user']['id']);
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    return isset($_SESSION['user']) && !empty($_SESSION['user']);
 }
 
 /**
@@ -25,21 +28,30 @@ function getCurrentUser() {
  * Iniciar sesión de usuario
  */
 function authenticateUser($user) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     $_SESSION['user'] = $user;
+    // Limpiar la URL de redirección si existe
+    $redirect = isset($_SESSION['redirect_url']) ? $_SESSION['redirect_url'] : 'index.php';
+    unset($_SESSION['redirect_url']);
+    return $redirect;
 }
 
 /**
  * Cerrar sesión de usuario
  */
 function logoutUser() {
-    if (isAuthenticated()) {
-        updateUserHistory($_SESSION['user']['id'], 'Cierre de sesión');
-        unset($_SESSION['user']);
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
     }
-    
-    // Destruir la sesión por completo para mayor seguridad
-    session_unset();
+    // Destruir la sesión
     session_destroy();
+    // Iniciar una nueva sesión para mensajes
+    session_start();
+    $_SESSION['message'] = 'Has cerrado sesión exitosamente';
+    header('Location: /login.php');
+    exit();
 }
 
 /**
@@ -67,10 +79,9 @@ function hasRole($requiredRole) {
  */
 function requireAuth() {
     if (!isAuthenticated()) {
-        // Guardar la URL solicitada para redirigir después del login
+        // Guardar la URL actual para redirigir después del login
         $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
-        
-        header('Location: login.php');
+        header('Location: /login.php');
         exit();
     }
 }

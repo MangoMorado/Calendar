@@ -15,7 +15,7 @@ function getCalendarData($calendarType = 'general') {
     }
     
     // Obtener todos los usuarios para asignarlos a las citas
-    $usersQuery = "SELECT id, name, color FROM users";
+    $usersQuery = "SELECT id, name, COALESCE(color, '#3788d8') as color FROM users";
     $usersResult = mysqli_query($conn, $usersQuery);
     $users = [];
     
@@ -24,7 +24,7 @@ function getCalendarData($calendarType = 'general') {
     }
     
     // Construir la consulta SQL para obtener las citas con la información del usuario
-    $sql = "SELECT a.*, u.name as user_name, u.color as user_color 
+    $sql = "SELECT a.*, u.name as user, COALESCE(u.color, '#3788d8') as user_color 
             FROM appointments a 
             LEFT JOIN users u ON a.user_id = u.id";
     
@@ -56,7 +56,7 @@ function getCalendarData($calendarType = 'general') {
             'borderColor' => $color,
             'calendarType' => $appointment['calendar_type'],
             'user_id' => $appointment['user_id'],
-            'user_name' => $appointment['user_name'] ?? 'Sin asignar',
+            'user' => $appointment['user'] ?? 'Sin asignar',
             'user_color' => $color
         ];
     }

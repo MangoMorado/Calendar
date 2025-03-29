@@ -3,6 +3,22 @@
  * Funciones para manipular eventos (crear, editar, eliminar, arrastrar)
  */
 
+// Variables para el sistema de deshacer
+let lastAction = null;
+let lastEventState = null;
+
+// Función para actualizar el estado del botón de deshacer
+function updateUndoButton() {
+    const undoButton = document.getElementById('undoButton');
+    if (!undoButton) return;
+
+    if (lastAction && lastEventState) {
+        undoButton.classList.add('show');
+    } else {
+        undoButton.classList.remove('show');
+    }
+}
+
 // Función para manejar la selección de fecha
 function handleDateSelection(info) {
     // Obtener la fecha y hora del clic
@@ -173,80 +189,142 @@ function handleEventClick(event) {
 // Función para manejar el arrastre de eventos (cambio de fecha/hora)
 function handleEventDrop(info) {
     const event = info.event;
-    const eventId = event.id;
+    const oldEvent = info.oldEvent;
     
-    // Crear nuevos objetos Date para asegurar que se manejen correctamente
-    const startDate = new Date(event.start);
-    // Si el evento no tiene fecha de fin, calcular una hora después
-    const endDate = event.end ? new Date(event.end) : new Date(startDate.getTime() + 60 * 60 * 1000);
+    // Guardar el estado anterior para la función de deshacer
+    lastEventState = {
+        id: oldEvent.id,
+        start: oldEvent.start,
+        end: oldEvent.end,
+        title: oldEvent.title,
+        extendedProps: { ...oldEvent.extendedProps }
+    };
     
-    console.log("Arrastrando evento - Fecha original:", info.oldEvent.start);
-    console.log("Arrastrando evento - Nueva fecha:", startDate);
+    // Formatear las fechas para mostrar
+    const oldDate = formatDate(oldEvent.start);
+    const newDate = formatDate(event.start);
     
-    // Formatear fechas para MySQL (YYYY-MM-DD HH:MM:SS)
-    const newStart = formatDateTimeForMySQL(startDate);
-    const newEnd = formatDateTimeForMySQL(endDate);
-    
-    console.log("Formato MySQL - Nueva fecha inicio:", newStart);
-    console.log("Formato MySQL - Nueva fecha fin:", newEnd);
-    
-    // Confirmar el cambio
-    if (!confirm("¿Está seguro de cambiar esta cita a " + formatDateForDisplay(startDate) + "?")) {
+    // Mostrar diálogo de confirmación
+    if (!confirm(`¿Deseas mover la cita "${event.title}" del ${oldDate} al ${newDate}?`)) {
         info.revert();
         return;
     }
+
+    console.log("Arrastrando evento - Fecha original:", oldEvent.start);
+    console.log("Arrastrando evento - Nueva fecha:", event.start);
     
-    // Mostrar notificación de carga
-    displaySuccessMessage("Actualizando cita...");
+    // Formatear fechas para MySQL
+    const newStartDate = formatDateTimeForMySQL(event.start);
+    const newEndDate = formatDateTimeForMySQL(event.end);
     
-    // Actualizar el evento en la base de datos
+    console.log("Formato MySQL - Nueva fecha inicio:", newStartDate);
+    console.log("Formato MySQL - Nueva fecha fin:", newEndDate);
+    
+    // Preparar datos para la actualización
     const formData = new FormData();
     formData.append('action', 'update_date');
-    formData.append('appointmentId', eventId);
-    formData.append('start', newStart);
-    formData.append('end', newEnd);
+    formData.append('appointmentId', event.id);
+    formData.append('start', newStartDate);
+    formData.append('end', newEndDate);
     
-    // Para debugging
-    for (const [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
-    }
+    // Guardar la acción actual para deshacer
+    lastAction = {
+        type: 'move',
+        eventId: event.id,
+        oldStart: oldEvent.start,
+        oldEnd: oldEvent.end
+    };
     
-    fetch("api/appointments.php", {
-        method: "POST",
+    // Actualizar visibilidad del botón de deshacer
+    updateUndoButton();
+    
+    // Realizar la actualización
+    fetch('api/appointments.php', {
+        method: 'POST',
         body: formData
     })
     .then(response => {
-        // Verificar si la respuesta es exitosa
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
-        // Intentar parsear como JSON
         return response.text().then(text => {
             try {
+                console.log('Respuesta del servidor:', text);
                 return JSON.parse(text);
             } catch (error) {
-                console.error("Error al parsear JSON:", error);
-                console.error("Respuesta del servidor:", text);
-                throw new Error("La respuesta del servidor no es JSON válido");
+                console.error('Error al parsear respuesta:', text);
+                throw new Error('Respuesta inválida del servidor');
             }
         });
     })
     .then(data => {
+        console.log('Datos procesados:', data);
         if (data.success) {
-            displaySuccessMessage("Cita actualizada exitosamente");
-            // Forzar recarga de eventos para asegurar consistencia
+            displaySuccessMessage(`Cita movida al ${newDate}`);
             refreshCalendarEvents();
         } else {
-            displayErrorMessage("Error al actualizar la cita: " + data.message);
             info.revert();
+            lastAction = null;
+            lastEventState = null;
+            updateUndoButton();
+            displayErrorMessage(data.message || "Error al actualizar la cita");
         }
     })
     .catch(error => {
-        console.error("Error:", error);
-        displayErrorMessage("Error al procesar la solicitud: " + error.message);
+        console.error('Error completo:', error);
         info.revert();
+        lastAction = null;
+        lastEventState = null;
+        updateUndoButton();
+        displayErrorMessage("Error de conexión al actualizar la cita: " + error.message);
     });
 }
+
+// Función para manejar la acción de deshacer
+function handleUndo() {
+    if (!lastAction || !lastEventState) return;
+    
+    const formData = new FormData();
+    formData.append('action', 'update_date');
+    formData.append('appointmentId', lastAction.eventId);
+    formData.append('start', formatDateTimeForMySQL(lastAction.oldStart));
+    formData.append('end', formatDateTimeForMySQL(lastAction.oldEnd));
+    
+    // Mostrar mensaje de carga
+    displaySuccessMessage("Deshaciendo cambio...");
+    
+    fetch('api/appointments.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displaySuccessMessage("Cambio deshecho correctamente");
+            refreshCalendarEvents();
+            
+            // Limpiar el estado y actualizar botón
+            lastAction = null;
+            lastEventState = null;
+            updateUndoButton();
+        } else {
+            displayErrorMessage("Error al deshacer el cambio");
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        displayErrorMessage("Error de conexión al deshacer el cambio");
+    });
+}
+
+// Inicializar el botón de deshacer cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    const undoButton = document.getElementById('undoButton');
+    if (undoButton) {
+        undoButton.addEventListener('click', handleUndo);
+        updateUndoButton();
+    }
+});
 
 // Función para manejar el redimensionamiento de eventos (cambio de duración)
 function handleEventResize(info) {

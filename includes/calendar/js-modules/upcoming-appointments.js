@@ -45,15 +45,18 @@ function displayUpcomingAppointments() {
         eventElement.dataset.calendarType = calType;
         
         // Color del calendario (ahora usamos el color del usuario si está disponible)
-        const userAssigned = event.extendedProps.user_id && event.extendedProps.user;
-        const calColor = userAssigned ? event.extendedProps.user_color : (calendarColors[calType] || calendarColors.general);
+        const userAssigned = event.extendedProps.user_id && (event.extendedProps.user || event.extendedProps.user_name);
+        const calColor = userAssigned && event.extendedProps.user_color ? event.extendedProps.user_color : (calendarColors[calType] || calendarColors.general);
         
         // Crear el HTML con la información del usuario si existe
-        const userInfo = userAssigned ? 
+        const userName = event.extendedProps.user_name || event.extendedProps.user;
+        const userInfo = userName && userName !== 'null' && userName !== 'undefined' && userName.trim() !== '' ? 
             `<span class="appointment-user">
-                <i class="bi bi-person"></i> ${event.extendedProps.user}
+                <i class="bi bi-person"></i> ${userName}
             </span>` :
-            '';
+            `<span class="appointment-user">
+                <i class="bi bi-person"></i> Sin asignar
+            </span>`;
         
         eventElement.innerHTML = `
             <div class="appointment-color" style="background-color: ${calColor}"></div>
@@ -66,10 +69,12 @@ function displayUpcomingAppointments() {
                     <span class="appointment-time">
                         <i class="bi bi-clock"></i> ${formatTime(startDate)}
                     </span>
-                    <span class="appointment-calendar">
-                        <i class="bi bi-calendar3"></i> ${calendarNames[calType]}
-                    </span>
-                    ${userInfo}
+                    <div class="appointment-info">
+                        <span class="appointment-calendar">
+                            <i class="bi bi-calendar3"></i> ${calendarNames[calType]}
+                        </span>
+                        ${userInfo}
+                    </div>
                 </div>
             </div>
             <div class="appointment-actions">

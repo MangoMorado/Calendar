@@ -1,0 +1,346 @@
+{
+	"info": {
+		"_postman_id": "1234-5678-abcd-efgh",
+		"name": "Mundo Animal API",
+		"description": "Colección de endpoints para el sistema de gestión de citas de Mundo Animal",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.session_id) {",
+									"        pm.collectionVariables.set('session_id', jsonData.session_id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{password}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{email}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/Calendar/api/auth.php",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["Calendar", "api", "auth.php"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Ping",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/Calendar/api/ping.php",
+					"protocol": "http",
+					"host": ["localhost"],
+					"path": ["Calendar", "api", "ping.php"]
+				}
+			}
+		},
+		{
+			"name": "Obtener Eventos",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/Calendar/api/appointments.php?action=get_events&start=2024-03-28T00:00:00&end=2024-03-29T23:59:59&calendar_type=estetico",
+					"protocol": "http",
+					"host": ["localhost"],
+					"path": ["Calendar", "api", "appointments.php"],
+					"query": [
+						{
+							"key": "action",
+							"value": "get_events"
+						},
+						{
+							"key": "start",
+							"value": "2024-03-28T00:00:00"
+						},
+						{
+							"key": "end",
+							"value": "2024-03-29T23:59:59"
+						},
+						{
+							"key": "calendar_type",
+							"value": "estetico"
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "Crear Cita",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "action",
+							"value": "create",
+							"type": "text"
+						},
+						{
+							"key": "title",
+							"value": "Consulta de rutina",
+							"type": "text"
+						},
+						{
+							"key": "description",
+							"value": "Revisión general del paciente",
+							"type": "text"
+						},
+						{
+							"key": "start_time",
+							"value": "2024-03-28T10:00:00",
+							"type": "text"
+						},
+						{
+							"key": "end_time",
+							"value": "2024-03-28T11:00:00",
+							"type": "text"
+						},
+						{
+							"key": "calendar_type",
+							"value": "veterinario",
+							"type": "text"
+						},
+						{
+							"key": "all_day",
+							"value": "false",
+							"type": "text"
+						},
+						{
+							"key": "user_id",
+							"value": "1",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost/Calendar/api/appointments.php",
+					"protocol": "http",
+					"host": ["localhost"],
+					"path": ["Calendar", "api", "appointments.php"]
+				}
+			}
+		},
+		{
+			"name": "Actualizar Cita",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "action",
+							"value": "update",
+							"type": "text"
+						},
+						{
+							"key": "id",
+							"value": "123",
+							"type": "text"
+						},
+						{
+							"key": "title",
+							"value": "Consulta de rutina - Actualizada",
+							"type": "text"
+						},
+						{
+							"key": "start_time",
+							"value": "2024-03-28T11:00:00",
+							"type": "text"
+						},
+						{
+							"key": "end_time",
+							"value": "2024-03-28T12:00:00",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost/Calendar/api/appointments.php",
+					"protocol": "http",
+					"host": ["localhost"],
+					"path": ["Calendar", "api", "appointments.php"]
+				}
+			}
+		},
+		{
+			"name": "Eliminar Cita",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "action",
+							"value": "delete",
+							"type": "text"
+						},
+						{
+							"key": "id",
+							"value": "123",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost/Calendar/api/appointments.php",
+					"protocol": "http",
+					"host": ["localhost"],
+					"path": ["Calendar", "api", "appointments.php"]
+				}
+			}
+		},
+		{
+			"name": "Obtener Detalles de Cita",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/Calendar/api/get_appointment.php?id=123",
+					"protocol": "http",
+					"host": ["localhost"],
+					"path": ["Calendar", "api", "get_appointment.php"],
+					"query": [
+						{
+							"key": "id",
+							"value": "123"
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "Obtener Todas las Notas",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/Calendar/api/notes.php?action=get_notes",
+					"protocol": "http",
+					"host": ["localhost"],
+					"path": ["Calendar", "api", "notes.php"],
+					"query": [
+						{
+							"key": "action",
+							"value": "get_notes"
+						}
+					]
+				}
+			}
+		},
+		{
+			"name": "Obtener Nota Específica",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost/Calendar/api/notes.php?action=get_note&id=123",
+					"protocol": "http",
+					"host": ["localhost"],
+					"path": ["Calendar", "api", "notes.php"],
+					"query": [
+						{
+							"key": "action",
+							"value": "get_note"
+						},
+						{
+							"key": "id",
+							"value": "123"
+						}
+					]
+				}
+			}
+		}
+	],
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "value",
+				"value": "{{session_id}}",
+				"type": "string"
+			},
+			{
+				"key": "key",
+				"value": "PHPSESSID",
+				"type": "string"
+			},
+			{
+				"key": "in",
+				"value": "cookie",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [""]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [""]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "email",
+			"value": "tu@email.com",
+			"type": "string"
+		},
+		{
+			"key": "password",
+			"value": "tu_contraseña",
+			"type": "string"
+		},
+		{
+			"key": "session_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+} 

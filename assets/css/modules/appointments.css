@@ -172,21 +172,48 @@
 /* Meta información de las citas */
 .appointment-meta {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-direction: column;
+    gap: 6px;
     margin-top: 8px;
     font-size: 0.75rem;
     color: var(--text-muted);
 }
 
-.appointment-time, .appointment-calendar {
+.appointment-time {
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
+.appointment-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+}
+
 .appointment-calendar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     font-weight: 500;
+}
+
+/* Estilos para el usuario asignado */
+.appointment-user {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-color);
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    background-color: var(--light-color);
+    border-radius: var(--radius-sm);
+}
+
+.appointment-user i {
+    font-size: 0.7rem;
+    color: var(--primary-color);
 }
 
 /* Mensaje de no eventos */
@@ -244,5 +271,28 @@
         grid-column: 2;
         grid-row: 1 / span 2;
         margin-top: 4.5rem;
+    }
+}
+
+/* Estilos para el botón de deshacer */
+#undoButton {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    animation: slideIn 0.3s ease;
+}
+
+#undoButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
     }
 } 

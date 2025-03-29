@@ -55,50 +55,83 @@ function renderCalendarTemplate($calendarType = 'general') {
             </div>
         </div>
         
-        <div class="calendar-legend">
-            <div class="calendar-legend-item">
-                <div class="calendar-legend-color calendar-legend-estetico"></div>
-                <span>Estético</span>
-            </div>
-            <div class="calendar-legend-item">
-                <div class="calendar-legend-color calendar-legend-veterinario"></div>
-                <span>Veterinario</span>
-            </div>
-            <div class="calendar-legend-item">
-                <div class="calendar-legend-color calendar-legend-general"></div>
-                <span>General</span>
-            </div>
+        <div class="undo-section">
+            <button id="undoButton" class="btn btn-warning d-flex align-items-center gap-2" style="display: none;">
+                <i class="bi bi-arrow-counterclockwise"></i>
+                <span>Deshacer último cambio</span>
+            </button>
         </div>
     </main>
 
-    <!-- Estilos personalizados para eventos de todo el día -->
+    <!-- Estilos personalizados -->
     <style>
-        /* Mejorar la visibilidad de los eventos de todo el día */
+        /* Estilos para eventos de todo el día */
         .fc-event-all-day {
             border-left-width: 5px !important;
         }
         
-        /* Asegurar que los eventos de todo el día se muestren completos */
         .fc-daygrid-day-events {
             min-height: 2em;
         }
         
-        /* Color de fondo y estilo para la sección de todo el día */
         .fc-timegrid-axis-cushion {
             font-weight: bold;
         }
         
-        /* Hacer que los eventos de todo el día sean más visibles */
         .fc-timegrid-event.fc-event-all-day {
             border-radius: 4px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
         }
         
-        /* Destacar eventos de todo el día cuando se pasa el cursor */
         .fc-event-all-day:hover {
             opacity: 0.85;
             transform: translateY(-1px);
             transition: all 0.2s;
+        }
+
+        /* Estilos para el botón de deshacer */
+        .undo-section {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        #undoButton {
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            padding: 10px 20px;
+            background-color: #ffc107;
+            border: none;
+            color: #000;
+            font-weight: 500;
+        }
+
+        #undoButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            background-color: #ffb300;
+        }
+
+        #undoButton:active {
+            transform: translateY(0);
+            background-color: #ffa000;
+        }
+
+        #undoButton.show {
+            display: flex !important;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
     </style>
 

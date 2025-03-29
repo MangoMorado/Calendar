@@ -1,0 +1,44 @@
+RewriteEngine On
+
+# Asegurarse de que el usuario no pueda acceder directamente a los archivos PHP en includes/
+RewriteRule ^includes/ - [F,L]
+
+# Asegurarse de que el usuario no pueda acceder directamente a los archivos de configuración
+RewriteRule ^config/ - [F,L]
+
+# Permitir el acceso a la API solo desde el mismo dominio
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type"
+    Header set Access-Control-Allow-Credentials "true"
+</IfModule>
+
+# Redirigir a login.php si no está autenticado
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/login\.php
+RewriteCond %{REQUEST_URI} !^/assets/
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteRule ^(.*)$ login.php [L]
+
+# Configuración PHP
+<IfModule mod_php7.c>
+    php_value session.cookie_httponly 1
+    php_value session.use_only_cookies 1
+    php_value session.cookie_samesite "Lax"
+</IfModule>
+
+# Prevenir listado de directorios
+Options -Indexes
+
+# Denegar acceso a archivos sensibles
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<FilesMatch "^(composer\.json|composer\.lock|package\.json|package-lock\.json|README\.md|CHANGELOG\.md|\.gitignore|\.env.*)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch> 

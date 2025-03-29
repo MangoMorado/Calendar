@@ -1,8 +1,7 @@
 # CHANGENOTES - Calendario MundoAnimal
 
 ## Lista de Cambios por implementar:
-- estado de las citas segun codigo de color (Verde, Amarillo: reprogramar, Rojo)
-- Problema de multiples mensajes
+- Estado de las citas segun codigo de color (Verde, Amarillo: reprogramar, Rojo)
 - Sistema de cola de citas, que el sistema reciba citas del chatbot y que un humano las programe
 - Mejoras de seguridad
 - Agregar Dias laborales a la configuración
@@ -24,10 +23,18 @@
 - Agregar sistema de configuración modular, pensando la app para varios tipos de usuarios (debe modificarse, nombre de la app, footer, logo, favicon)
 - Agregar Favicons
 - Mejoras para PWA
-- Agregar un al modal que sea Responsable: "Listar usuarios"
 - Crear estructura de clases para modelos principales (User, Appointment)
 - Agregar configuración de color en el menu de configuraciones
 - carga lazy de eventos para calendarios con muchas citas
+
+## Versión 0.0.5 - 🏓 Ping-Pong
+- Se corrigieron errores conocidos
+- Se agrego un nuevo sistema de API que permite interactuar con la APP, para su integración con n8n
+- Se agrego colecciones de postman para pruebas de la API
+- Se agrego mensaje de confirmación para mover citas
+- Se agrego acción de deshhacer al mover citas
+- Se elimino la leyenda de colores del calendario
+- Se Agrego botón deshacer
 
 ## Versión 0.0.4 - 🕵️ Sherlock
 - Se empezo migración gradual a MVC (Auth, Notes)

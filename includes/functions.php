@@ -11,10 +11,11 @@ function getAppointments($startDate, $endDate, $calendarType = null) {
     // Construir la consulta base con JOIN
     $baseQuery = "SELECT 
                     a.*, 
-                    u.name as user, 
-                    u.color as user_color 
+                    COALESCE(u.name, 'Sin asignar') as user,
+                    COALESCE(u.color, '#0d6efd') as user_color,
+                    u.id as user_id
                   FROM appointments a 
-                  LEFT JOIN users u ON a.user_id = u.id AND a.user_id IS NOT NULL";
+                  LEFT JOIN users u ON a.user_id = u.id";
     
     // Añadir orden por fecha a todas las consultas
     $orderBy = " ORDER BY a.start_time ASC";
@@ -71,7 +72,14 @@ function getAppointments($startDate, $endDate, $calendarType = null) {
 function getAppointmentById($id) {
     global $conn;
     
-    $sql = "SELECT * FROM appointments WHERE id = ?";
+    $sql = "SELECT 
+                a.*,
+                u.name as user,
+                u.color as user_color,
+                u.id as user_id
+            FROM appointments a
+            LEFT JOIN users u ON a.user_id = u.id
+            WHERE a.id = ?";
     
     $stmt = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt, "i", $id);

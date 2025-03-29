@@ -4,60 +4,86 @@ require_once '../config/database.php';
 require_once '../includes/functions.php';
 require_once '../includes/auth.php';
 
-// Verificar que el usuario esté autenticado
-requireAuth();
+// Configurar headers CORS y JSON
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Credentials: true');
+header('Content-Type: application/json; charset=utf-8');
 
-// Establecer headers para JSON
-header('Content-Type: application/json');
+// Manejar preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+// Verificar que el usuario esté autenticado
+try {
+    requireAuth();
+} catch (Exception $e) {
+    http_response_code(401);
+    echo json_encode([
+        'success' => false,
+        'message' => 'No autorizado: ' . $e->getMessage()
+    ]);
+    exit;
+}
 
 // Manejar solicitudes GET para obtener eventos
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if (isset($_GET['action']) && $_GET['action'] === 'get_events') {
-        // Obtener las citas
-        $startDate = isset($_GET['start']) ? $_GET['start'] : null;
-        $endDate = isset($_GET['end']) ? $_GET['end'] : null;
-        $calendarType = isset($_GET['calendar_type']) ? $_GET['calendar_type'] : null;
-        
-        $appointments = getAppointments($startDate, $endDate, $calendarType);
-        $events = [];
-        
-        foreach ($appointments as $appointment) {
-            // Convertir el valor de all_day a booleano para JavaScript
-            $isAllDay = isset($appointment['all_day']) && ($appointment['all_day'] == 1);
+        try {
+            // Obtener las citas
+            $startDate = isset($_GET['start']) ? $_GET['start'] : null;
+            $endDate = isset($_GET['end']) ? $_GET['end'] : null;
+            $calendarType = isset($_GET['calendar_type']) ? $_GET['calendar_type'] : null;
             
-            // Determinar el color según el usuario (si existe) o usar el color por defecto
-            $color = !empty($appointment['user_color']) ? $appointment['user_color'] : '#0d6efd';
+            $appointments = getAppointments($startDate, $endDate, $calendarType);
+            $events = [];
             
-            $events[] = [
-                'id' => $appointment['id'],
-                'title' => $appointment['title'],
-                'start' => $appointment['start_time'],
-                'end' => $appointment['end_time'],
-                'description' => $appointment['description'],
-                'backgroundColor' => $color,
-                'borderColor' => $color,
-                'allDay' => $isAllDay,
-                'extendedProps' => [
-                    'calendarType' => $appointment['calendar_type'],
+            foreach ($appointments as $appointment) {
+                // Convertir el valor de all_day a booleano para JavaScript
+                $isAllDay = isset($appointment['all_day']) && ($appointment['all_day'] == 1);
+                
+                // Determinar el color según el usuario (si existe) o usar el color por defecto
+                $color = !empty($appointment['user_color']) ? $appointment['user_color'] : '#0d6efd';
+                
+                $events[] = [
+                    'id' => $appointment['id'],
+                    'title' => $appointment['title'],
+                    'start' => $appointment['start_time'],
+                    'end' => $appointment['end_time'],
                     'description' => $appointment['description'],
-                    'user_id' => $appointment['user_id'],
-                    'userId' => $appointment['user_id'],
-                    'user' => $appointment['user'] ?? 'Sin asignar',
-                    'user_name' => $appointment['user'] ?? 'Sin asignar',
-                    'user_color' => $color
-                ]
-            ];
+                    'backgroundColor' => $color,
+                    'borderColor' => $color,
+                    'allDay' => $isAllDay,
+                    'extendedProps' => [
+                        'calendarType' => $appointment['calendar_type'],
+                        'description' => $appointment['description'],
+                        'user_id' => $appointment['user_id'],
+                        'user' => $appointment['user'] ?? 'Sin asignar',
+                        'user_color' => $color
+                    ]
+                ];
+            }
+            
+            // Limpiar cualquier buffer previo
+            if (ob_get_length()) ob_clean();
+            
+            // Codificar y enviar el JSON
+            echo json_encode([
+                'success' => true,
+                'data' => $events
+            ]);
+            exit;
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error al obtener eventos: ' . $e->getMessage()
+            ]);
+            exit;
         }
-        
-        // Establecer headers para JSON y asegurar que no hay output previo
-        header('Content-Type: application/json');
-        
-        // Limpiar cualquier buffer previo
-        ob_clean();
-        
-        // Codificar y enviar el JSON
-        echo json_encode($events);
-        exit;
     }
     
     echo json_encode(['success' => false, 'message' => 'Acción no reconocida']);

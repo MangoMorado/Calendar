@@ -1,0 +1,325 @@
+openapi: 3.0.0
+info:
+  title: API de Gestión de Citas - Mundo Animal
+  description: API para gestionar citas y notas en el sistema de calendario de Mundo Animal
+  version: 1.0.0
+  contact:
+    name: Soporte Técnico
+    email: soporte@mundoanimal.com
+
+servers:
+  - url: http://localhost/Calendar/api
+    description: Servidor de desarrollo
+  - url: https://api.mundoanimal.com
+    description: Servidor de producción
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: PHPSESSID
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único de la cita
+        title:
+          type: string
+          description: Título de la cita
+        description:
+          type: string
+          description: Descripción detallada de la cita
+        start_time:
+          type: string
+          format: date-time
+          description: Fecha y hora de inicio de la cita
+        end_time:
+          type: string
+          format: date-time
+          description: Fecha y hora de fin de la cita
+        calendar_type:
+          type: string
+          enum: [estetico, veterinario, general]
+          description: Tipo de calendario al que pertenece la cita
+        all_day:
+          type: boolean
+          description: Indica si la cita ocupa todo el día
+        user_id:
+          type: integer
+          description: ID del usuario asignado a la cita
+        user:
+          type: string
+          description: Nombre del usuario asignado
+        user_color:
+          type: string
+          description: Color personalizado del usuario en el calendario
+
+    Note:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único de la nota
+        title:
+          type: string
+          description: Título de la nota
+        content:
+          type: string
+          description: Contenido de la nota
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha de creación
+        updated_at:
+          type: string
+          format: date-time
+          description: Fecha de última actualización
+        user_id:
+          type: integer
+          description: ID del usuario propietario
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Mensaje de error descriptivo
+
+paths:
+  /appointments.php:
+    get:
+      summary: Obtener eventos del calendario
+      description: Retorna una lista de eventos (citas) para el período especificado
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [get_events]
+          description: Acción a realizar
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Fecha de inicio del período
+        - name: end
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Fecha de fin del período
+        - name: calendar_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [estetico, veterinario, general]
+          description: Tipo de calendario a filtrar
+      responses:
+        '200':
+          description: Lista de eventos obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appointment'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Crear o actualizar citas
+      description: Crea una nueva cita o actualiza una existente
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - action
+                - title
+                - start_time
+                - end_time
+              properties:
+                action:
+                  type: string
+                  enum: [create, update, delete, update_date]
+                  description: Acción a realizar
+                id:
+                  type: integer
+                  description: ID de la cita (requerido para update/delete)
+                title:
+                  type: string
+                  description: Título de la cita
+                description:
+                  type: string
+                  description: Descripción de la cita
+                start_time:
+                  type: string
+                  format: date-time
+                  description: Fecha y hora de inicio
+                end_time:
+                  type: string
+                  format: date-time
+                  description: Fecha y hora de fin
+                calendar_type:
+                  type: string
+                  enum: [estetico, veterinario, general]
+                  description: Tipo de calendario
+                all_day:
+                  type: boolean
+                  description: Indica si es evento de día completo
+                user_id:
+                  type: integer
+                  description: ID del usuario asignado
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Cita creada correctamente
+                  id:
+                    type: integer
+                    description: ID de la cita creada (solo en create)
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /notes.php:
+    get:
+      summary: Obtener notas
+      description: Obtiene una nota específica o todas las notas del usuario
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [get_note, get_notes]
+          description: Acción a realizar
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: ID de la nota específica (requerido para get_note)
+      responses:
+        '200':
+          description: Notas obtenidas exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  notes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Note'
+                  note:
+                    $ref: '#/components/schemas/Note'
+                  can_edit:
+                    type: boolean
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /get_appointment.php:
+    get:
+      summary: Obtener detalles de una cita
+      description: Obtiene los detalles completos de una cita específica
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: ID de la cita
+      responses:
+        '200':
+          description: Detalles de la cita obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  id:
+                    type: integer
+                  title:
+                    type: string
+                  description:
+                    type: string
+                  start_time:
+                    type: string
+                    format: date-time
+                  end_time:
+                    type: string
+                    format: date-time
+                  calendar_type:
+                    type: string
+                    enum: [estetico, veterinario, general]
+        '404':
+          description: Cita no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 
