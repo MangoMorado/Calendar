@@ -44,7 +44,7 @@ Options -Indexes
 </FilesMatch>
 
 # Permitir acceso a archivos JavaScript en js-modules
-<Directory "includes/calendar/js-modules">
+<Directory "assets/js/js-modules">
     Options +Indexes
     AllowOverride All
     Require all granted

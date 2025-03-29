@@ -4,8 +4,10 @@
  */
 
 // Variables para el sistema de deshacer
-let lastAction = null;
-let lastEventState = null;
+if (typeof lastAction === 'undefined') {
+    let lastAction = null;
+    let lastEventState = null;
+}
 
 // Función para actualizar el estado del botón de deshacer
 function updateUndoButton() {

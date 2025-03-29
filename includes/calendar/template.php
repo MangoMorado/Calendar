@@ -136,11 +136,33 @@ function renderCalendarTemplate($calendarType = 'general') {
     </style>
 
     <!-- Scripts del calendario -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Inicialización de variables globales
+        window.calendarColors = {
+            estetico: "#8E44AD",
+            veterinario: "#2E86C1",
+            general: "#5D69F7"
+        };
+        window.calendarNames = {
+            estetico: "Estético",
+            veterinario: "Veterinario",
+            general: "General"
+        };
+        window.lastAction = null;
+        window.lastEventState = null;
+        window.elements = null;
+        window.state = {
+            isEditMode: false,
+            currentAppointmentId: null,
+            currentCalendarType: null
+        };
+    </script>
     <script src="assets/js/js-modules/utils.js"></script>
+    <script src="assets/js/js-modules/calendar-init.js"></script>
     <script src="assets/js/js-modules/event-handlers.js"></script>
     <script src="assets/js/js-modules/upcoming-appointments.js"></script>
     <script src="assets/js/js-modules/modal-handlers.js"></script>
-    <script src="assets/js/js-modules/calendar-init.js"></script>
     <script src="assets/js/js-modules/main.js"></script>
 
     <?php

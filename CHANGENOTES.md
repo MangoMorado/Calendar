@@ -27,6 +27,9 @@
 - Agregar configuración de color en el menu de configuraciones
 - carga lazy de eventos para calendarios con muchas citas
 
+## Versión 0.0.5.2 - 🏓 Ping-Pong
+- lo que la actualización 0.0.5.1 debia hacer
+
 ## Versión 0.0.5.1 - 🏓 Ping-Pong
 - Corrección de error 403
 
@@ -71,7 +74,7 @@
 - Mejora de la mantenibilidad y testabilidad del código
 - Se prepara para implementación de patrón MVC, esto puede tomar varias updates 🥲
 - Modularizado el código JavaScript del calendario
-- Creada estructura de módulos en `includes/calendar/js-modules/`
+- Creada estructura de módulos en `assets/js/js-modules/`
 - Separadas las funcionalidades en archivos específicos
 - Mejorado el rendimiento al cargar solo los scripts necesarios
 - Añadido README con documentación de la estructura

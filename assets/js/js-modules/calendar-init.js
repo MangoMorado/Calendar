@@ -4,37 +4,58 @@
  */
 
 // Configuración de colores para los calendarios
-const calendarColors = {
-    estetico: "#8E44AD",
-    veterinario: "#2E86C1",
-    general: "#5D69F7"
-};
+if (typeof calendarColors === 'undefined') {
+    const calendarColors = {
+        estetico: "#8E44AD",
+        veterinario: "#2E86C1",
+        general: "#5D69F7"
+    };
+}
 
 // Nombres de los calendarios
-const calendarNames = {
-    estetico: "Estético",
-    veterinario: "Veterinario",
-    general: "General"
-};
-
-// Estado actual de la aplicación
-const state = {
-    isEditMode: false,
-    currentAppointmentId: null,
-    currentCalendarType: currentCalendarType // Definido globalmente en scripts.php
-};
+if (typeof calendarNames === 'undefined') {
+    const calendarNames = {
+        estetico: "Estético",
+        veterinario: "Veterinario",
+        general: "General"
+    };
+}
 
 // Referencias a elementos DOM
-const elements = {
-    calendarContainer: document.getElementById("calendar"),
-    appointmentModal: document.getElementById("appointmentModal"),
-    appointmentForm: document.getElementById("appointmentForm"),
-    deleteButton: document.getElementById("deleteAppointment"),
-    upcomingList: document.getElementById("upcomingAppointmentsList")
-};
+if (typeof elements === 'undefined') {
+    let elements = null;
+}
+
+// Estado actual de la aplicación
+if (typeof state === 'undefined') {
+    const state = {
+        isEditMode: false,
+        currentAppointmentId: null,
+        currentCalendarType: null
+    };
+}
+
+// Inicializar elementos DOM
+function initializeElements() {
+    elements = {
+        calendarContainer: document.getElementById("calendar"),
+        appointmentModal: document.getElementById("appointmentModal"),
+        appointmentForm: document.getElementById("appointmentForm"),
+        deleteButton: document.getElementById("deleteAppointment"),
+        upcomingList: document.getElementById("upcomingAppointmentsList")
+    };
+}
 
 // Inicializar el calendario
 function initCalendar(eventsJson, settings) {
+    // Inicializar elementos DOM si no están inicializados
+    if (!elements) {
+        initializeElements();
+    }
+
+    // Establecer el tipo de calendario actual
+    state.currentCalendarType = settings.calendarType || 'general';
+
     const calendar = new FullCalendar.Calendar(elements.calendarContainer, {
         // Definir vista inicial basada en el ancho de la pantalla
         initialView: window.innerWidth < 768 ? "listWeek" : "timeGridWeek",
