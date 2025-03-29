@@ -29,12 +29,12 @@ function getCalendarScripts($eventsJson, $settings, $calendarType) {
 </script>
 
 <!-- Cargar módulos JS del calendario -->
-<script src="includes/calendar/js-modules/utils.js"></script>
-<script src="includes/calendar/js-modules/event-handlers.js"></script>
-<script src="includes/calendar/js-modules/upcoming-appointments.js"></script>
-<script src="includes/calendar/js-modules/modal-handlers.js"></script>
-<script src="includes/calendar/js-modules/calendar-init.js"></script>
-<script src="includes/calendar/js-modules/main.js"></script>
+<script src="assets/js/js-modules/utils.js"></script>
+<script src="assets/js/js-modules/event-handlers.js"></script>
+<script src="assets/js/js-modules/upcoming-appointments.js"></script>
+<script src="assets/js/js-modules/modal-handlers.js"></script>
+<script src="assets/js/js-modules/calendar-init.js"></script>
+<script src="assets/js/js-modules/main.js"></script>
     <?php
     return ob_get_clean();
 } 

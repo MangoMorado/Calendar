@@ -27,6 +27,9 @@
 - Agregar configuración de color en el menu de configuraciones
 - carga lazy de eventos para calendarios con muchas citas
 
+## Versión 0.0.5.1 - 🏓 Ping-Pong
+- Corrección de error 403
+
 ## Versión 0.0.5 - 🏓 Ping-Pong
 - Se corrigieron errores conocidos
 - Se agrego un nuevo sistema de API que permite interactuar con la APP, para su integración con n8n

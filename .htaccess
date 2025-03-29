@@ -41,4 +41,24 @@ Options -Indexes
 <FilesMatch "^(composer\.json|composer\.lock|package\.json|package-lock\.json|README\.md|CHANGELOG\.md|\.gitignore|\.env.*)$">
     Order allow,deny
     Deny from all
+</FilesMatch>
+
+# Permitir acceso a archivos JavaScript en js-modules
+<Directory "includes/calendar/js-modules">
+    Options +Indexes
+    AllowOverride All
+    Require all granted
+</Directory>
+
+# Configuración para la carpeta assets y archivos JavaScript
+<Directory "assets">
+    Options -Indexes
+    AllowOverride None
+    Require all granted
+</Directory>
+
+<FilesMatch "\.(js|css|png|jpg|jpeg|gif|ico)$">
+    Order Allow,Deny
+    Allow from all
+    Require all granted
 </FilesMatch> 
