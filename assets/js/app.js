@@ -5,8 +5,15 @@
  */
 import { initCalendar } from './modules/calendar.js';
 import { initUpcomingAppointments } from './modules/appointments.js';
-import { initEventListeners, setUndoState } from './modules/events.js';
-import { showNotification, openModal, closeModal } from './modules/ui.js';
+import { 
+    initEventListeners, 
+    handleEventClick, 
+    handleTimeSlotSelection, 
+    handleEventDrop, 
+    handleEventResize 
+} from './modules/events.js';
+import { showNotification } from './modules/ui.js';
+import { loadUsersIntoSelect } from './modules/modal.js';
 
 // Funciones auxiliares para verificación
 function checkFullCalendarAvailability() {
@@ -245,4 +252,74 @@ function initializeUserSelect(users) {
     });
     
     console.log(`Se inicializó el select con ${userSelect.options.length} opciones (1 vacía + ${users.length} usuarios)`);
+}
+
+// Exponer el manejador de eliminación a nivel global
+// Importar primero el manejador desde el módulo events.js
+import('./modules/events.js').then(module => {
+    window.handleDeleteAppointment = function(state, elements) {
+        // Si el módulo exports directamente handleDeleteAppointment, usar eso
+        if (typeof module.handleDeleteAppointment === 'function') {
+            module.handleDeleteAppointment(state, elements, window.calendar);
+        } 
+        // Si no, buscar en el módulo
+        else {
+            // Buscamos la función en el módulo (podría no estar exportada directamente)
+            for (const key in module) {
+                if (typeof module[key] === 'function' && key.includes('Delete')) {
+                    module[key](state, elements, window.calendar);
+                    return;
+                }
+            }
+            
+            // Si no encontramos la función, usar una implementación básica
+            console.warn('No se encontró el manejador de eliminación, usando implementación básica');
+            if (state && state.currentAppointmentId) {
+                if (confirm('¿Estás seguro de que deseas eliminar esta cita?')) {
+                    const formData = new FormData();
+                    formData.append('id', state.currentAppointmentId);
+                    formData.append('action', 'delete');
+                    
+                    fetch('process_appointment.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showNotification(data.message, 'success');
+                            if (elements && elements.appointmentModal) {
+                                closeModal(elements.appointmentModal);
+                            }
+                            
+                            // Mostrar notificación de recarga
+                            showNotification('Cita eliminada. Recargando página...', 'success');
+                            
+                            // Siempre recargar la página después de eliminar
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 800); // Pequeño retraso para que la notificación sea visible
+                        } else {
+                            showNotification(data.message || 'Error al eliminar la cita', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showNotification('Error al procesar la solicitud', 'error');
+                    });
+                }
+            } else {
+                showNotification('No se ha seleccionado ninguna cita para eliminar', 'error');
+            }
+        }
+    };
+}).catch(error => {
+    console.error('Error al cargar el módulo de eventos:', error);
+});
+
+// Función auxiliar para cerrar el modal
+function closeModal(modal) {
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }

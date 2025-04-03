@@ -257,15 +257,51 @@ export function handleEventClick(info, elements, config, state) {
  * Manejador para eliminar cita
  */
 function handleDeleteAppointment(state, elements, calendar) {
-    if (!state.currentAppointmentId) {
+    // Obtener el ID de la cita desde múltiples fuentes posibles
+    let appointmentId = null;
+    
+    // 1. Intentar obtener el ID desde el estado proporcionado
+    if (state && state.currentAppointmentId) {
+        appointmentId = state.currentAppointmentId;
+    }
+    
+    // 2. Si no está en el estado proporcionado, verificar el estado global
+    if (!appointmentId && window.state && window.state.currentAppointmentId) {
+        appointmentId = window.state.currentAppointmentId;
+    }
+    
+    // 3. Verificar si hay un ID en el botón de eliminar
+    const deleteButton = document.getElementById('deleteAppointment');
+    if (!appointmentId && deleteButton && deleteButton.dataset.id) {
+        appointmentId = deleteButton.dataset.id;
+    }
+    
+    // 4. Verificar si hay un ID en el campo oculto del formulario
+    if (!appointmentId) {
+        const idField = document.getElementById('appointmentId');
+        if (idField && idField.value) {
+            appointmentId = idField.value;
+        }
+    }
+    
+    // Si todavía no tenemos ID, mostrar error
+    if (!appointmentId) {
         showNotification('No se ha seleccionado ninguna cita para eliminar', 'error');
+        console.error('No se pudo encontrar el ID de la cita para eliminar. Estado:', {
+            providedState: state,
+            windowState: window.state,
+            deleteButtonDataId: deleteButton ? deleteButton.dataset.id : 'no disponible',
+            formFieldId: document.getElementById('appointmentId') ? document.getElementById('appointmentId').value : 'no disponible'
+        });
         return;
     }
+    
+    console.log('Eliminando cita con ID:', appointmentId);
     
     if (confirm('¿Estás seguro de que deseas eliminar esta cita?')) {
         // Crear FormData para enviar
         const formData = new FormData();
-        formData.append('id', state.currentAppointmentId);
+        formData.append('id', appointmentId);
         formData.append('action', 'delete');
         
         // Mostrar indicador de carga
@@ -300,13 +336,13 @@ function handleDeleteAppointment(state, elements, calendar) {
                 // Cerrar modal
                 closeModal(elements.appointmentModal);
                 
-                // Recargar eventos del calendario
-                if (calendar && typeof calendar.refetchEvents === 'function') {
-                    setTimeout(() => calendar.refetchEvents(), 500);
-                } else {
-                    // Si falla el refetch, recargar la página
-                    setTimeout(() => window.location.reload(), 1000);
-                }
+                // Mostrar notificación de recarga
+                showNotification('Cita eliminada. Recargando página...', 'success');
+                
+                // Siempre recargar la página después de eliminar una cita exitosamente
+                setTimeout(() => {
+                    window.location.reload();
+                }, 800); // Pequeño retraso para que la notificación sea visible
             } else {
                 showNotification(data.message || 'Error al eliminar la cita', 'error');
             }

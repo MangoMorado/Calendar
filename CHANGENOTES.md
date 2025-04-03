@@ -27,6 +27,9 @@
 - Agregar configuración de color en el menu de configuraciones
 - carga lazy de eventos para calendarios con muchas citas
 
+## Versión 0.0.5.5 - 🏓 Ping-Pong
+- Se corrigieron errores conocidos
+
 ## Versión 0.0.5.4 - 🏓 Ping-Pong
 - Se corrigio Error en iOS que no muestra el menu hamburguesa
 

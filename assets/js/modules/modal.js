@@ -215,16 +215,91 @@ export function setupEditModal(event, elements, config, state) {
         }
     }
     
-    // Mostrar botón eliminar
+    // Mostrar botón eliminar y configurarlo correctamente
     const deleteButton = document.getElementById('deleteAppointment');
     if (deleteButton) {
         deleteButton.style.display = 'inline-block';
         deleteButton.dataset.id = appointmentId;
+        
+        // Asegurarnos de que el evento click está configurado correctamente
+        // Primero removemos cualquier evento previo para evitar duplicación
+        const newDeleteButton = deleteButton.cloneNode(true);
+        deleteButton.parentNode.replaceChild(newDeleteButton, deleteButton);
+        
+        // Añadir evento de clic
+        newDeleteButton.addEventListener('click', function() {
+            // Verificar si hay manejadores de eventos globales
+            if (typeof window.handleDeleteAppointment === 'function') {
+                window.handleDeleteAppointment(state, elements);
+            } else {
+                // Si no hay manejador global, usar estado básico
+                if (confirm('¿Estás seguro de que deseas eliminar esta cita?')) {
+                    const formData = new FormData();
+                    formData.append('id', appointmentId);
+                    formData.append('action', 'delete');
+                    
+                    // Mostrar indicador de carga
+                    if (typeof showNotification === 'function') {
+                        showNotification('Eliminando cita...', 'info');
+                    }
+                    
+                    fetch('process_appointment.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Usar showNotification si está disponible
+                            if (typeof showNotification === 'function') {
+                                showNotification(data.message || 'Cita eliminada con éxito', 'success');
+                                showNotification('Cita eliminada. Recargando página...', 'success');
+                            } else {
+                                alert(data.message || 'Cita eliminada con éxito');
+                            }
+                            
+                            // Siempre recargar la página
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 800);
+                        } else {
+                            // Usar showNotification si está disponible
+                            if (typeof showNotification === 'function') {
+                                showNotification(data.message || 'Error al eliminar la cita', 'error');
+                            } else {
+                                alert(data.message || 'Error al eliminar la cita');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        // Usar showNotification si está disponible
+                        if (typeof showNotification === 'function') {
+                            showNotification('Error al procesar la solicitud', 'error');
+                        } else {
+                            alert('Error al procesar la solicitud');
+                        }
+                    });
+                }
+            }
+        });
     }
     
-    // Actualizar estado
+    // Actualizar estado local
     state.isEditMode = true;
     state.currentAppointmentId = appointmentId;
+    
+    // Sincronizar con el estado global (si existe)
+    if (window.state) {
+        window.state.isEditMode = true;
+        window.state.currentAppointmentId = appointmentId;
+    }
+    
+    console.log('Estado actualizado para edición:', {
+        eventId: appointmentId,
+        localState: state,
+        windowState: window.state
+    });
     
     // Mostrar modal
     appointmentModal.style.display = 'block';

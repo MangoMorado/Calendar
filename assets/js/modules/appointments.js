@@ -170,10 +170,21 @@ function addClickEventsToAppointments(upcomingList, events) {
                     appointmentModal: document.getElementById('appointmentModal')
                 };
                 
+                // Actualizar estado y variables globales para asegurar que la cita se pueda eliminar
                 const state = {
                     isEditMode: true,
                     currentAppointmentId: eventId
                 };
+                
+                // Actualizar también las variables globales
+                window.state.isEditMode = true;
+                window.state.currentAppointmentId = eventId;
+                
+                console.log('Estado actualizado para eliminación:', {
+                    eventId: eventId,
+                    isEditMode: true,
+                    windowState: window.state
+                });
                 
                 // Obtener configuración
                 const config = {
@@ -182,6 +193,23 @@ function addClickEventsToAppointments(upcomingList, events) {
                 
                 // Mostrar el modal de edición
                 setupEditModal(calEvent, elements, config, state);
+                
+                // Después de abrir el modal, verificar que el ID está correctamente establecido
+                setTimeout(() => {
+                    const deleteButton = document.getElementById('deleteAppointment');
+                    if (deleteButton) {
+                        // Asegurarnos que el botón esté visible
+                        deleteButton.style.display = 'inline-block';
+                        // Establecer el ID de la cita en el botón de eliminar
+                        deleteButton.dataset.id = eventId;
+                    }
+                    
+                    // Verificar campos ocultos
+                    const idField = document.getElementById('appointmentId');
+                    if (idField) {
+                        idField.value = eventId;
+                    }
+                }, 100);
             } else {
                 console.log('Evento no encontrado en el calendario:', eventId);
             }
