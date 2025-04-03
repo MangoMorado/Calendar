@@ -43,8 +43,8 @@ Options -Indexes
     Deny from all
 </FilesMatch>
 
-# Permitir acceso a archivos JavaScript en js-modules
-<Directory "assets/js/js-modules">
+# Permitir acceso a archivos JavaScript en modules (nueva arquitectura ES6)
+<Directory "assets/js/modules">
     Options +Indexes
     AllowOverride All
     Require all granted

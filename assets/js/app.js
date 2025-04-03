@@ -5,7 +5,7 @@
  */
 import { initCalendar } from './modules/calendar.js';
 import { initUpcomingAppointments } from './modules/appointments.js';
-import { initEventListeners } from './modules/events.js';
+import { initEventListeners, setUndoState } from './modules/events.js';
 import { showNotification, openModal, closeModal } from './modules/ui.js';
 
 // Funciones auxiliares para verificación
@@ -36,10 +36,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Verificar disponibilidad de FullCalendar
     const FC = checkFullCalendarAvailability();
     
-    // Verificar que window.calendarEvents exista
-    if (!window.calendarEvents) {
-        console.warn('window.calendarEvents no existe. Usando array vacío.');
-        window.calendarEvents = [];
+    // Verificar que window.eventsJson exista (nuevo nombre)
+    if (!window.eventsJson) {
+        console.warn('window.eventsJson no existe. Usando array vacío.');
+        window.eventsJson = [];
     }
     
     // Verificar que window.calendarSettings exista
@@ -52,6 +52,33 @@ document.addEventListener('DOMContentLoaded', function() {
             timeFormat: '12h'
         };
     }
+    
+    // Verificar que window.calendarUsers exista
+    if (!window.calendarUsers) {
+        console.warn('window.calendarUsers no existe. Usando array vacío.');
+        window.calendarUsers = [];
+    } else {
+        console.log(`Usuarios del calendario cargados: ${window.calendarUsers.length}`, window.calendarUsers);
+    }
+    
+    // Analizar la estructura del modal
+    const modalStructureCheck = () => {
+        const userSelect = document.getElementById('user_id');
+        if (userSelect) {
+            console.log(`Select de usuarios encontrado con ${userSelect.options.length} opciones.`);
+            for (let i = 0; i < Math.min(userSelect.options.length, 5); i++) {
+                console.log(`- Opción ${i}: valor='${userSelect.options[i].value}', texto='${userSelect.options[i].text}'`);
+            }
+            if (userSelect.options.length > 5) {
+                console.log(`... y ${userSelect.options.length - 5} opciones más`);
+            }
+        } else {
+            console.warn("No se encontró el select de usuarios en el DOM.");
+        }
+    };
+    
+    // Ejecutar verificación después de que el DOM esté completamente cargado
+    setTimeout(modalStructureCheck, 1000);
     
     // Inicializar solo si FullCalendar está disponible
     if (FC) {
@@ -75,10 +102,11 @@ function initializeApp() {
         upcomingList: document.getElementById('upcomingAppointmentsList'),
         calendarTypeSelector: document.getElementById('calendarTypeSelector'),
         appointmentModal: document.getElementById('appointmentModal'),
-        closeModalBtn: document.querySelector('.close'),
+        closeModalBtn: document.querySelector('.btn-close'),
         createAppointmentBtn: document.getElementById('createAppointment'),
         deleteAppointmentBtn: document.getElementById('deleteAppointment'),
-        appointmentForm: document.getElementById('appointmentForm')
+        appointmentForm: document.getElementById('appointmentForm'),
+        undoButton: document.getElementById('undoButton')
     };
     
     // Verificar elementos esenciales
@@ -102,7 +130,7 @@ function initializeApp() {
     
     // Configuración
     const config = {
-        events: window.calendarEvents || [],
+        events: window.eventsJson || [],
         currentCalendarType: window.currentCalendarType || 'general',
         settings: window.calendarSettings || {
             slotMinTime: '00:00:00',
@@ -119,38 +147,102 @@ function initializeApp() {
             'estetico': 'Estético',
             'veterinario': 'Veterinario',
             'general': 'General'
-        }
+        },
+        users: window.calendarUsers || []
     };
     
     console.log('Configuración final:', config);
     
+    // Exponer la función de inicialización de usuarios globalmente
+    window.initializeUserSelect = initializeUserSelect;
+    
+    // Inicializar el select de usuarios desde el inicio para evitar problemas
+    initializeUserSelect(config.users);
+    
     // Inicializar componentes usando los módulos
     try {
-        // Inicializar componentes solo si existen
-        if (elements.upcomingList) {
-            initUpcomingAppointments(elements, config);
-        }
-        
-        // Inicializar calendario - elemento crucial
+        // IMPORTANTE: Inicializar el calendario primero
         const calendar = initCalendar(elements, config, state);
         
         if (calendar) {
             console.log('Calendario inicializado correctamente');
             
+            // Exponer el calendario al ámbito global ANTES de inicializar otros componentes
+            window.calendar = calendar;
+            
+            // Sincronizar sistema de deshacer si existe estado previo
+            if (window.lastAction && window.lastEventState) {
+                setUndoState(window.lastAction, window.lastEventState);
+            }
+            
             // Inicializar listeners de eventos
             initEventListeners(elements, config, state, calendar);
             
-            // Exponer variables y funciones necesarias al ámbito global
+            // Inicializar componente de próximas citas DESPUÉS de que el calendario está listo
+            if (elements.upcomingList) {
+                initUpcomingAppointments(elements, config);
+            }
+            
+            // Exponer otras variables y funciones al ámbito global
             window.currentAppointmentId = null;
             window.isEditMode = false;
             window.showNotification = showNotification;
             window.openModal = openModal;
             window.closeModal = closeModal;
-            window.calendar = calendar;
         } else {
             console.error('Error al inicializar el calendario');
         }
     } catch (error) {
         console.error('Error al inicializar la aplicación:', error);
     }
+}
+
+/**
+ * Inicializa el select de usuarios al cargar la aplicación
+ * @param {Array} users - Lista de usuarios disponibles
+ */
+function initializeUserSelect(users) {
+    // Primero verificar si hay usuarios disponibles
+    if (!Array.isArray(users) || users.length === 0) {
+        console.warn('No hay usuarios proporcionados para inicializar el select');
+        // Intentar usar los usuarios globales
+        if (window.calendarUsers && Array.isArray(window.calendarUsers) && window.calendarUsers.length > 0) {
+            users = window.calendarUsers;
+            console.log(`Usando ${users.length} usuarios del ámbito global para inicializar el select`);
+        } else {
+            console.error('No se pueden inicializar usuarios en el select');
+            return;
+        }
+    }
+
+    // Obtener el select de usuarios
+    const userSelect = document.getElementById('user_id');
+    if (!userSelect) {
+        console.warn('Select de usuarios no encontrado en la inicialización');
+        return;
+    }
+
+    console.log(`Inicializando select de usuarios con ${users.length} usuarios`);
+    
+    // Limpiar opciones existentes
+    userSelect.innerHTML = '';
+    
+    // Añadir opción por defecto
+    const defaultOption = document.createElement('option');
+    defaultOption.value = "";
+    defaultOption.text = "-- Selecciona un usuario --";
+    userSelect.appendChild(defaultOption);
+    
+    // Añadir usuarios
+    users.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user.id;
+        option.text = user.name;
+        if (user.color) {
+            option.dataset.color = user.color;
+        }
+        userSelect.appendChild(option);
+    });
+    
+    console.log(`Se inicializó el select con ${userSelect.options.length} opciones (1 vacía + ${users.length} usuarios)`);
 }

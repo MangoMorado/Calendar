@@ -158,12 +158,8 @@ function renderCalendarTemplate($calendarType = 'general') {
             currentCalendarType: null
         };
     </script>
-    <script src="assets/js/js-modules/utils.js"></script>
-    <script src="assets/js/js-modules/calendar-init.js"></script>
-    <script src="assets/js/js-modules/event-handlers.js"></script>
-    <script src="assets/js/js-modules/upcoming-appointments.js"></script>
-    <script src="assets/js/js-modules/modal-handlers.js"></script>
-    <script src="assets/js/js-modules/main.js"></script>
+    <!-- Cargar app principal usando módulos ES6 -->
+    <script type="module" src="assets/js/app.js"></script>
 
     <?php
     return ob_get_clean();

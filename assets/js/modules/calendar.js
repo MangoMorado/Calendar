@@ -8,148 +8,207 @@ import { openModal, showNotification } from './ui.js';
  * Inicializa el componente del calendario
  */
 export function initCalendar(elements, config, state) {
-    const { calendar: calendarEl, eventTooltip } = elements;
-    const { events, currentCalendarType, settings, calendarNames } = config;
+    // Verificar disponibilidad de FullCalendar
+    console.log("FullCalendar global:", window.FullCalendar);
+    console.log("Verificación directa de FullCalendar:", typeof FullCalendar !== 'undefined' ? "Disponible" : "No disponible");
     
-    // Asegurar que el elemento del calendario exista
+    if (!window.FullCalendar) {
+        console.error('Error: FullCalendar no está disponible');
+        return null;
+    }
+    
+    // Obtener elemento del calendario
+    const calendarEl = elements.calendar;
     if (!calendarEl) {
-        console.error('Error: Elemento del calendario no encontrado');
+        console.error('Error: Elemento #calendar no encontrado');
         return null;
     }
     
-    // Debuguear disponibilidad de FullCalendar
-    console.log('FullCalendar global:', window.FullCalendar);
-    console.log('Verificación directa de FullCalendar:', typeof FullCalendar !== 'undefined' ? 'Disponible' : 'No disponible');
-    
-    // Asegurar que FullCalendar esté disponible
-    if (typeof window.FullCalendar === 'undefined' && typeof FullCalendar === 'undefined') {
-        console.error('Error: FullCalendar no está cargado en ningún ámbito');
-        return null;
-    }
-    
-    // Determinar qué versión de FullCalendar usar
-    const FC = window.FullCalendar || FullCalendar;
-    
+    // Obtener configuración y tipo de calendario actual
+    const { settings, currentCalendarType, calendarColors, events } = config;
     console.log('Configuración aplicada:', settings);
     
+    // Detectar si es un dispositivo móvil
+    const isMobile = window.innerWidth < 768;
+    
     try {
-        // Crear instancia de calendario
-        console.log('Intentando crear instancia de calendario con FullCalendar 6.1.15');
+        console.log('Intentando crear instancia de calendario con FullCalendar', FullCalendar.version);
         
-        const calendar = new FC.Calendar(calendarEl, {
-            initialView: 'timeGridWeek',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-            },
+        // Crear instancia de calendario
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: isMobile ? 'timeGridDay' : 'timeGridWeek',
+            themeSystem: 'bootstrap5',
+            timeZone: 'local',
             locale: 'es',
-            buttonText: {
-                today: 'Hoy',
-                month: 'Mes',
-                week: 'Semana',
-                day: 'Día',
-                list: 'Lista'
-            },
+            height: 'auto', // Altura automática en lugar de scroll
+            
+            // Configuración de tiempo
             slotMinTime: settings.slotMinTime,
             slotMaxTime: settings.slotMaxTime,
-            height: 'auto',
-            allDaySlot: false,
             slotDuration: settings.slotDuration,
-            nowIndicator: true,
-            navLinks: true,
-            selectable: true,
-            selectMirror: true,
-            dayMaxEvents: true,
-            // Habilitar eventos arrastrables y configuración explícita
-            editable: true,
-            droppable: true,
-            eventStartEditable: true,
-            // Habilitar cambio de duración de eventos
-            eventResizableFromStart: false,
-            eventDurationEditable: true,
-            businessHours: {
-                daysOfWeek: [1, 2, 3, 4, 5, 6, 0], // Todos los días
-                startTime: settings.slotMinTime,
-                endTime: settings.slotMaxTime,
+            snapDuration: settings.slotDuration,
+            
+            // Configuración general optimizada para móviles
+            headerToolbar: {
+                left: isMobile ? 'prev,next' : 'prev,next today',
+                center: 'title',
+                right: isMobile ? 'timeGridDay,dayGridMonth' : 'dayGridMonth,timeGridWeek,timeGridDay'
             },
-            events: events,
+            
+            // Eliminar scroll vertical y horizontal
+            scrollTimeReset: false, // No hacer scroll automático a la hora actual
+            
+            // Optimización móvil
+            expandRows: true, // Expandir filas para llenar el espacio
+            stickyHeaderDates: true, // Mantener el encabezado visible al hacer scroll
+            
+            // Desactivar elementos que consumen espacio
+            allDaySlot: !isMobile, // Ocultar slot de "todo el día" en móviles
+            weekNumbers: false, // Ocultar números de semana
+            
+            // Fechas y formato
+            firstDay: 1, // Lunes
+            nowIndicator: true,
+            navLinks: !isMobile, // Desactivar enlaces de navegación en móviles
+            dayMaxEvents: isMobile ? 2 : true, // Limitar número de eventos visibles en móviles
+            businessHours: {
+                daysOfWeek: [1, 2, 3, 4, 5], // Lunes a Viernes
+                startTime: settings.businessHours?.startTime || '08:00',
+                endTime: settings.businessHours?.endTime || '18:00'
+            },
+            
+            // Formato de visualización de la hora
             eventTimeFormat: {
                 hour: '2-digit',
                 minute: '2-digit',
+                meridiem: settings.timeFormat === '12h',
                 hour12: settings.timeFormat === '12h'
             },
-            // Personalizar la renderización de eventos
-            eventDidMount: function(info) {
-                // Aplicar clase específica al evento según el tipo de calendario
-                const calendarType = info.event.extendedProps.calendarType || 'general';
-                info.el.classList.add(`calendar-${calendarType}`);
-                
-                // Asegurar que los eventos sean arrastrables agregando data-attributes
-                info.el.setAttribute('draggable', 'true');
-                info.el.dataset.eventId = info.event.id;
-            },
-            // Tooltip personalizado para eventos
-            eventMouseEnter: function(info) {
-                const rect = info.el.getBoundingClientRect();
-                const scrollTop = window.scrollY || document.documentElement.scrollTop;
-                
-                // Formatear fechas
-                const start = new Date(info.event.start);
-                const end = new Date(info.event.end);
-                const formattedStart = start.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit', hour12: true});
-                const formattedEnd = end.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit', hour12: true});
-                const formattedDate = start.toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'long'});
-                
-                // Obtener el tipo de calendario para mostrar en el tooltip
-                const calendarType = info.event.extendedProps.calendarType || 'general';
-                const calendarName = calendarNames[calendarType] || 'General';
-                
-                // Contenido del tooltip
-                eventTooltip.innerHTML = `
-                    <div class="tooltip-title">${info.event.title}</div>
-                    <div class="tooltip-time"><i class="bi bi-clock"></i> ${formattedStart} - ${formattedEnd}</div>
-                    <div class="tooltip-date"><i class="bi bi-calendar-event"></i> ${formattedDate}</div>
-                    <div class="tooltip-calendar"><i class="bi bi-calendar3"></i> ${calendarName}</div>
-                    ${info.event.extendedProps.description ? `<div class="tooltip-desc">${info.event.extendedProps.description}</div>` : ''}
-                `;
-                
-                // Posicionar y mostrar tooltip
-                eventTooltip.style.left = rect.left + window.scrollX + 'px';
-                eventTooltip.style.top = rect.bottom + scrollTop + 'px';
-                eventTooltip.style.display = 'block';
-            },
-            eventMouseLeave: function() {
-                eventTooltip.style.display = 'none';
-            },
-            // Evento al seleccionar un rango de tiempo
+            
+            // Permitir interacción con eventos
+            selectable: true,
+            editable: true,
+            
+            // Eventos iniciales
+            events: events,
+            
+            // Optimización del renderizado
+            eventDisplay: isMobile ? 'block' : 'auto', // Estilo de visualización de eventos
+            
+            // Handlers de eventos
             select: function(info) {
-                handleTimeSlotSelection(info, elements, settings, state);
+                // Importamos aquí para evitar dependencias circulares
+                import('./events.js')
+                .then(module => {
+                    module.handleTimeSlotSelection(info, elements, config, state);
+                })
+                .catch(error => {
+                    console.error('Error al importar módulo de eventos:', error);
+                    // Fallback al handler local
+                    console.warn('Usando handler local como respaldo');
+                    handleTimeSlotSelection(info, elements, settings, state);
+                });
             },
-            // Evento al hacer clic en una cita existente
+            
             eventClick: function(info) {
-                handleEventClick(info, elements, state);
+                // Importamos aquí para evitar dependencias circulares
+                import('./events.js')
+                .then(module => {
+                    module.handleEventClick(info, elements, config, state);
+                })
+                .catch(error => {
+                    console.error('Error al importar módulo de eventos:', error);
+                    // Fallback al handler local
+                    console.warn('Usando handler local como respaldo');
+                    handleEventClick(info, elements, state);
+                });
             },
-            // Eventos para drag and drop
+            
             eventDrop: function(info) {
-                handleEventDrop(info, currentCalendarType);
+                // Importamos aquí para evitar dependencias circulares
+                import('./events.js')
+                .then(module => {
+                    module.handleEventDrop(info, currentCalendarType);
+                })
+                .catch(error => {
+                    console.error('Error al importar módulo de eventos:', error);
+                    // Fallback al handler local
+                    console.warn('Usando handler local como respaldo');
+                    handleEventDrop(info, currentCalendarType);
+                });
             },
-            // Evento para redimensionar un evento
+            
             eventResize: function(info) {
-                handleEventResize(info, currentCalendarType);
+                // Importamos aquí para evitar dependencias circulares
+                import('./events.js')
+                .then(module => {
+                    module.handleEventResize(info, currentCalendarType);
+                })
+                .catch(error => {
+                    console.error('Error al importar módulo de eventos:', error);
+                    // Fallback al handler local
+                    console.warn('Usando handler local como respaldo');
+                    handleEventResize(info, currentCalendarType);
+                });
+            },
+            
+            eventDidMount: function(info) {
+                // Personalizar el color del evento según el tipo de calendario
+                if (info.event.extendedProps.calendarType) {
+                    const calendarType = info.event.extendedProps.calendarType;
+                    if (calendarColors[calendarType]) {
+                        info.el.style.backgroundColor = calendarColors[calendarType];
+                        info.el.style.borderColor = calendarColors[calendarType];
+                    }
+                }
+                
+                // Aplicar color personalizado si el usuario tiene uno
+                if (info.event.extendedProps.user_color) {
+                    info.el.style.backgroundColor = info.event.extendedProps.user_color;
+                    info.el.style.borderColor = info.event.extendedProps.user_color;
+                }
+                
+                // Añadir tooltip
+                info.el.title = info.event.title;
+                
+                // En dispositivos móviles, no mostrar tooltip para ahorrar espacio
+                if (!isMobile) {
+                    info.el.addEventListener('mouseover', function() {
+                        showEventTooltip(info.event, info.el, elements.eventTooltip);
+                    });
+                    
+                    info.el.addEventListener('mouseout', function() {
+                        hideEventTooltip(elements.eventTooltip);
+                    });
+                }
             }
         });
         
+        // Escuchar cambios de tamaño de ventana para adaptar vista
+        window.addEventListener('resize', () => {
+            const newIsMobile = window.innerWidth < 768;
+            if (newIsMobile !== isMobile) {
+                calendar.changeView(newIsMobile ? 'timeGridDay' : 'timeGridWeek');
+                // Refrescar el calendario
+                calendar.refetchEvents();
+            }
+        });
+        
+        // Renderizar calendario
         calendar.render();
+        
+        // Añadir clase personalizada para optimizar espacio
+        calendarEl.classList.add('mobile-optimized');
+        
         return calendar;
     } catch (error) {
-        console.error('Error al crear la instancia de calendario:', error);
+        console.error('Error al inicializar el calendario:', error);
         return null;
     }
 }
 
 /**
- * Maneja el cambio de evento por drag and drop
+ * Maneja el arrastre de un evento
  */
 function handleEventDrop(info, currentCalendarType) {
     const eventId = info.event.id;
@@ -175,6 +234,11 @@ function handleEventDrop(info, currentCalendarType) {
     formData.append('title', info.event.title);
     formData.append('description', info.event.extendedProps.description || '');
     
+    // Si el evento tiene un usuario asignado, mantenerlo
+    if (info.event.extendedProps.user_id) {
+        formData.append('user_id', info.event.extendedProps.user_id);
+    }
+    
     // Si no estamos en una vista específica, conservar el tipo de calendario
     if (currentCalendarType === 'general') {
         formData.append('calendar_type', info.event.extendedProps.calendarType || 'general');
@@ -193,9 +257,20 @@ function handleEventDrop(info, currentCalendarType) {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Error en la respuesta del servidor: ' + response.status);
+            throw new Error(`Error de servidor: ${response.status} ${response.statusText}`);
         }
-        return response.json();
+        return response.text();
+    })
+    .then(text => {
+        // Intentar parsear como JSON de manera más permisiva
+        try {
+            const cleanText = text.trim();
+            console.log('Respuesta del servidor (arrastrar):', cleanText);
+            return JSON.parse(cleanText);
+        } catch (error) {
+            console.error('No se pudo parsear la respuesta como JSON:', text);
+            throw new Error('No se pudo parsear la respuesta del servidor como JSON');
+        }
     })
     .then(data => {
         if (data.success) {
@@ -207,7 +282,7 @@ function handleEventDrop(info, currentCalendarType) {
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('Error de conexión: ' + error.message, 'error');
+        showNotification(`Error: ${error.message || 'Error de conexión'}`, 'error');
         info.revert(); // Revertir el cambio
     });
 }
@@ -239,6 +314,11 @@ function handleEventResize(info, currentCalendarType) {
     formData.append('title', info.event.title);
     formData.append('description', info.event.extendedProps.description || '');
     
+    // Si el evento tiene un usuario asignado, mantenerlo
+    if (info.event.extendedProps.user_id) {
+        formData.append('user_id', info.event.extendedProps.user_id);
+    }
+    
     // Si no estamos en una vista específica, conservar el tipo de calendario
     if (currentCalendarType === 'general') {
         formData.append('calendar_type', info.event.extendedProps.calendarType || 'general');
@@ -257,9 +337,20 @@ function handleEventResize(info, currentCalendarType) {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Error en la respuesta del servidor: ' + response.status);
+            throw new Error(`Error de servidor: ${response.status} ${response.statusText}`);
         }
-        return response.json();
+        return response.text();
+    })
+    .then(text => {
+        // Intentar parsear como JSON de manera más permisiva
+        try {
+            const cleanText = text.trim();
+            console.log('Respuesta del servidor (redimensionar):', cleanText);
+            return JSON.parse(cleanText);
+        } catch (error) {
+            console.error('No se pudo parsear la respuesta como JSON:', text);
+            throw new Error('No se pudo parsear la respuesta del servidor como JSON');
+        }
     })
     .then(data => {
         if (data.success) {
@@ -271,7 +362,7 @@ function handleEventResize(info, currentCalendarType) {
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('Error de conexión: ' + error.message, 'error');
+        showNotification(`Error: ${error.message || 'Error de conexión'}`, 'error');
         info.revert(); // Revertir el cambio
     });
 }
@@ -344,26 +435,71 @@ function handleTimeSlotSelection(info, elements, settings, state) {
 function handleEventClick(info, elements, state) {
     // Obtener los detalles de la cita con AJAX
     fetch(`get_appointment.php?id=${info.event.id}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error de servidor: ${response.status} ${response.statusText}`);
+            }
+            return response.text();
+        })
+        .then(text => {
+            // Intentar parsear como JSON de manera más permisiva
+            try {
+                const cleanText = text.trim();
+                console.log('Respuesta del servidor (obtener detalles):', cleanText);
+                return JSON.parse(cleanText);
+            } catch (error) {
+                console.error('No se pudo parsear la respuesta como JSON:', text);
+                throw new Error('No se pudo parsear la respuesta del servidor como JSON');
+            }
+        })
         .then(data => {
-            document.getElementById('title').value = data.title;
-            document.getElementById('description').value = data.description;
-            document.getElementById('startTime').value = data.start_time;
-            document.getElementById('endTime').value = data.end_time;
+            // Llenar el formulario con los datos recibidos
+            const titleField = document.getElementById('title');
+            const descriptionField = document.getElementById('description');
+            const startTimeField = document.getElementById('startTime') || document.getElementById('start_time');
+            const endTimeField = document.getElementById('endTime') || document.getElementById('end_time');
+            const calendarTypeSelect = document.getElementById('calendarType') || document.getElementById('calendar_type');
+            const userSelect = document.getElementById('user_id');
+            
+            if (titleField) titleField.value = data.title || '';
+            if (descriptionField) descriptionField.value = data.description || '';
+            
+            // Formatear fechas para el input datetime-local
+            if (startTimeField) {
+                const startStr = data.start_time ? data.start_time.replace(' ', 'T') : '';
+                startTimeField.value = startStr;
+            }
+            
+            if (endTimeField) {
+                const endStr = data.end_time ? data.end_time.replace(' ', 'T') : '';
+                endTimeField.value = endStr;
+            }
             
             // Seleccionar el tipo de calendario correcto
-            const calendarTypeSelect = document.getElementById('calendarType');
             if (calendarTypeSelect) {
-                [...calendarTypeSelect.options].forEach(option => {
-                    if (option.value === data.calendar_type) {
-                        option.selected = true;
-                    }
-                });
+                const calendarType = data.calendar_type || 'general';
+                calendarTypeSelect.value = calendarType;
+            }
+            
+            // Seleccionar el usuario si existe
+            if (userSelect && data.user_id) {
+                userSelect.value = data.user_id;
+                // Disparar evento change para actualizar la vista previa del color
+                const changeEvent = new Event('change');
+                userSelect.dispatchEvent(changeEvent);
             }
             
             // Configurar el modal para editar cita
-            document.getElementById('modalTitle').innerHTML = '<i class="bi bi-calendar-check"></i> Editar Cita';
-            document.getElementById('deleteAppointment').style.display = 'inline-flex';
+            const modalTitle = document.getElementById('modalTitle');
+            if (modalTitle) {
+                modalTitle.innerHTML = '<i class="bi bi-calendar-check"></i> Editar Cita';
+            }
+            
+            const deleteButton = document.getElementById('deleteAppointment');
+            if (deleteButton) {
+                deleteButton.style.display = 'inline-flex';
+                deleteButton.dataset.id = info.event.id;
+            }
             
             // Actualizar estado
             state.currentAppointmentId = info.event.id;
@@ -375,7 +511,84 @@ function handleEventClick(info, elements, state) {
             openModal(elements.appointmentModal);
         })
         .catch(error => {
-            console.error('Error:', error);
-            window.showNotification('Error al cargar los datos de la cita', 'error');
+            console.error('Error al cargar los detalles de la cita:', error);
+            showNotification(`Error: ${error.message || 'Error al cargar los detalles'}`, 'error');
         });
+}
+
+/**
+ * Muestra un tooltip personalizado para un evento
+ * @param {Object} event - El evento de FullCalendar
+ * @param {HTMLElement} element - El elemento DOM del evento
+ * @param {HTMLElement} tooltipEl - El elemento DOM del tooltip
+ */
+function showEventTooltip(event, element, tooltipEl) {
+    if (!tooltipEl) return;
+    
+    try {
+        // Obtener posición del elemento
+        const rect = element.getBoundingClientRect();
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        
+        // Formatear fechas
+        const start = new Date(event.start);
+        const end = event.end ? new Date(event.end) : new Date(start.getTime() + 3600000);
+        
+        const formatOptions = { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: true 
+        };
+        
+        const dateFormatOptions = {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long'
+        };
+        
+        const formattedStart = start.toLocaleTimeString('es-ES', formatOptions);
+        const formattedEnd = end.toLocaleTimeString('es-ES', formatOptions);
+        const formattedDate = start.toLocaleDateString('es-ES', dateFormatOptions);
+        
+        // Obtener tipo de calendario
+        const calendarType = event.extendedProps.calendarType || 'general';
+        let calendarName;
+        
+        switch (calendarType) {
+            case 'estetico':
+                calendarName = 'Estético';
+                break;
+            case 'veterinario':
+                calendarName = 'Veterinario';
+                break;
+            default:
+                calendarName = 'General';
+        }
+        
+        // Construir contenido HTML del tooltip
+        tooltipEl.innerHTML = `
+            <div class="tooltip-title">${event.title}</div>
+            <div class="tooltip-time"><i class="bi bi-clock"></i> ${formattedStart} - ${formattedEnd}</div>
+            <div class="tooltip-date"><i class="bi bi-calendar-event"></i> ${formattedDate}</div>
+            <div class="tooltip-calendar"><i class="bi bi-calendar3"></i> ${calendarName}</div>
+            ${event.extendedProps.description ? `<div class="tooltip-desc">${event.extendedProps.description}</div>` : ''}
+        `;
+        
+        // Posicionar tooltip
+        tooltipEl.style.left = rect.left + window.scrollX + 'px';
+        tooltipEl.style.top = rect.bottom + scrollTop + 'px';
+        tooltipEl.style.display = 'block';
+    } catch (error) {
+        console.error('Error al mostrar tooltip:', error);
+    }
+}
+
+/**
+ * Oculta el tooltip de evento
+ * @param {HTMLElement} tooltipEl - El elemento DOM del tooltip
+ */
+function hideEventTooltip(tooltipEl) {
+    if (tooltipEl) {
+        tooltipEl.style.display = 'none';
+    }
 } 

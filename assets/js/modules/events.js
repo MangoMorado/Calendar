@@ -3,6 +3,23 @@
  * Maneja los controladores de eventos para la interfaz
  */
 import { openModal, closeModal, showNotification } from './ui.js';
+import { setupCreateModal, setupEditModal, processAppointmentForm, updateColorPreview } from './modal.js';
+import { formatDateTimeForServer } from './utils.js';
+
+// Variables para el sistema de deshacer
+let lastAction = null;
+let lastEventState = null;
+
+/**
+ * Permite establecer el estado de deshacer desde fuera del módulo
+ * @param {string} action - La acción que se realizó (create, update, delete)
+ * @param {Object} eventState - El estado del evento antes del cambio
+ */
+export function setUndoState(action, eventState) {
+    lastAction = action;
+    lastEventState = eventState;
+    updateUndoButton();
+}
 
 /**
  * Inicializa los event listeners
@@ -14,7 +31,9 @@ export function initEventListeners(elements, config, state, calendar) {
         createAppointmentBtn, 
         deleteAppointmentBtn, 
         appointmentForm,
-        appointmentModal
+        appointmentModal,
+        calendar: calendarEl,
+        undoButton
     } = elements;
     
     // Establecer el calendario en el ámbito global para acceso desde otros módulos
@@ -31,11 +50,17 @@ export function initEventListeners(elements, config, state, calendar) {
     // Crear nueva cita
     if (createAppointmentBtn) {
         createAppointmentBtn.addEventListener('click', function() {
-            handleCreateAppointmentClick(this, elements, config, state);
+            setupCreateModal(elements, config, state);
         });
     }
     
-    // Cerrar modal con el botón X
+    // Selector de usuario para actualizar color
+    const userSelector = document.getElementById('user_id');
+    if (userSelector) {
+        userSelector.addEventListener('change', updateColorPreview);
+    }
+    
+    // Cerrar modal
     if (closeModalBtn) {
         closeModalBtn.addEventListener('click', function() {
             closeModal(appointmentModal);
@@ -49,186 +74,564 @@ export function initEventListeners(elements, config, state, calendar) {
         }
     });
     
-    // Manejar envío del formulario
+    // Cerrar modal con tecla Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && appointmentModal.style.display === 'block') {
+            closeModal(appointmentModal);
+        }
+    });
+    
+    // Envío de formulario
     if (appointmentForm) {
         appointmentForm.addEventListener('submit', function(e) {
-            handleFormSubmit(e, this, state, appointmentModal);
+            e.preventDefault();
+            
+            // Procesar formulario y cerrar modal al completar
+            processAppointmentForm(this, state, function() {
+                closeModal(appointmentModal);
+                
+                // Recargar eventos del calendario
+                if (calendar && typeof calendar.refetchEvents === 'function') {
+                    setTimeout(() => calendar.refetchEvents(), 500);
+                } else {
+                    // Si falla el refetch, recargar la página después de un momento
+                    setTimeout(() => window.location.reload(), 1000);
+                }
+            });
         });
     }
     
     // Eliminar cita
     if (deleteAppointmentBtn) {
         deleteAppointmentBtn.addEventListener('click', function() {
-            handleDeleteAppointment(this, state, appointmentModal);
+            handleDeleteAppointment(state, elements, calendar);
         });
     }
     
-    // Teclas de acceso rápido
-    document.addEventListener('keydown', function(e) {
-        // Escape para cerrar el modal
-        if (e.key === 'Escape' && appointmentModal.style.display === 'block') {
-            closeModal(appointmentModal);
-        }
+    // Botón para deshacer cambios
+    if (undoButton) {
+        undoButton.addEventListener('click', function() {
+            handleUndo(calendar);
+        });
+        
+        // Comprobar si hay un estado de deshacer guardado en la carga inicial
+        setTimeout(() => updateUndoButton(), 500);
+    }
+}
+
+/**
+ * Manejador para selección de fecha/hora en el calendario
+ */
+export function handleTimeSlotSelection(info, elements, config, state) {
+    console.log("Slot seleccionado:", {
+        start: info.startStr,
+        end: info.endStr,
+        clickedDate: info.start,
+        endDate: info.end,
+        slotDuration: config.settings.slotDuration
     });
-}
-
-/**
- * Maneja el clic en el botón de crear cita
- */
-function handleCreateAppointmentClick(button, elements, config, state) {
-    document.getElementById('modalTitle').innerHTML = '<i class="bi bi-calendar-plus"></i> Crear Cita';
-    document.getElementById('deleteAppointment').style.display = 'none';
     
-    // Actualizar estado
-    state.isEditMode = false;
-    state.currentAppointmentId = null;
-    window.isEditMode = false;
-    window.currentAppointmentId = null;
-    
-    // Resetear formulario
-    elements.appointmentForm.reset();
-    
-    // Establecer fecha/hora predeterminadas
-    const now = new Date();
-    now.setMinutes(Math.ceil(now.getMinutes() / 30) * 30, 0, 0); // Redondear a la media hora
-    
-    const later = new Date(now);
-    later.setHours(later.getHours() + 1);
-    
-    document.getElementById('startTime').value = now.toISOString().substring(0, 16);
-    document.getElementById('endTime').value = later.toISOString().substring(0, 16);
-    
-    // Configurar el tipo de calendario según la página actual
-    const calendarTypeSelect = document.getElementById('calendarType');
-    if (calendarTypeSelect) {
-        // Si el botón tiene un atributo data-calendar-type, usarlo
-        const buttonCalendarType = button.getAttribute('data-calendar-type');
-        if (buttonCalendarType) {
-            // Para páginas con tipo fijo (estetico.php, veterinario.php)
-            if (calendarTypeSelect.tagName === 'INPUT' && calendarTypeSelect.type === 'hidden') {
-                calendarTypeSelect.value = buttonCalendarType;
-            } else {
-                // Para el caso del dropdown
-                [...calendarTypeSelect.options].forEach(option => {
-                    if (option.value === buttonCalendarType) {
-                        option.selected = true;
-                    }
-                });
-            }
-        } else if (config.currentCalendarType && config.currentCalendarType !== 'general') {
-            // Para la vista general, preseleccionar según el último tipo usado
-            [...calendarTypeSelect.options].forEach(option => {
-                if (option.value === config.currentCalendarType) {
-                    option.selected = true;
-                }
-            });
+    // Asegurarse de que tenemos usuarios disponibles
+    if (!config.users || config.users.length === 0) {
+        if (window.calendarUsers && window.calendarUsers.length > 0) {
+            console.log("Actualizando usuarios desde ámbito global para el modal");
+            config.users = window.calendarUsers;
+        } else {
+            console.warn("⚠️ No hay usuarios disponibles para la cita");
         }
     }
     
-    // Abrir el modal
-    openModal(elements.appointmentModal);
+    // Crear objeto de evento temporal para el modal
+    const event = {
+        start: info.start,
+        end: info.end || new Date(info.start.getTime() + 3600000),
+        allDay: info.allDay,
+        extendedProps: {
+            calendarType: config.currentCalendarType || 'general'
+        }
+    };
+    
+    // Configurar modal usando el evento temporal
+    setupCreateModal(elements, config, state, event);
+    
+    // Después de abrir el modal, verificar si los usuarios se cargaron correctamente
+    setTimeout(() => {
+        const userSelect = document.getElementById('user_id');
+        if (userSelect && userSelect.options.length <= 1) {
+            console.warn("⚠️ Los usuarios no se cargaron correctamente en el modal, intentando nuevamente...");
+            
+            // Intentar inicializar el select de usuarios nuevamente
+            if (typeof window.initializeUserSelect === 'function') {
+                window.initializeUserSelect(config.users);
+            } else if (config.users && config.users.length > 0) {
+                // Añadir opciones manualmente si la función no está disponible
+                for (const user of config.users) {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.text = user.name;
+                    if (user.color) option.dataset.color = user.color;
+                    userSelect.appendChild(option);
+                }
+                console.log(`Se añadieron ${config.users.length} usuarios directamente al select`);
+            }
+        }
+        
+        // Asegurarse de que las fechas seleccionadas estén establecidas en el formulario
+        // Esto es una medida adicional en caso de que setupCreateModal no las haya configurado correctamente
+        import('./utils.js').then(utils => {
+            const startField = document.getElementById('startTime') || document.getElementById('start_time');
+            const endField = document.getElementById('endTime') || document.getElementById('end_time');
+            
+            if (startField && info.start) {
+                startField.value = utils.formatDateForInput(info.start);
+                console.log("Fecha de inicio establecida en el formulario:", startField.value);
+            }
+            
+            if (endField && info.end) {
+                endField.value = utils.formatDateForInput(info.end);
+                console.log("Fecha de fin establecida en el formulario:", endField.value);
+            } else if (endField && info.start) {
+                // Si no hay fecha de fin, calcular una hora después
+                const endTime = new Date(info.start.getTime());
+                endTime.setHours(endTime.getHours() + 1);
+                endField.value = utils.formatDateForInput(endTime);
+                console.log("Fecha de fin calculada:", endField.value);
+            }
+        }).catch(error => {
+            console.error("Error al importar módulo de utilidades:", error);
+        });
+    }, 100);
 }
 
 /**
- * Maneja el envío del formulario
+ * Manejador para clic en evento existente
  */
-function handleFormSubmit(e, form, state, modal) {
-    e.preventDefault();
+export function handleEventClick(info, elements, config, state) {
+    console.log("Evento seleccionado:", {
+        id: info.event.id,
+        title: info.event.title,
+        start: info.event.startStr,
+        end: info.event.endStr,
+        extendedProps: info.event.extendedProps
+    });
     
-    const formData = new FormData(form);
-    
-    if (state.isEditMode) {
-        formData.append('id', state.currentAppointmentId);
-        formData.append('action', 'update');
-    } else {
-        formData.append('action', 'create');
+    // Asegurarse de que tenemos usuarios disponibles
+    if (!config || !config.users || config.users.length === 0) {
+        if (window.calendarUsers && window.calendarUsers.length > 0) {
+            console.log("Actualizando usuarios desde ámbito global para el modal de edición");
+            if (!config) config = {};
+            config.users = window.calendarUsers;
+        } else {
+            console.warn("⚠️ No hay usuarios disponibles para editar la cita");
+        }
     }
     
-    // Validar duración
-    const startTime = new Date(formData.get('start_time'));
-    const endTime = new Date(formData.get('end_time'));
+    // Configurar el modal de edición
+    setupEditModal(info.event, elements, config, state);
     
-    if (endTime <= startTime) {
-        showNotification('La hora de fin debe ser posterior a la hora de inicio', 'error');
+    // Después de abrir el modal, verificar si los usuarios se cargaron correctamente
+    setTimeout(() => {
+        const userSelect = document.getElementById('user_id');
+        if (userSelect && userSelect.options.length <= 1) {
+            console.warn("⚠️ Los usuarios no se cargaron correctamente en el modal de edición, intentando nuevamente...");
+            
+            // Intentar inicializar el select de usuarios nuevamente
+            if (typeof window.initializeUserSelect === 'function') {
+                window.initializeUserSelect(config.users);
+                
+                // Después de inicializar, seleccionar el usuario correcto
+                const userId = info.event.extendedProps.user_id || info.event.extendedProps.userId;
+                if (userId && userSelect.options.length > 1) {
+                    userSelect.value = userId;
+                    
+                    // Forzar evento change para actualizar el color
+                    const changeEvent = new Event('change');
+                    userSelect.dispatchEvent(changeEvent);
+                }
+            }
+        }
+    }, 100);
+}
+
+/**
+ * Manejador para eliminar cita
+ */
+function handleDeleteAppointment(state, elements, calendar) {
+    if (!state.currentAppointmentId) {
+        showNotification('No se ha seleccionado ninguna cita para eliminar', 'error');
         return;
     }
     
-    // Mostrar indicador de carga
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Procesando...';
-    
-    // Enviar datos con AJAX
-    fetch('process_appointment.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification(data.message, 'success');
-            
-            // Cerrar el modal
-            closeModal(modal);
-            
-            // Recargar la página después de un breve retraso
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        } else {
-            showNotification(data.message || 'Ha ocurrido un error.', 'error');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Error de conexión', 'error');
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
-    });
-}
-
-/**
- * Maneja la eliminación de citas
- */
-function handleDeleteAppointment(button, state, modal) {
     if (confirm('¿Estás seguro de que deseas eliminar esta cita?')) {
+        // Crear FormData para enviar
         const formData = new FormData();
         formData.append('id', state.currentAppointmentId);
         formData.append('action', 'delete');
         
         // Mostrar indicador de carga
-        button.disabled = true;
-        button.innerHTML = '<i class="bi bi-hourglass-split"></i> Eliminando...';
+        showNotification('Eliminando cita...', 'info');
         
+        // Enviar petición al servidor
         fetch('process_appointment.php', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error de servidor: ${response.status} ${response.statusText}`);
+            }
+            return response.text();
+        })
+        .then(text => {
+            // Intentar parsear como JSON de manera más permisiva
+            try {
+                const cleanText = text.trim();
+                console.log('Respuesta del servidor (eliminar):', cleanText);
+                return JSON.parse(cleanText);
+            } catch (error) {
+                console.error('No se pudo parsear la respuesta como JSON:', text);
+                throw new Error('No se pudo parsear la respuesta del servidor como JSON');
+            }
+        })
         .then(data => {
             if (data.success) {
                 showNotification(data.message, 'success');
                 
-                // Cerrar el modal
-                closeModal(modal);
+                // Cerrar modal
+                closeModal(elements.appointmentModal);
                 
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                // Recargar eventos del calendario
+                if (calendar && typeof calendar.refetchEvents === 'function') {
+                    setTimeout(() => calendar.refetchEvents(), 500);
+                } else {
+                    // Si falla el refetch, recargar la página
+                    setTimeout(() => window.location.reload(), 1000);
+                }
             } else {
-                showNotification(data.message || 'Ha ocurrido un error.', 'error');
-                button.disabled = false;
-                button.innerHTML = '<i class="bi bi-trash"></i> Eliminar';
+                showNotification(data.message || 'Error al eliminar la cita', 'error');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            showNotification('Error de conexión', 'error');
-            button.disabled = false;
-            button.innerHTML = '<i class="bi bi-trash"></i> Eliminar';
+            console.error('Error al eliminar cita:', error);
+            showNotification(`Error: ${error.message || 'Error de conexión'}`, 'error');
         });
     }
+}
+
+/**
+ * Maneja el arrastre de un evento
+ */
+export function handleEventDrop(info, currentCalendarType) {
+    const eventId = info.event.id;
+    const newStart = info.event.start;
+    const newEnd = info.event.end || new Date(newStart.getTime() + 3600000); // Si no hay end, añadir 30 min
+    const formattedStart = formatDateTimeForServer(newStart);
+    const formattedEnd = formatDateTimeForServer(newEnd);
+    
+    console.log('Evento arrastrado:', {
+        id: eventId,
+        title: info.event.title,
+        start: formattedStart,
+        end: formattedEnd,
+        calendarType: info.event.extendedProps.calendarType || 'general'
+    });
+    
+    // Guardar estado anterior para la función de deshacer
+    lastAction = 'update';
+    lastEventState = {
+        id: eventId,
+        title: info.event.title,
+        start: info.oldEvent.start,
+        end: info.oldEvent.end,
+        allDay: info.oldEvent.allDay,
+        extendedProps: Object.assign({}, info.oldEvent.extendedProps)
+    };
+    
+    // Crear los datos para la petición
+    const formData = new FormData();
+    formData.append('id', eventId);
+    formData.append('action', 'update');
+    formData.append('start_time', formattedStart);
+    formData.append('end_time', formattedEnd);
+    formData.append('title', info.event.title);
+    formData.append('description', info.event.extendedProps.description || '');
+    
+    // Si el evento tiene un usuario asignado, mantenerlo
+    if (info.event.extendedProps.user_id) {
+        formData.append('user_id', info.event.extendedProps.user_id);
+    }
+    
+    // Si no estamos en una vista específica, conservar el tipo de calendario
+    if (currentCalendarType === 'general') {
+        formData.append('calendar_type', info.event.extendedProps.calendarType || 'general');
+    } else {
+        // Si estamos en una vista específica (estético o veterinario), mantener ese tipo
+        formData.append('calendar_type', currentCalendarType);
+    }
+    
+    // Mostrar indicador de carga
+    showNotification('Actualizando cita...', 'info');
+    
+    // Enviar la petición al servidor
+    fetch('process_appointment.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Error de servidor: ${response.status} ${response.statusText}`);
+        }
+        return response.text();
+    })
+    .then(text => {
+        // Intentar parsear como JSON de manera más permisiva
+        try {
+            const cleanText = text.trim();
+            console.log('Respuesta del servidor (arrastrar):', cleanText);
+            return JSON.parse(cleanText);
+        } catch (error) {
+            console.error('No se pudo parsear la respuesta como JSON:', text);
+            throw new Error('No se pudo parsear la respuesta del servidor como JSON');
+        }
+    })
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message || 'Cita actualizada correctamente', 'success');
+            
+            // Actualizar la UI para el botón de deshacer
+            updateUndoButton();
+        } else {
+            showNotification(data.message || 'Error al actualizar la cita', 'error');
+            info.revert(); // Revertir el cambio
+            
+            // Limpiar lastAction y lastEventState para que no se pueda deshacer un evento fallido
+            lastAction = null;
+            lastEventState = null;
+            updateUndoButton();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification(`Error: ${error.message || 'Error de conexión'}`, 'error');
+        info.revert(); // Revertir el cambio
+        
+        // Limpiar lastAction y lastEventState para que no se pueda deshacer un evento fallido
+        lastAction = null;
+        lastEventState = null;
+        updateUndoButton();
+    });
+}
+
+/**
+ * Maneja el redimensionamiento de un evento
+ */
+export function handleEventResize(info, currentCalendarType) {
+    const eventId = info.event.id;
+    const newStart = info.event.start;
+    const newEnd = info.event.end || new Date(newStart.getTime() + 30*60000); // Si no hay end, añadir 30 min
+    const formattedStart = formatDateTimeForServer(newStart);
+    const formattedEnd = formatDateTimeForServer(newEnd);
+    
+    console.log('Evento redimensionado:', {
+        id: eventId,
+        title: info.event.title,
+        start: formattedStart,
+        end: formattedEnd,
+        calendarType: info.event.extendedProps.calendarType || 'general'
+    });
+    
+    // Guardar estado anterior para la función de deshacer
+    lastAction = 'update';
+    lastEventState = {
+        id: eventId,
+        title: info.event.title,
+        start: info.oldEvent.start,
+        end: info.oldEvent.end,
+        allDay: info.oldEvent.allDay,
+        extendedProps: Object.assign({}, info.oldEvent.extendedProps)
+    };
+    
+    // Crear los datos para la petición
+    const formData = new FormData();
+    formData.append('id', eventId);
+    formData.append('action', 'update');
+    formData.append('start_time', formattedStart);
+    formData.append('end_time', formattedEnd);
+    formData.append('title', info.event.title);
+    formData.append('description', info.event.extendedProps.description || '');
+    
+    // Si el evento tiene un usuario asignado, mantenerlo
+    if (info.event.extendedProps.user_id) {
+        formData.append('user_id', info.event.extendedProps.user_id);
+    }
+    
+    // Si no estamos en una vista específica, conservar el tipo de calendario
+    if (currentCalendarType === 'general') {
+        formData.append('calendar_type', info.event.extendedProps.calendarType || 'general');
+    } else {
+        // Si estamos en una vista específica (estético o veterinario), mantener ese tipo
+        formData.append('calendar_type', currentCalendarType);
+    }
+    
+    // Mostrar indicador de carga
+    showNotification('Actualizando horario...', 'info');
+    
+    // Enviar la petición al servidor
+    fetch('process_appointment.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Error de servidor: ${response.status} ${response.statusText}`);
+        }
+        return response.text();
+    })
+    .then(text => {
+        // Intentar parsear como JSON de manera más permisiva
+        try {
+            const cleanText = text.trim();
+            console.log('Respuesta del servidor (redimensionar):', cleanText);
+            return JSON.parse(cleanText);
+        } catch (error) {
+            console.error('No se pudo parsear la respuesta como JSON:', text);
+            throw new Error('No se pudo parsear la respuesta del servidor como JSON');
+        }
+    })
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message || 'Horario actualizado correctamente', 'success');
+            
+            // Actualizar la UI para el botón de deshacer
+            updateUndoButton();
+        } else {
+            showNotification(data.message || 'Error al actualizar el horario', 'error');
+            info.revert(); // Revertir el cambio
+            
+            // Limpiar lastAction y lastEventState para que no se pueda deshacer un evento fallido
+            lastAction = null;
+            lastEventState = null;
+            updateUndoButton();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification(`Error: ${error.message || 'Error de conexión'}`, 'error');
+        info.revert(); // Revertir el cambio
+        
+        // Limpiar lastAction y lastEventState para que no se pueda deshacer un evento fallido
+        lastAction = null;
+        lastEventState = null;
+        updateUndoButton();
+    });
+}
+
+/**
+ * Actualiza la visibilidad del botón de deshacer
+ */
+function updateUndoButton() {
+    const undoButton = document.getElementById('undoButton');
+    if (!undoButton) return;
+    
+    if (lastAction && lastEventState) {
+        undoButton.style.display = 'flex'; // Asegurar que se muestre
+        undoButton.classList.add('show');
+        
+        // Sincronizar con variables globales para persistencia
+        window.lastAction = lastAction;
+        window.lastEventState = lastEventState;
+        
+        console.log('Botón deshacer activado', {action: lastAction, event: lastEventState.id});
+    } else {
+        undoButton.classList.remove('show');
+        setTimeout(() => {
+            if (!lastAction && !lastEventState) {
+                undoButton.style.display = 'none';
+            }
+        }, 300); // Esperar a que termine la animación
+        
+        // Limpiar variables globales
+        window.lastAction = null;
+        window.lastEventState = null;
+    }
+}
+
+/**
+ * Maneja la funcionalidad de deshacer
+ */
+function handleUndo(calendar) {
+    if (!lastAction || !lastEventState || !calendar) return;
+    
+    // Obtener el evento actual
+    const currentEvent = calendar.getEventById(lastEventState.id);
+    if (!currentEvent) {
+        showNotification('No se puede deshacer: El evento ya no existe', 'error');
+        return;
+    }
+    
+    // Mostrar notificación
+    showNotification('Deshaciendo último cambio...', 'info');
+    
+    // Crear FormData con los datos originales
+    const formData = new FormData();
+    formData.append('id', lastEventState.id);
+    formData.append('action', 'update');
+    formData.append('title', lastEventState.title);
+    formData.append('description', lastEventState.extendedProps.description || '');
+    formData.append('start_time', formatDateTimeForServer(lastEventState.start));
+    formData.append('end_time', formatDateTimeForServer(lastEventState.end));
+    formData.append('calendar_type', lastEventState.extendedProps.calendarType || 'general');
+    
+    // Si el evento tiene un usuario asignado, incluirlo
+    if (lastEventState.extendedProps.user_id) {
+        formData.append('user_id', lastEventState.extendedProps.user_id);
+    }
+    
+    // Enviar petición al servidor
+    fetch('process_appointment.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Error de servidor: ${response.status} ${response.statusText}`);
+        }
+        return response.text();
+    })
+    .then(text => {
+        // Intentar parsear como JSON de manera más permisiva
+        try {
+            const cleanText = text.trim();
+            console.log('Respuesta del servidor (deshacer):', cleanText);
+            return JSON.parse(cleanText);
+        } catch (error) {
+            console.error('No se pudo parsear la respuesta como JSON:', text);
+            throw new Error('No se pudo parsear la respuesta del servidor como JSON');
+        }
+    })
+    .then(data => {
+        if (data.success) {
+            showNotification('Cambio deshecho correctamente', 'success');
+            
+            // Actualizar el evento en el calendario
+            currentEvent.setProp('title', lastEventState.title);
+            currentEvent.setStart(lastEventState.start);
+            currentEvent.setEnd(lastEventState.end);
+            currentEvent.setAllDay(lastEventState.allDay);
+            
+            // Recargar eventos para asegurar consistencia
+            setTimeout(() => calendar.refetchEvents(), 500);
+            
+            // Limpiar estado de deshacer
+            lastAction = null;
+            lastEventState = null;
+            updateUndoButton();
+        } else {
+            showNotification(data.message || 'Error al deshacer cambio', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error al deshacer cambio:', error);
+        showNotification(`Error: ${error.message || 'Error de conexión'}`, 'error');
+    });
 } 

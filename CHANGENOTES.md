@@ -27,6 +27,10 @@
 - Agregar configuración de color en el menu de configuraciones
 - carga lazy de eventos para calendarios con muchas citas
 
+## Versión 0.0.5.3 - 🏓 Ping-Pong
+- Se corrigio bug que duplicaba citas
+- Se completo la migración de JS vanilla a ES6
+
 ## Versión 0.0.5.2 - 🏓 Ping-Pong
 - lo que la actualización 0.0.5.1 debia hacer
 

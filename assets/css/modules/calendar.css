@@ -290,4 +290,139 @@
         width: 100%;
         justify-content: center;
     }
+}
+
+/* ===============================
+   Estilos del Calendario - Optimizados para móviles
+   =============================== */
+
+/* Optimización para móviles - eliminar controles de scroll */
+.mobile-optimized .fc-scroller {
+    overflow: visible !important;
+    height: auto !important;
+}
+
+.mobile-optimized .fc-scroller-liquid {
+    height: auto !important;
+}
+
+.mobile-optimized .fc-scroller-harness {
+    overflow: visible !important;
+    position: static !important;
+}
+
+.mobile-optimized .fc-scrollgrid-section-liquid > td {
+    height: auto !important;
+}
+
+.mobile-optimized .fc-view-harness {
+    position: static !important;
+    height: auto !important;
+}
+
+.mobile-optimized .fc-daygrid-body {
+    height: auto !important;
+}
+
+.mobile-optimized .fc-scrollgrid {
+    height: auto !important;
+}
+
+/* Reducir tamaño y espaciado en móviles */
+.mobile-optimized .fc-event {
+    padding: 0.15rem 0.3rem !important;
+    box-shadow: none !important;
+    margin-bottom: 1px !important;
+}
+
+.mobile-optimized .fc-timegrid-slot {
+    height: 40px !important;
+}
+
+.mobile-optimized .fc-button {
+    padding: 0.3rem 0.5rem !important;
+    font-size: 0.875rem !important;
+}
+
+/* Ajustes para móviles */
+
+/* Ocultar los botones menos importantes en móviles */
+@media (max-width: 768px) {
+    .fc-toolbar {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .fc-toolbar-chunk {
+        width: 100%;
+        justify-content: center;
+        display: flex;
+    }
+    
+    .fc-toolbar-title {
+        font-size: 1.1rem !important;
+    }
+    
+    .calendar-header {
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .calendar-nav {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    #createAppointment {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Reducir tamaño de los eventos en vista móvil */
+    .fc-event {
+        padding: 0.15rem 0.3rem !important;
+        font-size: 0.75rem;
+    }
+    
+    .fc-event-title {
+        font-size: 0.75rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+    
+    .fc-event-time {
+        font-size: 0.7rem;
+    }
+    
+    /* Hacer más compact las vistas de lista */
+    .fc-list-table td {
+        padding: 4px 8px !important;
+    }
+    
+    /* Ocultar leyenda en móviles para ahorrar espacio */
+    .calendar-legend {
+        display: none;
+    }
+    
+    /* Reducir espacio entre filas de tiempo */
+    .fc-timegrid-slot {
+        height: 40px !important;
+    }
+    
+    /* Quitar efectos de hover en móviles */
+    .fc-event:hover {
+        transform: none;
+        box-shadow: var(--shadow-sm) !important;
+    }
+}
+
+/* Media queries para ajustes responsivos */
+@media (max-width: 992px) {
+    main.container {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
 } 

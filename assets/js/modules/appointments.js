@@ -2,106 +2,189 @@
  * Módulo de Citas
  * Maneja la visualización y gestión de las citas
  */
+import { formatDate, formatTime } from './utils.js';
+import { setupEditModal } from './modal.js';
 
 /**
  * Inicializa el componente de próximas citas
+ * @param {Object} elements - Referencias a elementos DOM
+ * @param {Object} config - Configuración de la aplicación
  */
 export function initUpcomingAppointments(elements, config) {
     const { upcomingList } = elements;
-    const { events, currentCalendarType, calendarColors, calendarNames } = config;
     
-    if (!upcomingList) return;
+    if (!upcomingList) {
+        console.log('Elemento de próximas citas no encontrado');
+        return;
+    }
     
-    displayUpcomingAppointments(upcomingList, events, currentCalendarType, calendarColors, calendarNames);
+    // Intentar obtener el calendario del ámbito global si no se ha pasado
+    const calendar = window.calendar;
+    if (!calendar) {
+        console.log('Calendario no disponible para próximas citas');
+        return;
+    }
+    
+    // Obtener eventos del calendario
+    const events = calendar.getEvents();
+    
+    // Mostrar las próximas citas
+    displayUpcomingAppointments(upcomingList, events, config);
 }
 
 /**
  * Muestra la lista de próximas citas
+ * @param {HTMLElement} upcomingList - Elemento contenedor de la lista
+ * @param {Array} events - Eventos del calendario
+ * @param {Object} config - Configuración de la aplicación
  */
-function displayUpcomingAppointments(upcomingList, events, currentCalendarType, calendarColors, calendarNames) {
+export function displayUpcomingAppointments(upcomingList, events, config) {
+    const { calendarColors, calendarNames, currentCalendarType } = config;
+    
+    if (!upcomingList) return;
+    
     // Ordenar eventos por fecha de inicio
     const sortedEvents = [...events].sort((a, b) => new Date(a.start) - new Date(b.start));
     
-    // Filtrar eventos futuros (a partir de hoy)
+    // Filtrar eventos futuros (a partir de ahora)
     const now = new Date();
     let upcomingEvents = sortedEvents.filter(event => new Date(event.start) >= now);
     
     // Si no estamos en la vista general, filtrar solo las citas del tipo seleccionado
     if (currentCalendarType !== 'general') {
-        upcomingEvents = upcomingEvents.filter(event => event.calendarType === currentCalendarType);
+        upcomingEvents = upcomingEvents.filter(event => {
+            const eventType = event.extendedProps.calendarType || 'general';
+            return eventType === currentCalendarType;
+        });
     }
     
     // Tomar solo los primeros 5 eventos
     upcomingEvents = upcomingEvents.slice(0, 5);
     
+    // Crear elementos para cada evento
     if (upcomingEvents.length === 0) {
         upcomingList.innerHTML = '<p class="no-events">No hay citas próximas</p>';
         return;
     }
     
-    // Crear elementos para cada evento
     upcomingList.innerHTML = '';
+    
     upcomingEvents.forEach(event => {
-        const start = new Date(event.start);
-        const formattedDate = start.toLocaleDateString('es-ES', {weekday: 'short', day: 'numeric', month: 'short'});
-        const formattedTime = start.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit', hour12: true});
+        // Convertir a objeto Date
+        const startDate = new Date(event.start);
+        
+        // Crear elemento para la cita
+        const eventEl = document.createElement('div');
+        eventEl.className = 'appointment-item';
+        eventEl.dataset.eventId = event.id;
         
         // Obtener el tipo de calendario
-        const calendarType = event.calendarType || 'general';
-        const calendarName = calendarNames[calendarType] || 'General';
-        const calendarClass = `calendar-${calendarType}`;
-        const calendarColor = calendarColors[calendarType] || '#5D69F7';
+        const calendarType = event.extendedProps.calendarType || 'general';
+        eventEl.dataset.calendarType = calendarType;
         
-        const eventEl = document.createElement('div');
-        eventEl.className = `appointment-item ${calendarClass}`;
-        eventEl.dataset.eventId = event.id;
+        // Obtener color del calendario (prioridad al color del usuario si está disponible)
+        const userColor = event.extendedProps.user_color;
+        const calColor = userColor || calendarColors[calendarType] || calendarColors.general;
+        
+        // Obtener nombre de usuario
+        const userName = event.extendedProps.user || event.extendedProps.user_name;
+        const userDisplay = userName && userName !== 'null' && userName !== 'undefined' && userName.trim() !== '' 
+            ? userName 
+            : 'Sin asignar';
+        
+        // Crear HTML con la información
         eventEl.innerHTML = `
-            <div class="appointment-date">
-                <div class="calendar-indicator" style="background-color: ${calendarColor};"></div>
-                <span class="day">${formattedDate}</span>
-                <span class="time">${formattedTime}</span>
-            </div>
+            <div class="appointment-color" style="background-color: ${calColor}"></div>
             <div class="appointment-details">
                 <div class="appointment-title">${event.title}</div>
-                <div class="appointment-calendar">${calendarName}</div>
-                ${event.description ? `<div class="appointment-desc">${event.description.substring(0, 60)}${event.description.length > 60 ? '...' : ''}</div>` : ''}
+                <div class="appointment-meta">
+                    <span class="appointment-time">
+                        <i class="bi bi-calendar-date"></i> ${formatDate(startDate)}
+                    </span>
+                    <span class="appointment-time">
+                        <i class="bi bi-clock"></i> ${formatTime(startDate)}
+                    </span>
+                    <div class="appointment-info">
+                        <span class="appointment-calendar">
+                            <i class="bi bi-calendar3"></i> ${calendarNames[calendarType] || 'General'}
+                        </span>
+                        <span class="appointment-user">
+                            <i class="bi bi-person"></i> ${userDisplay}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="appointment-actions">
+                <button class="btn btn-sm btn-outline-primary view-event" title="Ver detalles">
+                    <i class="bi bi-eye"></i>
+                </button>
             </div>
         `;
         
         upcomingList.appendChild(eventEl);
     });
     
-    // Guardar los eventos en un atributo de datos para acceder a ellos más tarde
-    upcomingList.dataset.events = JSON.stringify(upcomingEvents);
-    
-    // Agregar eventos de clic
-    addClickEventsToAppointments(upcomingList);
+    // Añadir eventos de clic
+    addClickEventsToAppointments(upcomingList, events);
 }
 
 /**
- * Agrega eventos de clic a los elementos de la lista de citas
+ * Añade eventos de clic a los elementos de la lista de citas
+ * @param {HTMLElement} upcomingList - Elemento contenedor de la lista
+ * @param {Array} events - Eventos del calendario
  */
-function addClickEventsToAppointments(upcomingList) {
+function addClickEventsToAppointments(upcomingList, events) {
     const appointmentItems = upcomingList.querySelectorAll('.appointment-item');
     
     appointmentItems.forEach(item => {
         item.addEventListener('click', function() {
-            // La lógica para manejar el clic en la cita solo se ejecutará cuando el calendario esté disponible
             const eventId = this.dataset.eventId;
             
-            // Esperar a que el objeto calendar esté disponible
-            setTimeout(() => {
-                if (window.calendar) {
-                    const calEvent = window.calendar.getEventById(eventId);
-                    if (calEvent) {
-                        window.calendar.gotoDate(calEvent.start);
-                        setTimeout(() => {
-                            calEvent.setProp('backgroundColor', '#EF4444');
-                            setTimeout(() => calEvent.setProp('backgroundColor', ''), 1500);
-                        }, 100);
-                    }
-                }
-            }, 100);
+            // Intentar obtener el calendario del ámbito global
+            const calendar = window.calendar;
+            if (!calendar) {
+                console.error('Calendario no disponible');
+                return;
+            }
+            
+            // Buscar el evento en el calendario
+            const calEvent = calendar.getEventById(eventId);
+            if (calEvent) {
+                // Ir a la fecha del evento
+                calendar.gotoDate(calEvent.start);
+                
+                // Resaltar el evento temporalmente
+                setTimeout(() => {
+                    const originalColor = calEvent.backgroundColor;
+                    calEvent.setProp('backgroundColor', '#EF4444');
+                    
+                    // Restaurar color original después de un tiempo
+                    setTimeout(() => {
+                        calEvent.setProp('backgroundColor', originalColor || '');
+                    }, 1500);
+                }, 100);
+                
+                // Configurar elementos y estado para el modal
+                const elements = {
+                    appointmentForm: document.getElementById('appointmentForm'),
+                    appointmentModal: document.getElementById('appointmentModal')
+                };
+                
+                const state = {
+                    isEditMode: true,
+                    currentAppointmentId: eventId
+                };
+                
+                // Obtener configuración
+                const config = {
+                    users: window.calendarUsers || []
+                };
+                
+                // Mostrar el modal de edición
+                setupEditModal(calEvent, elements, config, state);
+            } else {
+                console.log('Evento no encontrado en el calendario:', eventId);
+            }
         });
     });
 } 
