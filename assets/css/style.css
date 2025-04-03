@@ -1,0 +1,14 @@
+/* Estilos específicos para iOS y menú móvil */
+@supports (-webkit-touch-callout: none) {
+    body.menu-open {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+}
+
+/* Clase general para prevenir scroll cuando el menú está abierto */
+body.menu-open {
+    overflow: hidden;
+} 

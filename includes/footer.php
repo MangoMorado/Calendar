@@ -5,6 +5,7 @@
     </footer>
     
     <!-- Scripts comunes -->
+    <script src="assets/js/helpers/ios-fixes.js"></script>
     <script src="assets/js/header.js"></script>
     
     <?php if (isset($extraScripts)) echo $extraScripts; ?>

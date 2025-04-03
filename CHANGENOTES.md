@@ -27,6 +27,9 @@
 - Agregar configuración de color en el menu de configuraciones
 - carga lazy de eventos para calendarios con muchas citas
 
+## Versión 0.0.5.4 - 🏓 Ping-Pong
+- Se corrigio Error en iOS que no muestra el menu hamburguesa
+
 ## Versión 0.0.5.3 - 🏓 Ping-Pong
 - Se corrigio bug que duplicaba citas
 - Se completo la migración de JS vanilla a ES6
