@@ -1,0 +1,210 @@
+{
+    "nodes": [
+      {
+        "parameters": {
+          "inputSource": "passthrough"
+        },
+        "id": "c055762a-8fe7-4141-a639-df2372f30060",
+        "typeVersion": 1.1,
+        "name": "When Executed by Another Workflow",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          260,
+          340
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://mundoanimal.mangomorado.com/api/token.php",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{\n    \"email\": \"mundi@mangomorado.com\",\n    \"password\": \"jpZr7DRZ\"\n}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          560,
+          180
+        ],
+        "id": "c99c0830-3c17-4911-8a8a-97c58c161e39",
+        "name": "Login"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "chatInput",
+          "hasOutputParser": true,
+          "options": {
+            "systemMessage": "# ROL\nEres un **asistente virtual de calendario** de Mundo Animal. Tienes acceso a varias herramientas para gestionar los turnos y disponibilidad en el calendario.\n\n**Fecha y hora actual:** `{{ $now.setZone('America/Bogota') }}`\nEl día de la semana es: `{{ $now.setZone('America/Bogota').weekdayLong }}`\n\n---\n\n# CONTEXTO\n- Tu única interlocutora es **MundiBot**, quien transmite la información a los pacientes. **Nunca le respondas.**\n- La clínica atiende **de lunes a sábado, de 08:00 a 18:00 horas**.\n- No se pueden agendar turnos con menos de **3 horas de anticipación**.\n- Cada turno dura **1 hora**, salvo que se indique otra duración específica.\n\n---\n\n# TAREAS Y REGLAS\n\n## 1. Ver disponibilidad horaria\n- Usá la herramienta **\"Ver Disponibilidad\"**.\n- La herramienta devuelve las citas agendadas, solo se puede agendar 2 citas de manera simultanea.\n- En caso de no haber disponibilidad, intentá con el dia siguiente.\n\n**Ejemplo de respuesta de la tool:**\nTe devolvera un JSON con los horarios OCUPADOS, estos son los horarios que no se pueden agendar:\n\n{\n    \"success\": true,\n    \"message\": \"Eventos obtenidos correctamente\",\n    \"data\": [\n        {\n            \"id\": 63,\n            \"title\": \"AN REVALORACION LUNA - LIZ CANCHILA \",\n            \"start\": \"2025-04-02 15:00:00\",\n            \"end\": \"2025-04-02 15:20:00\",\n            \"description\": \"Revaloración luna \",\n            \"backgroundColor\": \"#e8268e\",\n            \"borderColor\": \"#e8268e\",\n            \"allDay\": false,\n            \"extendedProps\": {\n                \"calendarType\": \"veterinario\",\n                \"description\": \"Revaloración luna \",\n                \"user_id\": 5,\n                \"user\": \"Alejandra Noguera\",\n                \"user_color\": \"#e8268e\"\n            }\n        }\n    ]\n}\n\n---",
+            "maxIterations": 3
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 1.8,
+        "position": [
+          1000,
+          340
+        ],
+        "id": "93701e91-7990-4900-b6c4-f0a8b2dc5a6c",
+        "name": "AI Agent"
+      },
+      {
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "mode": "list",
+            "value": "gpt-4o-mini"
+          },
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1.2,
+        "position": [
+          800,
+          540
+        ],
+        "id": "46c7347a-adeb-4a3d-a8f1-a5c3f0ea9e0f",
+        "name": "OpenAI Chat Model",
+        "credentials": {
+          "openAiApi": {
+            "id": "lXYqrNQbtsJxj5Dt",
+            "name": "OpenAi account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "toolDescription": "Usa esta tool para consultar la agenda disponible",
+          "url": "https://mundoanimal.mangomorado.com/api/appointments.php",
+          "sendHeaders": true,
+          "parametersHeaders": {
+            "values": [
+              {
+                "name": "Authorization",
+                "valueProvider": "fieldValue",
+                "value": "=Bearer {{ $json.data.token }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "parametersBody": {
+            "values": [
+              {
+                "name": "start"
+              },
+              {
+                "name": "end"
+              }
+            ]
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+        "typeVersion": 1.1,
+        "position": [
+          1000,
+          600
+        ],
+        "id": "ba9aad94-a989-4045-b374-cd8841ae4094",
+        "name": "Consultar Agenda"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "91524544-acb5-4ff0-beb4-1757775cada9",
+                "name": "=chatInput",
+                "value": "={{ $json.query }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          560,
+          340
+        ],
+        "id": "44b841c7-9c57-47c5-af7f-519d7c95c18e",
+        "name": "Edit Fields"
+      }
+    ],
+    "connections": {
+      "When Executed by Another Workflow": {
+        "main": [
+          [
+            {
+              "node": "Login",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Edit Fields",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Login": {
+        "main": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Consultar Agenda": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields": {
+        "main": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {
+      "When Executed by Another Workflow": [
+        {
+          "query": "{\"title\":\"Consulta | 1094276510 (Oreo)\",\"description\":\"Consulta para Oreo, un gato de 3 años que no quiere comer.\",\"start_time\":\"2025-04-08T17:00:00\",\"end_time\":\"2025-04-08T17:30:00\",\"calendar_type\":\"veterinario\",\"all_day\":false,\"user_id\":10}",
+          "user_id": 0
+        }
+      ]
+    },
+    "meta": {
+      "templateCredsSetupCompleted": true,
+      "instanceId": "492216dba7ead6f870ef4169d10664ed44bcfc662cf5e8e4907018d95ca96a66"
+    }
+  }

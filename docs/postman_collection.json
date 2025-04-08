@@ -137,12 +137,18 @@
 						"header": [
 							{
 								"key": "Content-Type",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"start\": \"2025-04-01T00:00:00\",\n    \"end\": \"2025-04-02T23:59:59\",\n    \"calendar_type\": \"veterinario\"\n}"
+							"raw": "{\n    \"start\": \"2025-04-01T00:00:00\",\n    \"end\": \"2025-04-02T23:59:59\",\n    \"calendar_type\": \"veterinario\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/appointments.php",
@@ -154,6 +160,48 @@
 							]
 						},
 						"description": "Obtiene eventos del calendario para un rango de fechas usando parámetros en el cuerpo JSON"
+					}
+				},
+				{
+					"name": "Consultar Disponibilidad",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"start\": \"{{$isoTimestamp}}\",\n    \"end\": \"{{$isoDateAdd 7 'd'}}\",\n    \"calendar_type\": \"general\",\n    \"slot_duration\": 3600\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/availability.php",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"availability.php"
+							]
+						},
+						"description": "Consulta los horarios disponibles para un rango de fechas, considerando las reglas de negocio (máximo 2 citas simultáneas, horario de atención, anticipación mínima)"
 					}
 				},
 				{
@@ -465,6 +513,141 @@
 					}
 				}
 			]
+		},
+		{
+			"name": "Disponibilidad",
+			"item": [
+				{
+					"name": "Consultar Disponibilidad (POST)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"start\": \"2025-04-01 00:00:00\",\n    \"end\": \"2025-04-05 23:59:59\",\n    \"calendar_type\": \"general\",\n    \"slot_duration\": 3600\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/availability.php",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"availability.php"
+							]
+						},
+						"description": "Obtiene los horarios disponibles para un rango de fechas, considerando las reglas de negocio"
+					}
+				},
+				{
+					"name": "Consultar Disponibilidad (GET)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/availability.php?start=2025-04-01 00:00:00&end=2025-04-05 23:59:59&calendar_type=veterinario&slot_duration=3600",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"availability.php"
+							],
+							"query": [
+								{
+									"key": "start",
+									"value": "2025-04-01 00:00:00"
+								},
+								{
+									"key": "end",
+									"value": "2025-04-05 23:59:59"
+								},
+								{
+									"key": "calendar_type",
+									"value": "veterinario"
+								},
+								{
+									"key": "slot_duration",
+									"value": "3600"
+								}
+							]
+						},
+						"description": "Obtiene los horarios disponibles para un rango de fechas usando parámetros GET"
+					}
+				},
+				{
+					"name": "Consultar Disponibilidad (30 min)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"start\": \"2025-04-01 00:00:00\",\n    \"end\": \"2025-04-02 23:59:59\",\n    \"calendar_type\": \"veterinario\",\n    \"slot_duration\": 1800\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/availability.php",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"availability.php"
+							]
+						},
+						"description": "Obtiene los horarios disponibles con slots de 30 minutos"
+					}
+				}
+			],
+			"description": "Endpoints para consultar disponibilidad de horarios"
 		}
 	],
 	"auth": {
