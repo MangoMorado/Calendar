@@ -138,13 +138,14 @@ La aplicación ahora incluye una API RESTful mejorada que utiliza JSON Web Token
 - Endpoints RESTful que siguen las convenciones estándar HTTP
 - Respuestas JSON consistentes y bien estructuradas
 - Documentación completa mediante OpenAPI
+- Flexibilidad en el envío de parámetros (URL o cuerpo JSON)
 
 ### Endpoints principales
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
 | POST | `/api/token.php` | Genera un token JWT para autenticación |
-| GET | `/api/appointments.php` | Obtiene citas del calendario |
+| GET | `/api/appointments.php` | Obtiene citas del calendario (acepta parámetros por URL o cuerpo JSON) |
 | POST | `/api/appointments.php` | Crea una nueva cita |
 | PUT | `/api/appointments.php` | Actualiza una cita existente |
 | DELETE | `/api/appointments.php` | Elimina una cita existente |
@@ -163,11 +164,20 @@ curl -X POST http://localhost/Calendar/api/token.php \
   -d '{"email":"usuario@ejemplo.com", "password":"contraseña"}'
 ```
 
-Para hacer una solicitud autenticada:
+Para obtener citas usando parámetros en la URL:
+
+```bash
+curl -X GET "http://localhost/Calendar/api/appointments.php?start=2025-04-01T00:00:00&end=2025-04-02T23:59:59" \
+  -H "Authorization: Bearer TU_TOKEN_JWT"
+```
+
+Para obtener citas usando parámetros en el cuerpo JSON:
 
 ```bash
 curl -X GET http://localhost/Calendar/api/appointments.php \
-  -H "Authorization: Bearer TU_TOKEN_JWT"
+  -H "Authorization: Bearer TU_TOKEN_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"start":"2025-04-01T00:00:00", "end":"2025-04-02T23:59:59", "calendar_type":"veterinario"}'
 ```
 
 ### Documentación completa

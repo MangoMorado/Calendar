@@ -27,6 +27,9 @@
 - Agregar configuración de color en el menu de configuraciones
 - carga lazy de eventos para calendarios con muchas citas
 
+## Versión 0.0.5.7 - 🏓 Ping-Pong
+- Actualización de la API (consultas del calendario)
+
 ## Versión 0.0.5.6 - 🏓 Ping-Pong
 - Actualización de la API
 

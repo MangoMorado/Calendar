@@ -117,7 +117,43 @@
 								}
 							]
 						},
-						"description": "Obtiene eventos del calendario para un rango de fechas"
+						"description": "Obtiene eventos del calendario para un rango de fechas usando parámetros en la URL"
+					}
+				},
+				{
+					"name": "Obtener Eventos (JSON Body)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"start\": \"2025-04-01T00:00:00\",\n    \"end\": \"2025-04-02T23:59:59\",\n    \"calendar_type\": \"veterinario\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/appointments.php",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"appointments.php"
+							]
+						},
+						"description": "Obtiene eventos del calendario para un rango de fechas usando parámetros en el cuerpo JSON"
 					}
 				},
 				{

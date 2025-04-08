@@ -169,7 +169,7 @@ paths:
   /appointments.php:
     get:
       summary: Obtener eventos del calendario
-      description: Retorna una lista de eventos (citas) para el período especificado
+      description: Retorna una lista de eventos (citas) para el período especificado. Acepta parámetros tanto en la URL como en el cuerpo de la solicitud como JSON.
       security:
         - jwtAuth: []
       parameters:
@@ -179,21 +179,44 @@ paths:
           schema:
             type: string
             format: date-time
-          description: Fecha de inicio del período
+          description: Fecha de inicio del período (alternativa a incluirlo en el cuerpo)
         - name: end
           in: query
           required: false
           schema:
             type: string
             format: date-time
-          description: Fecha de fin del período
+          description: Fecha de fin del período (alternativa a incluirlo en el cuerpo)
         - name: calendar_type
           in: query
           required: false
           schema:
             type: string
             enum: [estetico, veterinario, general]
-          description: Tipo de calendario a filtrar
+          description: Tipo de calendario a filtrar (alternativa a incluirlo en el cuerpo)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: date-time
+                  description: Fecha de inicio del período
+                end:
+                  type: string
+                  format: date-time
+                  description: Fecha de fin del período
+                calendar_type:
+                  type: string
+                  enum: [estetico, veterinario, general]
+                  description: Tipo de calendario a filtrar
+            example:
+              start: "2025-04-01T00:00:00"
+              end: "2025-04-02T23:59:59"
+              calendar_type: "veterinario"
       responses:
         '200':
           description: Lista de eventos obtenida exitosamente

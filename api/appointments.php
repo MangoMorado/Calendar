@@ -32,13 +32,17 @@ try {
     apiResponse(false, 'Error de autenticación: ' . $e->getMessage(), null, 401);
 }
 
-// Método GET para obtener citas
+// Manejar solicitudes GET para obtener eventos
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
-        // Obtener parámetros
-        $startDate = $_GET['start'] ?? null;
-        $endDate = $_GET['end'] ?? null;
-        $calendarType = $_GET['calendar_type'] ?? null;
+        // Primero verificar si hay datos JSON en el cuerpo
+        $jsonData = file_get_contents('php://input');
+        $bodyParams = json_decode($jsonData, true) ?: [];
+        
+        // Obtener parámetros de la URL o del cuerpo JSON, priorizando el cuerpo
+        $startDate = $bodyParams['start'] ?? $_GET['start'] ?? null;
+        $endDate = $bodyParams['end'] ?? $_GET['end'] ?? null;
+        $calendarType = $bodyParams['calendar_type'] ?? $_GET['calendar_type'] ?? null;
         
         // Obtener citas
         $appointments = getAppointments($startDate, $endDate, $calendarType);
