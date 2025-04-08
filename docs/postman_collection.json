@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "1234-5678-abcd-efgh",
 		"name": "Mundo Animal API",
-		"description": "Colección de endpoints para el sistema de gestión de citas de Mundo Animal",
+		"description": "Colección de endpoints para el sistema de gestión de citas de Mundo Animal con autenticación JWT",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -10,7 +10,7 @@
 			"name": "Auth",
 			"item": [
 				{
-					"name": "Login",
+					"name": "Obtener Token JWT",
 					"event": [
 						{
 							"listen": "test",
@@ -18,8 +18,9 @@
 								"exec": [
 									"if (pm.response.code === 200) {",
 									"    var jsonData = pm.response.json();",
-									"    if (jsonData.session_id) {",
-									"        pm.collectionVariables.set('session_id', jsonData.session_id);",
+									"    if (jsonData.data && jsonData.data.token) {",
+									"        pm.collectionVariables.set('jwt_token', jsonData.data.token);",
+									"        console.log('Token JWT guardado: ' + jsonData.data.token);",
 									"    }",
 									"}"
 								],
@@ -28,284 +29,414 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "basic",
-							"basic": [
-								{
-									"key": "password",
-									"value": "{{password}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{email}}",
-									"type": "string"
-								}
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{email}}\",\n    \"password\": \"{{password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/token.php",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"token.php"
 							]
 						},
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "http://localhost/Calendar/api/auth.php",
-							"protocol": "http",
-							"host": ["localhost"],
-							"path": ["Calendar", "api", "auth.php"]
-						}
+						"description": "Genera un token JWT para autenticación"
 					}
 				}
 			]
 		},
 		{
-			"name": "Ping",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost/Calendar/api/ping.php",
-					"protocol": "http",
-					"host": ["localhost"],
-					"path": ["Calendar", "api", "ping.php"]
+			"name": "Sistema",
+			"item": [
+				{
+					"name": "Ping",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ping.php",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ping.php"
+							]
+						},
+						"description": "Verifica si la API está disponible"
+					}
 				}
-			}
+			]
 		},
 		{
-			"name": "Obtener Eventos",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost/Calendar/api/appointments.php?action=get_events&start=2024-03-28T00:00:00&end=2024-03-29T23:59:59&calendar_type=estetico",
-					"protocol": "http",
-					"host": ["localhost"],
-					"path": ["Calendar", "api", "appointments.php"],
-					"query": [
-						{
-							"key": "action",
-							"value": "get_events"
+			"name": "Citas",
+			"item": [
+				{
+					"name": "Obtener Eventos",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
 						},
-						{
-							"key": "start",
-							"value": "2024-03-28T00:00:00"
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/appointments.php?start=2024-03-28T00:00:00&end=2024-03-29T23:59:59&calendar_type=estetico",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"appointments.php"
+							],
+							"query": [
+								{
+									"key": "start",
+									"value": "2024-03-28T00:00:00"
+								},
+								{
+									"key": "end",
+									"value": "2024-03-29T23:59:59"
+								},
+								{
+									"key": "calendar_type",
+									"value": "estetico"
+								}
+							]
 						},
-						{
-							"key": "end",
-							"value": "2024-03-29T23:59:59"
-						},
-						{
-							"key": "calendar_type",
-							"value": "estetico"
-						}
-					]
-				}
-			}
-		},
-		{
-			"name": "Crear Cita",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "formdata",
-					"formdata": [
-						{
-							"key": "action",
-							"value": "create",
-							"type": "text"
-						},
-						{
-							"key": "title",
-							"value": "Consulta de rutina",
-							"type": "text"
-						},
-						{
-							"key": "description",
-							"value": "Revisión general del paciente",
-							"type": "text"
-						},
-						{
-							"key": "start_time",
-							"value": "2024-03-28T10:00:00",
-							"type": "text"
-						},
-						{
-							"key": "end_time",
-							"value": "2024-03-28T11:00:00",
-							"type": "text"
-						},
-						{
-							"key": "calendar_type",
-							"value": "veterinario",
-							"type": "text"
-						},
-						{
-							"key": "all_day",
-							"value": "false",
-							"type": "text"
-						},
-						{
-							"key": "user_id",
-							"value": "1",
-							"type": "text"
-						}
-					]
+						"description": "Obtiene eventos del calendario para un rango de fechas"
+					}
 				},
-				"url": {
-					"raw": "http://localhost/Calendar/api/appointments.php",
-					"protocol": "http",
-					"host": ["localhost"],
-					"path": ["Calendar", "api", "appointments.php"]
-				}
-			}
-		},
-		{
-			"name": "Actualizar Cita",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "formdata",
-					"formdata": [
-						{
-							"key": "action",
-							"value": "update",
-							"type": "text"
+				{
+					"name": "Crear Cita",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
 						},
-						{
-							"key": "id",
-							"value": "123",
-							"type": "text"
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Consulta de rutina\",\n    \"description\": \"Revisión general del paciente\",\n    \"start_time\": \"2024-03-28T10:00:00\",\n    \"end_time\": \"2024-03-28T11:00:00\",\n    \"calendar_type\": \"veterinario\",\n    \"all_day\": false,\n    \"user_id\": 1\n}"
 						},
-						{
-							"key": "title",
-							"value": "Consulta de rutina - Actualizada",
-							"type": "text"
+						"url": {
+							"raw": "{{base_url}}/appointments.php",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"appointments.php"
+							]
 						},
-						{
-							"key": "start_time",
-							"value": "2024-03-28T11:00:00",
-							"type": "text"
-						},
-						{
-							"key": "end_time",
-							"value": "2024-03-28T12:00:00",
-							"type": "text"
-						}
-					]
+						"description": "Crea una nueva cita"
+					}
 				},
-				"url": {
-					"raw": "http://localhost/Calendar/api/appointments.php",
-					"protocol": "http",
-					"host": ["localhost"],
-					"path": ["Calendar", "api", "appointments.php"]
-				}
-			}
-		},
-		{
-			"name": "Eliminar Cita",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "formdata",
-					"formdata": [
-						{
-							"key": "action",
-							"value": "delete",
-							"type": "text"
+				{
+					"name": "Actualizar Cita",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
 						},
-						{
-							"key": "id",
-							"value": "123",
-							"type": "text"
-						}
-					]
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 123,\n    \"title\": \"Consulta de rutina - Actualizada\",\n    \"description\": \"Revisión general del paciente\",\n    \"start_time\": \"2024-03-28T11:00:00\",\n    \"end_time\": \"2024-03-28T12:00:00\",\n    \"calendar_type\": \"veterinario\",\n    \"all_day\": false,\n    \"user_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/appointments.php",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"appointments.php"
+							]
+						},
+						"description": "Actualiza una cita existente"
+					}
 				},
-				"url": {
-					"raw": "http://localhost/Calendar/api/appointments.php",
-					"protocol": "http",
-					"host": ["localhost"],
-					"path": ["Calendar", "api", "appointments.php"]
-				}
-			}
-		},
-		{
-			"name": "Obtener Detalles de Cita",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost/Calendar/api/get_appointment.php?id=123",
-					"protocol": "http",
-					"host": ["localhost"],
-					"path": ["Calendar", "api", "get_appointment.php"],
-					"query": [
-						{
-							"key": "id",
-							"value": "123"
-						}
-					]
-				}
-			}
-		},
-		{
-			"name": "Obtener Todas las Notas",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost/Calendar/api/notes.php?action=get_notes",
-					"protocol": "http",
-					"host": ["localhost"],
-					"path": ["Calendar", "api", "notes.php"],
-					"query": [
-						{
-							"key": "action",
-							"value": "get_notes"
-						}
-					]
-				}
-			}
-		},
-		{
-			"name": "Obtener Nota Específica",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost/Calendar/api/notes.php?action=get_note&id=123",
-					"protocol": "http",
-					"host": ["localhost"],
-					"path": ["Calendar", "api", "notes.php"],
-					"query": [
-						{
-							"key": "action",
-							"value": "get_note"
+				{
+					"name": "Eliminar Cita",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
 						},
-						{
-							"key": "id",
-							"value": "123"
-						}
-					]
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/appointments.php?id=123",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"appointments.php"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "123"
+								}
+							]
+						},
+						"description": "Elimina una cita existente"
+					}
+				},
+				{
+					"name": "Obtener Detalles de Cita",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/get_appointment.php?id=123",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"get_appointment.php"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "123"
+								}
+							]
+						},
+						"description": "Obtiene los detalles de una cita específica"
+					}
 				}
-			}
+			]
+		},
+		{
+			"name": "Notas",
+			"item": [
+				{
+					"name": "Obtener Todas las Notas",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/notes.php",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notes.php"
+							]
+						},
+						"description": "Obtiene todas las notas del usuario autenticado"
+					}
+				},
+				{
+					"name": "Obtener Nota Específica",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/notes.php?id=123",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notes.php"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "123"
+								}
+							]
+						},
+						"description": "Obtiene una nota específica por ID"
+					}
+				},
+				{
+					"name": "Crear Nota",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Nueva nota\",\n    \"content\": \"Contenido de la nota\",\n    \"type\": \"nota\",\n    \"visibility\": \"solo_yo\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/notes.php",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notes.php"
+							]
+						},
+						"description": "Crea una nueva nota"
+					}
+				},
+				{
+					"name": "Actualizar Nota",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 123,\n    \"title\": \"Nota actualizada\",\n    \"content\": \"Contenido actualizado\",\n    \"type\": \"sugerencia\",\n    \"visibility\": \"todos\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/notes.php",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notes.php"
+							]
+						},
+						"description": "Actualiza una nota existente"
+					}
+				},
+				{
+					"name": "Eliminar Nota",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/notes.php?id=123",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notes.php"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "123"
+								}
+							]
+						},
+						"description": "Elimina una nota existente"
+					}
+				}
+			]
 		}
 	],
 	"auth": {
-		"type": "apikey",
-		"apikey": [
+		"type": "bearer",
+		"bearer": [
 			{
-				"key": "value",
-				"value": "{{session_id}}",
-				"type": "string"
-			},
-			{
-				"key": "key",
-				"value": "PHPSESSID",
-				"type": "string"
-			},
-			{
-				"key": "in",
-				"value": "cookie",
+				"key": "token",
+				"value": "{{jwt_token}}",
 				"type": "string"
 			}
 		]
@@ -328,6 +459,11 @@
 	],
 	"variable": [
 		{
+			"key": "base_url",
+			"value": "http://localhost/Calendar/api",
+			"type": "string"
+		},
+		{
 			"key": "email",
 			"value": "tu@email.com",
 			"type": "string"
@@ -338,7 +474,7 @@
 			"type": "string"
 		},
 		{
-			"key": "session_id",
+			"key": "jwt_token",
 			"value": "",
 			"type": "string"
 		}

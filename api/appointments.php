@@ -3,11 +3,13 @@
 require_once '../config/database.php';
 require_once '../includes/functions.php';
 require_once '../includes/auth.php';
+require_once '../includes/api/jwt.php';
 
 // Configurar headers CORS y JSON
+// En producción, reemplazar * por los dominios específicos permitidos
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Allow-Credentials: true');
 header('Content-Type: application/json; charset=utf-8');
 
@@ -17,253 +19,205 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Verificar que el usuario esté autenticado
+// Verificar autenticación usando JWT
 try {
-    requireAuth();
-} catch (Exception $e) {
-    http_response_code(401);
-    echo json_encode([
-        'success' => false,
-        'message' => 'No autorizado: ' . $e->getMessage()
-    ]);
-    exit;
-}
-
-// Manejar solicitudes GET para obtener eventos
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    if (isset($_GET['action']) && $_GET['action'] === 'get_events') {
-        try {
-            // Obtener las citas
-            $startDate = isset($_GET['start']) ? $_GET['start'] : null;
-            $endDate = isset($_GET['end']) ? $_GET['end'] : null;
-            $calendarType = isset($_GET['calendar_type']) ? $_GET['calendar_type'] : null;
-            
-            $appointments = getAppointments($startDate, $endDate, $calendarType);
-            $events = [];
-            
-            foreach ($appointments as $appointment) {
-                // Convertir el valor de all_day a booleano para JavaScript
-                $isAllDay = isset($appointment['all_day']) && ($appointment['all_day'] == 1);
-                
-                // Determinar el color según el usuario (si existe) o usar el color por defecto
-                $color = !empty($appointment['user_color']) ? $appointment['user_color'] : '#0d6efd';
-                
-                $events[] = [
-                    'id' => $appointment['id'],
-                    'title' => $appointment['title'],
-                    'start' => $appointment['start_time'],
-                    'end' => $appointment['end_time'],
-                    'description' => $appointment['description'],
-                    'backgroundColor' => $color,
-                    'borderColor' => $color,
-                    'allDay' => $isAllDay,
-                    'extendedProps' => [
-                        'calendarType' => $appointment['calendar_type'],
-                        'description' => $appointment['description'],
-                        'user_id' => $appointment['user_id'],
-                        'user' => $appointment['user'] ?? 'Sin asignar',
-                        'user_color' => $color
-                    ]
-                ];
-            }
-            
-            // Limpiar cualquier buffer previo
-            if (ob_get_length()) ob_clean();
-            
-            // Codificar y enviar el JSON
-            echo json_encode([
-                'success' => true,
-                'data' => $events
-            ]);
-            exit;
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                'success' => false,
-                'message' => 'Error al obtener eventos: ' . $e->getMessage()
-            ]);
-            exit;
-        }
-    }
+    $payload = requireJWTAuth();
+    $currentUserId = $payload['user_id'] ?? null;
+    $userRole = $payload['role'] ?? '';
     
-    echo json_encode(['success' => false, 'message' => 'Acción no reconocida']);
-    exit;
+    if (!$currentUserId) {
+        apiResponse(false, 'Usuario no identificado', null, 401);
+    }
+} catch (Exception $e) {
+    apiResponse(false, 'Error de autenticación: ' . $e->getMessage(), null, 401);
 }
 
-// Verificar el método de solicitud para POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['success' => false, 'message' => 'Método no permitido']);
-    exit;
-}
-
-// Obtener la acción solicitada
-$action = isset($_POST['action']) ? $_POST['action'] : '';
-
-// Manejar las diferentes acciones
-switch ($action) {
-    case 'create':
-        // Validar campos requeridos
-        if (empty($_POST['title']) || empty($_POST['start_time']) || empty($_POST['end_time'])) {
-            echo json_encode(['success' => false, 'message' => 'Faltan campos requeridos']);
-            exit;
+// Método GET para obtener citas
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    try {
+        // Obtener parámetros
+        $startDate = $_GET['start'] ?? null;
+        $endDate = $_GET['end'] ?? null;
+        $calendarType = $_GET['calendar_type'] ?? null;
+        
+        // Obtener citas
+        $appointments = getAppointments($startDate, $endDate, $calendarType);
+        $events = [];
+        
+        foreach ($appointments as $appointment) {
+            // Convertir el valor de all_day a booleano para JavaScript
+            $isAllDay = isset($appointment['all_day']) && ($appointment['all_day'] == 1);
+            
+            // Determinar el color según el usuario (si existe) o usar el color por defecto
+            $color = !empty($appointment['user_color']) ? $appointment['user_color'] : '#0d6efd';
+            
+            $events[] = [
+                'id' => $appointment['id'],
+                'title' => $appointment['title'],
+                'start' => $appointment['start_time'],
+                'end' => $appointment['end_time'],
+                'description' => $appointment['description'],
+                'backgroundColor' => $color,
+                'borderColor' => $color,
+                'allDay' => $isAllDay,
+                'extendedProps' => [
+                    'calendarType' => $appointment['calendar_type'],
+                    'description' => $appointment['description'],
+                    'user_id' => $appointment['user_id'],
+                    'user' => $appointment['user'] ?? 'Sin asignar',
+                    'user_color' => $color
+                ]
+            ];
         }
         
-        // Obtener datos del formulario
-        $title = $_POST['title'];
-        $description = isset($_POST['description']) ? $_POST['description'] : '';
-        $startTime = $_POST['start_time'];
-        $endTime = $_POST['end_time'];
-        $calendarType = isset($_POST['calendar_type']) ? $_POST['calendar_type'] : 'estetico';
+        // Limpiar cualquier buffer previo
+        if (ob_get_length()) ob_clean();
         
-        // Manejo específico del user_id para asegurar que se guarde correctamente
+        // Enviar respuesta
+        apiResponse(true, 'Eventos obtenidos correctamente', $events);
+    } catch (Exception $e) {
+        apiResponse(false, 'Error al obtener eventos: ' . $e->getMessage(), null, 500);
+    }
+}
+
+// Método POST para crear una cita
+else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        // Verificar si hay cuerpo JSON
+        $jsonData = file_get_contents('php://input');
+        $data = json_decode($jsonData, true);
+        
+        // Si no hay datos JSON, usar los datos de formulario tradicionales
+        if (!$data) {
+            $data = $_POST;
+        }
+        
+        // Validar campos requeridos
+        if (empty($data['title']) || empty($data['start_time']) || empty($data['end_time'])) {
+            apiResponse(false, 'Faltan campos requeridos: título, hora de inicio y hora de fin', null, 400);
+        }
+        
+        // Obtener datos
+        $title = $data['title'];
+        $description = $data['description'] ?? '';
+        $startTime = $data['start_time'];
+        $endTime = $data['end_time'];
+        $calendarType = $data['calendar_type'] ?? 'general';
+        
+        // Manejo del user_id
         $userId = null;
-        if (isset($_POST['user_id']) && $_POST['user_id'] !== '' && $_POST['user_id'] !== '0') {
-            $userId = intval($_POST['user_id']);
+        if (isset($data['user_id']) && $data['user_id'] !== '' && $data['user_id'] !== '0') {
+            $userId = intval($data['user_id']);
             // Validar que sea un ID válido
             if ($userId <= 0) {
                 $userId = null;
             }
         }
         
-        // Para debug
-        error_log("USER ID en create: " . var_export($userId, true));
-        
-        // Ya no impedimos el uso de 'general' como tipo de calendario
-        // Comentado: if ($calendarType === 'general') {
-        //     $calendarType = 'estetico';
-        // }
-        
-        // Para checkbox, verificar si existe, ya que solo se envía cuando está marcado
-        $allDay = isset($_POST['all_day']) ? ($_POST['all_day'] === 'on' || $_POST['all_day'] === '1' || $_POST['all_day'] === 'true') : false;
+        // Para checkbox, verificar si existe
+        $allDay = isset($data['all_day']) ? 
+            ($data['all_day'] === 'on' || $data['all_day'] === '1' || 
+             $data['all_day'] === 'true' || $data['all_day'] === true) : false;
         
         // Crear la cita
         $appointmentId = createAppointment($title, $description, $startTime, $endTime, $calendarType, $allDay, $userId);
         
         if ($appointmentId) {
-            echo json_encode([
-                'success' => true, 
-                'message' => 'Cita creada correctamente',
-                'id' => $appointmentId
-            ]);
+            apiResponse(true, 'Cita creada correctamente', ['id' => $appointmentId]);
         } else {
-            echo json_encode([
-                'success' => false, 
-                'message' => 'Error al crear la cita'
-            ]);
+            apiResponse(false, 'Error al crear la cita', null, 500);
         }
-        break;
+    } catch (Exception $e) {
+        apiResponse(false, 'Error al procesar la solicitud: ' . $e->getMessage(), null, 500);
+    }
+}
+
+// Método PUT para actualizar una cita
+else if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+    try {
+        // Obtener datos JSON
+        $jsonData = file_get_contents('php://input');
+        $data = json_decode($jsonData, true);
         
-    case 'update':
-        // Validar campos requeridos
-        if (empty($_POST['id']) || empty($_POST['title']) || empty($_POST['start_time']) || empty($_POST['end_time'])) {
-            echo json_encode(['success' => false, 'message' => 'Faltan campos requeridos']);
-            exit;
+        if (!$data) {
+            apiResponse(false, 'Datos inválidos', null, 400);
         }
         
-        // Obtener datos del formulario
-        $id = $_POST['id'];
-        $title = $_POST['title'];
-        $description = isset($_POST['description']) ? $_POST['description'] : '';
-        $startTime = $_POST['start_time'];
-        $endTime = $_POST['end_time'];
-        $calendarType = isset($_POST['calendar_type']) ? $_POST['calendar_type'] : null;
+        // Verificar ID y campos requeridos
+        if (!isset($data['id']) || empty($data['title']) || empty($data['start_time']) || empty($data['end_time'])) {
+            apiResponse(false, 'Faltan campos requeridos: id, título, hora de inicio y hora de fin', null, 400);
+        }
         
-        // Manejo específico del user_id para asegurar que se guarde correctamente
+        // Obtener datos
+        $id = intval($data['id']);
+        $title = $data['title'];
+        $description = $data['description'] ?? '';
+        $startTime = $data['start_time'];
+        $endTime = $data['end_time'];
+        $calendarType = $data['calendar_type'] ?? null;
+        
+        // Manejo del user_id
         $userId = null;
-        if (isset($_POST['user_id']) && $_POST['user_id'] !== '' && $_POST['user_id'] !== '0') {
-            $userId = intval($_POST['user_id']);
-            // Validar que sea un ID válido
+        if (isset($data['user_id']) && $data['user_id'] !== '' && $data['user_id'] !== '0') {
+            $userId = intval($data['user_id']);
             if ($userId <= 0) {
                 $userId = null;
             }
         }
         
-        // Para debug
-        error_log("USER ID en update: " . var_export($userId, true) . " para la cita ID: " . $id);
-        
-        // Ya no impedimos el uso de 'general' como tipo de calendario
-        // Comentado: if ($calendarType === 'general') {
-        //     $calendarType = 'estetico';
-        // }
-        
-        // Para checkbox, verificar si existe, ya que solo se envía cuando está marcado
-        $allDay = isset($_POST['all_day']) ? ($_POST['all_day'] === 'on' || $_POST['all_day'] === '1' || $_POST['all_day'] === 'true') : false;
+        // Para checkbox, verificar si existe
+        $allDay = isset($data['all_day']) ? 
+            ($data['all_day'] === 'on' || $data['all_day'] === '1' || 
+             $data['all_day'] === 'true' || $data['all_day'] === true) : false;
         
         // Actualizar la cita
         $success = updateAppointment($id, $title, $description, $startTime, $endTime, $calendarType, $allDay, $userId);
         
         if ($success) {
-            echo json_encode([
-                'success' => true, 
-                'message' => 'Cita actualizada correctamente'
-            ]);
+            apiResponse(true, 'Cita actualizada correctamente');
         } else {
-            echo json_encode([
-                'success' => false, 
-                'message' => 'Error al actualizar la cita'
-            ]);
+            apiResponse(false, 'Error al actualizar la cita', null, 500);
         }
-        break;
+    } catch (Exception $e) {
+        apiResponse(false, 'Error al procesar la solicitud: ' . $e->getMessage(), null, 500);
+    }
+}
+
+// Método DELETE para eliminar una cita
+else if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+    try {
+        // Verificar si hay ID en la URL
+        $id = isset($_GET['id']) ? intval($_GET['id']) : null;
         
-    case 'delete':
-        // Validar campos requeridos
-        if (empty($_POST['id'])) {
-            echo json_encode(['success' => false, 'message' => 'ID de cita no proporcionado']);
-            exit;
+        // Si no hay ID en la URL, intentar obtenerlo del cuerpo
+        if (!$id) {
+            $jsonData = file_get_contents('php://input');
+            $data = json_decode($jsonData, true);
+            $id = $data['id'] ?? null;
         }
         
-        // Obtener ID de la cita
-        $id = $_POST['id'];
+        if (!$id) {
+            apiResponse(false, 'ID de cita no proporcionado', null, 400);
+        }
+        
+        // Obtener datos de la cita antes de eliminarla para el historial
+        $appointmentToDelete = getAppointmentById($id);
         
         // Eliminar la cita
-        $success = deleteAppointment($id);
+        $result = deleteAppointment($id);
         
-        if ($success) {
-            echo json_encode([
-                'success' => true, 
-                'message' => 'Cita eliminada correctamente'
-            ]);
+        if ($result) {
+            apiResponse(true, 'Cita eliminada correctamente');
         } else {
-            echo json_encode([
-                'success' => false, 
-                'message' => 'Error al eliminar la cita'
-            ]);
+            apiResponse(false, 'Error al eliminar la cita', null, 500);
         }
-        break;
-        
-    case 'update_date':
-        // Validar campos requeridos
-        if (empty($_POST['appointmentId']) || empty($_POST['start']) || empty($_POST['end'])) {
-            echo json_encode(['success' => false, 'message' => 'Faltan campos requeridos']);
-            exit;
-        }
-        
-        // Obtener datos
-        $id = $_POST['appointmentId'];
-        $startTime = $_POST['start'];
-        $endTime = $_POST['end'];
-        
-        // Actualizar solo las fechas de la cita
-        $success = updateAppointmentDates($id, $startTime, $endTime);
-        
-        if ($success) {
-            echo json_encode([
-                'success' => true, 
-                'message' => 'Fechas de cita actualizadas correctamente'
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false, 
-                'message' => 'Error al actualizar las fechas de la cita'
-            ]);
-        }
-        break;
-        
-    default:
-        echo json_encode([
-            'success' => false, 
-            'message' => 'Acción no reconocida'
-        ]);
-        break;
+    } catch (Exception $e) {
+        apiResponse(false, 'Error al procesar la solicitud: ' . $e->getMessage(), null, 500);
+    }
+}
+
+// Método no permitido
+else {
+    apiResponse(false, 'Método no permitido', null, 405);
 }
 ?> 

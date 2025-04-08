@@ -126,4 +126,56 @@ El sistema utiliza una arquitectura modular que facilita el mantenimiento y la e
 
 ## Licencia
 
-Este proyecto está licenciado bajo [MIT License] 
+Este proyecto está licenciado bajo [MIT License]
+
+## API REST con JWT
+
+La aplicación ahora incluye una API RESTful mejorada que utiliza JSON Web Tokens (JWT) para la autenticación, lo que proporciona una forma más segura y estándar de autenticar solicitudes API.
+
+### Características de la API
+
+- Autenticación mediante tokens JWT
+- Endpoints RESTful que siguen las convenciones estándar HTTP
+- Respuestas JSON consistentes y bien estructuradas
+- Documentación completa mediante OpenAPI
+
+### Endpoints principales
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/token.php` | Genera un token JWT para autenticación |
+| GET | `/api/appointments.php` | Obtiene citas del calendario |
+| POST | `/api/appointments.php` | Crea una nueva cita |
+| PUT | `/api/appointments.php` | Actualiza una cita existente |
+| DELETE | `/api/appointments.php` | Elimina una cita existente |
+| GET | `/api/notes.php` | Obtiene notas del usuario |
+| POST | `/api/notes.php` | Crea una nueva nota |
+| PUT | `/api/notes.php` | Actualiza una nota existente |
+| DELETE | `/api/notes.php` | Elimina una nota existente |
+
+### Ejemplo de uso
+
+Para autenticarse y obtener un token JWT:
+
+```bash
+curl -X POST http://localhost/Calendar/api/token.php \
+  -H "Content-Type: application/json" \
+  -d '{"email":"usuario@ejemplo.com", "password":"contraseña"}'
+```
+
+Para hacer una solicitud autenticada:
+
+```bash
+curl -X GET http://localhost/Calendar/api/appointments.php \
+  -H "Authorization: Bearer TU_TOKEN_JWT"
+```
+
+### Documentación completa
+
+La documentación completa de la API está disponible en formato OpenAPI en el archivo `docs/openapi.yaml`. También se proporciona una colección de Postman en `docs/postman_collection.json` para facilitar las pruebas.
+
+Para importar la colección en Postman:
+1. Abre Postman
+2. Haz clic en "Importar"
+3. Selecciona el archivo `docs/postman_collection.json`
+4. Configura las variables de entorno según sea necesario 
