@@ -132,11 +132,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Cargar todas las notas del usuario
 function loadNotes() {
-    fetch('api/notes.php?action=get_notes')
-        .then(response => response.json())
+    fetchWithAuthAndErrorHandling('api/notes.php?action=get_notes')
         .then(data => {
             if (data.success) {
-                allNotes = data.notes;
+                allNotes = data.data.notes;
                 renderNotes();
             } else {
                 document.getElementById('notesList').innerHTML = `
@@ -280,8 +279,7 @@ function loadNoteDetail(noteId) {
     `;
     
     // Cargar detalle mediante API
-    fetch(`api/notes.php?action=get_note&id=${noteId}`)
-        .then(response => response.json())
+    fetchWithAuthAndErrorHandling(`api/notes.php?action=get_note&id=${noteId}`)
         .then(data => {
             if (data.success) {
                 renderNoteDetail(data.note, data.can_edit);

@@ -28,7 +28,39 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $jsonData = file_get_contents('php://input');
 $data = json_decode($jsonData, true);
 
-// Verificar si los datos son válidos
+// Verificar si hay sesión PHP activa primero
+session_start();
+if (isset($_SESSION['user']) && !empty($_SESSION['user'])) {
+    // Usar datos de la sesión en lugar de los enviados en el cuerpo
+    $user = $_SESSION['user'];
+    
+    // Generar payload para el token
+    $payload = [
+        'user_id' => $user['id'],
+        'email' => $user['email'],
+        'name' => $user['name'],
+        'role' => $user['role']
+    ];
+    
+    // Generar token con tiempo de expiración de 24 horas
+    $token = generateJWT($payload, 86400); // 24 horas
+    
+    // Datos para la respuesta
+    $responseData = [
+        'token' => $token,
+        'expires_in' => 86400,
+        'user' => [
+            'id' => $user['id'],
+            'name' => $user['name'],
+            'email' => $user['email'],
+            'role' => $user['role']
+        ]
+    ];
+    
+    apiResponse(true, 'Autenticación exitosa mediante sesión', $responseData);
+}
+
+// Si no hay sesión, verificar si los datos son válidos para autenticación
 if (!$data || !isset($data['email']) || !isset($data['password'])) {
     apiResponse(false, 'Datos incompletos o inválidos', null, 400);
 }

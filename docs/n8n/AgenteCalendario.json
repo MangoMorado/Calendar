@@ -1,210 +1,331 @@
 {
-    "nodes": [
-      {
-        "parameters": {
-          "inputSource": "passthrough"
-        },
-        "id": "c055762a-8fe7-4141-a639-df2372f30060",
-        "typeVersion": 1.1,
-        "name": "When Executed by Another Workflow",
-        "type": "n8n-nodes-base.executeWorkflowTrigger",
-        "position": [
-          260,
-          340
-        ]
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
       },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://mundoanimal.mangomorado.com/api/token.php",
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "{\n    \"email\": \"mundi@mangomorado.com\",\n    \"password\": \"jpZr7DRZ\"\n}",
-          "options": {}
-        },
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          560,
-          180
-        ],
-        "id": "c99c0830-3c17-4911-8a8a-97c58c161e39",
-        "name": "Login"
-      },
-      {
-        "parameters": {
-          "promptType": "define",
-          "text": "chatInput",
-          "hasOutputParser": true,
-          "options": {
-            "systemMessage": "# ROL\nEres un **asistente virtual de calendario** de Mundo Animal. Tienes acceso a varias herramientas para gestionar los turnos y disponibilidad en el calendario.\n\n**Fecha y hora actual:** `{{ $now.setZone('America/Bogota') }}`\nEl día de la semana es: `{{ $now.setZone('America/Bogota').weekdayLong }}`\n\n---\n\n# CONTEXTO\n- Tu única interlocutora es **MundiBot**, quien transmite la información a los pacientes. **Nunca le respondas.**\n- La clínica atiende **de lunes a sábado, de 08:00 a 18:00 horas**.\n- No se pueden agendar turnos con menos de **3 horas de anticipación**.\n- Cada turno dura **1 hora**, salvo que se indique otra duración específica.\n\n---\n\n# TAREAS Y REGLAS\n\n## 1. Ver disponibilidad horaria\n- Usá la herramienta **\"Ver Disponibilidad\"**.\n- La herramienta devuelve las citas agendadas, solo se puede agendar 2 citas de manera simultanea.\n- En caso de no haber disponibilidad, intentá con el dia siguiente.\n\n**Ejemplo de respuesta de la tool:**\nTe devolvera un JSON con los horarios OCUPADOS, estos son los horarios que no se pueden agendar:\n\n{\n    \"success\": true,\n    \"message\": \"Eventos obtenidos correctamente\",\n    \"data\": [\n        {\n            \"id\": 63,\n            \"title\": \"AN REVALORACION LUNA - LIZ CANCHILA \",\n            \"start\": \"2025-04-02 15:00:00\",\n            \"end\": \"2025-04-02 15:20:00\",\n            \"description\": \"Revaloración luna \",\n            \"backgroundColor\": \"#e8268e\",\n            \"borderColor\": \"#e8268e\",\n            \"allDay\": false,\n            \"extendedProps\": {\n                \"calendarType\": \"veterinario\",\n                \"description\": \"Revaloración luna \",\n                \"user_id\": 5,\n                \"user\": \"Alejandra Noguera\",\n                \"user_color\": \"#e8268e\"\n            }\n        }\n    ]\n}\n\n---",
-            "maxIterations": 3
-          }
-        },
-        "type": "@n8n/n8n-nodes-langchain.agent",
-        "typeVersion": 1.8,
-        "position": [
-          1000,
-          340
-        ],
-        "id": "93701e91-7990-4900-b6c4-f0a8b2dc5a6c",
-        "name": "AI Agent"
-      },
-      {
-        "parameters": {
-          "model": {
-            "__rl": true,
-            "mode": "list",
-            "value": "gpt-4o-mini"
-          },
-          "options": {}
-        },
-        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-        "typeVersion": 1.2,
-        "position": [
-          800,
-          540
-        ],
-        "id": "46c7347a-adeb-4a3d-a8f1-a5c3f0ea9e0f",
-        "name": "OpenAI Chat Model",
-        "credentials": {
-          "openAiApi": {
-            "id": "lXYqrNQbtsJxj5Dt",
-            "name": "OpenAi account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "toolDescription": "Usa esta tool para consultar la agenda disponible",
-          "url": "https://mundoanimal.mangomorado.com/api/appointments.php",
-          "sendHeaders": true,
-          "parametersHeaders": {
-            "values": [
-              {
-                "name": "Authorization",
-                "valueProvider": "fieldValue",
-                "value": "=Bearer {{ $json.data.token }}"
-              }
-            ]
-          },
-          "sendBody": true,
-          "parametersBody": {
-            "values": [
-              {
-                "name": "start"
-              },
-              {
-                "name": "end"
-              }
-            ]
-          }
-        },
-        "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
-        "typeVersion": 1.1,
-        "position": [
-          1000,
-          600
-        ],
-        "id": "ba9aad94-a989-4045-b374-cd8841ae4094",
-        "name": "Consultar Agenda"
-      },
-      {
-        "parameters": {
-          "assignments": {
-            "assignments": [
-              {
-                "id": "91524544-acb5-4ff0-beb4-1757775cada9",
-                "name": "=chatInput",
-                "value": "={{ $json.query }}",
-                "type": "string"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
-        "position": [
-          560,
-          340
-        ],
-        "id": "44b841c7-9c57-47c5-af7f-519d7c95c18e",
-        "name": "Edit Fields"
-      }
-    ],
-    "connections": {
-      "When Executed by Another Workflow": {
-        "main": [
-          [
-            {
-              "node": "Login",
-              "type": "main",
-              "index": 0
-            },
-            {
-              "node": "Edit Fields",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Login": {
-        "main": [
-          [
-            {
-              "node": "AI Agent",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "OpenAI Chat Model": {
-        "ai_languageModel": [
-          [
-            {
-              "node": "AI Agent",
-              "type": "ai_languageModel",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Consultar Agenda": {
-        "ai_tool": [
-          [
-            {
-              "node": "AI Agent",
-              "type": "ai_tool",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Edit Fields": {
-        "main": [
-          [
-            {
-              "node": "AI Agent",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      }
-    },
-    "pinData": {
-      "When Executed by Another Workflow": [
-        {
-          "query": "{\"title\":\"Consulta | 1094276510 (Oreo)\",\"description\":\"Consulta para Oreo, un gato de 3 años que no quiere comer.\",\"start_time\":\"2025-04-08T17:00:00\",\"end_time\":\"2025-04-08T17:30:00\",\"calendar_type\":\"veterinario\",\"all_day\":false,\"user_id\":10}",
-          "user_id": 0
-        }
+      "id": "c055762a-8fe7-4141-a639-df2372f30060",
+      "typeVersion": 1.1,
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        220,
+        320
       ]
     },
-    "meta": {
-      "templateCredsSetupCompleted": true,
-      "instanceId": "492216dba7ead6f870ef4169d10664ed44bcfc662cf5e8e4907018d95ca96a66"
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://mundoanimal.mangomorado.com/api/token.php",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n    \"email\": \"mundi@mangomorado.com\",\n    \"password\": \"jpZr7DRZ\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        560,
+        320
+      ],
+      "id": "c99c0830-3c17-4911-8a8a-97c58c161e39",
+      "name": "Login"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# Mundibot dice:\n**title:** {{ $('Datos Mundibot').item.json.title }}\n\n**description:** {{ $('Datos Mundibot').item.json.description }}\n\n**calendar_type:** {{ $('Datos Mundibot').item.json.calendar_type }}\n\n**Slots disponibles:**\n{{ $json.data }}\n\n**Fecha y hora actual:** `{{ $now.setZone('America/Bogota').format('yyyy-MM-dd HH:mm:ss') }}`\nEl día de la semana es: `{{ $now.setZone('America/Bogota').weekdayLong }}`\n",
+        "options": {
+          "systemMessage": "=# ROL\nEres un **asistente virtual de calendario** de Mundo Animal. Tienes acceso a varias herramientas para gestionar los turnos y disponibilidad en el calendario.\n\n---\n\n# IMPORTANTE\n- Tu única interlocutora es **MundiBot**, quien transmite la información a los pacientes.\n- La clínica atiende **de lunes a sábado, de 08:00 a 18:00 horas**.\n- No se pueden agendar turnos con menos de **1 hora de anticipación**.\n- Cada turno dura **1 hora**, salvo que se indique otra duración específica.\n- NO se puede agendar citas a fechas pasadas \"antes del tiempo\"\n\n---\n\n# TAREAS Y REGLAS\n\n## 1. Ver disponibilidad horaria\n- Ver los horarios disponibles ( {{ $json.data }} )\n- Debes proporcionar los siguientes parámetros obligatorios:\n  - `start`: Fecha de inicio en formato `yyyy-MM-dd HH:mm:ss` \n  - `end`: Fecha de fin en formato `yyyy-MM-dd HH:mm:ss`\n  - `calendar_type`: Tipo de calendario (`veterinario`, `estetico` o `general`)\n  - `slot_duration`: Duración del turno en segundos (opcional, por defecto 3600 = 1 hora)\n\n- La API te devolverá directamente los ESPACIOS DISPONIBLES, no las citas ocupadas.\n- El horario de atención es de 08:00 a 18:00 horas de lunes a sábado.\n- El sistema permite hasta 2 citas simultáneas (en el mismo horario) y la API ya hace este cálculo.\n- Presenta a MundiBot una lista organizada de horarios DISPONIBLES en el formato hora:minutos.\n- En caso de no haber disponibilidad en el día consultado, sugiere el siguiente día disponible.\n\n**Instrucciones para procesar la respuesta:**\n1. ver los horarios disponibles\n2. Cada objeto en el array `data` contiene campos `start` y `end` con los horarios disponibles.\n3. El campo `available_spots` indica cuántas citas más se pueden agendar en ese horario.\n4. Formato de respuesta: \"{{ $now.setZone('America/Bogota').format('yyyy-MM-dd HH:mm:ss') }}\" para cada espacio disponible.\n\n**Ejemplo de solicitud a la API:**\n```\nstart: 2025-04-02 00:00:00\nend: 2025-04-02 23:59:59\ncalendar_type: veterinario\n```\n\n**Ejemplo de respuesta de la herramienta:**\n```json\n{\n    \"success\": true,\n    \"message\": \"Horarios disponibles obtenidos correctamente\",\n    \"data\": [\n        {\n            \"start\": \"2025-04-02 08:00:00\",\n            \"end\": \"2025-04-02 09:00:00\",\n            \"available_spots\": 2\n        },\n        {\n            \"start\": \"2025-04-02 09:00:00\",\n            \"end\": \"2025-04-02 10:00:00\",\n            \"available_spots\": 2\n        },\n        {\n            \"start\": \"2025-04-02 10:00:00\",\n            \"end\": \"2025-04-02 11:00:00\", \n            \"available_spots\": 1\n        }\n    ]\n}\n```\n\n**Ejemplo de tu respuesta procesada para MundiBot:**\n\"Para el 02/04/2025 tenemos estos horarios disponibles:\n- 08:00 a 09:00\n- 09:00 a 10:00\n- 10:00 a 11:00\n- 11:00 a 12:00\n- 12:00 a 13:00\n- 13:00 a 14:00\n- 14:00 a 15:00\n- 16:00 a 17:00\n- 17:00 a 18:00\"\n\nNota: Si falta un horario en la lista (como 15:00 a 16:00 en este ejemplo), significa que no hay espacios disponibles en ese horario.\n\n---\n\n# 🔄 Flujo de Interacción con MundiBot\n\n## Proceso de comunicación entre agentes\n\n1. **Recepción de solicitudes:**\n   - Recibirás solicitudes de MundiBot, los datos llegarán a través del objeto `{{ $('Datos Mundibot').item.json }}` que contiene title, description y calendar_type.\n   - Recibiras tambien la agenda disponible (**Slots disponibles:** {{ $json.data }})\n\n2. **Respuesta a MundiBot:**\n   - Tu respuesta debe ser clara, concisa y directa para que MundiBot pueda transmitirla correctamente.\n   - Mantén el formato estandarizado: \"Para el DD/MM/YYYY tenemos estos horarios disponibles:\" seguido de la lista de horarios.\n   - Cuando no hay disponibilidad, ofrece una alternativa: \"No hay disponibilidad para DD/MM/YYYY. El siguiente día disponible es DD/MM/YYYY con estos horarios: ...\".\n\n4. **Ejemplos de respuestas para situaciones específicas:**\n\n   - **Disponibilidad encontrada:**\n     ```\n     Para el 02/04/2025 tenemos estos horarios disponibles:\n     - 08:00 a 09:00\n     - 09:00 a 10:00\n     - 10:00 a 11:00\n     ```\n\n   - **Sin disponibilidad en la fecha solicitada:**\n     ```\n     No hay disponibilidad para el 02/04/2025. El siguiente día disponible es 03/04/2025 con estos horarios:\n     - 09:00 a 10:00\n     - 11:00 a 12:00\n     - 14:00 a 15:00\n     ```\n\n   - **Fuera de horario de atención:**\n     ```\n     La fecha seleccionada (01/05/2025) corresponde a un día festivo/domingo. Nuestro horario de atención es de lunes a sábado de 08:00 a 18:00 horas. El siguiente día disponible es 02/05/2025.\n     ```\n\nEs crucial mantener la comunicación precisa y directa, ya que toda información será transmitida al cliente final a través de MundiBot.\n\n---",
+          "maxIterations": 2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        1000,
+        320
+      ],
+      "id": "93701e91-7990-4900-b6c4-f0a8b2dc5a6c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "timeout": 600000,
+          "maxRetries": 2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        520
+      ],
+      "id": "46c7347a-adeb-4a3d-a8f1-a5c3f0ea9e0f",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "lXYqrNQbtsJxj5Dt",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://mundoanimal.mangomorado.com/api/availability.php",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.data.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "start",
+              "value": "={{ $('Datos Mundibot').item.json.start }}"
+            },
+            {
+              "name": "end",
+              "value": "={{ $('Datos Mundibot').item.json.end }}"
+            },
+            {
+              "name": "calendar_type",
+              "value": "={{ $('Datos Mundibot').item.json.calendar_type }}"
+            },
+            {
+              "name": "slot_duration",
+              "value": "3600"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        320
+      ],
+      "id": "ff91a1d7-3334-4375-8345-33c817daf624",
+      "name": "Agenda"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e6aa3f95-690f-4809-84ec-7f4f62ec9ec8",
+              "name": "title",
+              "value": "={{ JSON.parse($json.query).title }}",
+              "type": "string"
+            },
+            {
+              "id": "0c7199c3-f13b-45a8-be8f-e566c487f206",
+              "name": "description",
+              "value": "={{ JSON.parse($json.query).description }}",
+              "type": "string"
+            },
+            {
+              "id": "325da8e9-103c-47bb-b5e0-437f410c9975",
+              "name": "start",
+              "value": "={{ JSON.parse($json.query).start_time.split('T')[0] + ' 00:00:00' }}",
+              "type": "string"
+            },
+            {
+              "id": "f8f6902f-87fa-4d89-b1fc-3cd8212c58e3",
+              "name": "end",
+              "value": "={{ JSON.parse($json.query).start_time.split('T')[0] + ' 23:59:59' }}",
+              "type": "string"
+            },
+            {
+              "id": "6aa6e39b-ec9e-4135-94ff-6d818bdc803b",
+              "name": "calendar_type",
+              "value": "={{ JSON.parse($json.query).calendar_type }}",
+              "type": "string"
+            },
+            {
+              "id": "b2fc3117-2e2d-48d3-8196-71448c4288e4",
+              "name": "requested_start",
+              "value": "={{ JSON.parse($json.query).start_time.replace('T', ' ').substr(0, 19) }}",
+              "type": "string"
+            },
+            {
+              "id": "d5839579-22ac-4c71-b2ee-b78b6df4f4b0",
+              "name": "requested_end",
+              "value": "={{ JSON.parse($json.query).end_time.replace('T', ' ').substr(0, 19) }}",
+              "type": "string"
+            },
+            {
+              "id": "cc368151-e9b3-486b-acd7-baac1556c355",
+              "name": "all_day",
+              "value": "={{ JSON.parse($json.query).all_day }}",
+              "type": "string"
+            },
+            {
+              "id": "8bedb8dc-a9da-41b8-9145-c2e754fabd3e",
+              "name": "user_id",
+              "value": "={{ JSON.parse($json.query).user_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        380,
+        320
+      ],
+      "id": "44b841c7-9c57-47c5-af7f-519d7c95c18e",
+      "name": "Datos Mundibot"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Usa esta tool para agendar o crear citas",
+        "method": "POST",
+        "url": "https://mundoanimal.mangomorado.com/api/appointments.php",
+        "sendHeaders": true,
+        "parametersHeaders": {
+          "values": [
+            {
+              "name": "Authorization",
+              "valueProvider": "fieldValue",
+              "value": "=Bearer {{ $('Login').item.json.data.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "parametersBody": {
+          "values": [
+            {
+              "name": "title"
+            },
+            {
+              "name": "description"
+            },
+            {
+              "name": "start_time"
+            },
+            {
+              "name": "end_time"
+            },
+            {
+              "name": "calendar_type"
+            },
+            {
+              "name": "all_day",
+              "valueProvider": "fieldValue",
+              "value": "false"
+            },
+            {
+              "name": "user_id",
+              "valueProvider": "fieldValue",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        1160,
+        540
+      ],
+      "id": "87235306-c183-4fd7-9a1d-8530f1f6e731",
+      "name": "Crear Cita"
     }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Datos Mundibot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Login": {
+      "main": [
+        [
+          {
+            "node": "Agenda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agenda": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Datos Mundibot": {
+      "main": [
+        [
+          {
+            "node": "Login",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Cita": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "query": "{\"title\":\"Consulta general | Sergio Veloza (Sol)\",\"description\":\"Dueño: Sergio Veloza. Mascota: Sol (gato). Razón: No quiere comer.\",\"start_time\":\"2025-04-08T17:00:00\",\"end_time\":\"2025-04-08T18:00:00\",\"calendar_type\":\"general\",\"all_day\":false,\"user_id\":10}",
+        "user_id": 0
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "492216dba7ead6f870ef4169d10664ed44bcfc662cf5e8e4907018d95ca96a66"
   }
+}

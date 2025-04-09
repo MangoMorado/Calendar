@@ -14,21 +14,30 @@
 - Dashboard con estadisticas 🥭
 - Integración con Google Calendar
 - Integracion con Vetesoft (https://app.vetesoft.org/login/)
-- Integración con el chatbot
 - Organizar el sistema bajo el modelo MVC
 - Agregar sistema de pruebas automatizadas
 - Documentación extendida
-- Agregar nuevo Sugerencias, panel de sugerencias de nuevas caracteristicas o reporte de errores
 - Agregar sistema de personalización "Skins"
 - Agregar sistema de configuración modular, pensando la app para varios tipos de usuarios (debe modificarse, nombre de la app, footer, logo, favicon)
 - Agregar Favicons
 - Mejoras para PWA
 - Crear estructura de clases para modelos principales (User, Appointment)
-- Agregar configuración de color en el menu de configuraciones
 - carga lazy de eventos para calendarios con muchas citas
+- Sistema de notificaciones por WhatsApp (mañana tienes estas citas)
+
+## Versión 0.0.5.9 - 🏓 Ping-Pong
+- Implementación de autenticación JWT para APIs
+- Nuevos archivos de utilidades JavaScript para manejo de tokens
+  - `assets/js/helpers/api.js`: Manejo de peticiones API con autenticación
+  - `assets/js/helpers/auth.js`: Gestión de token JWT (obtención, renovación y eliminación)
+- Actualización de `api/token.php` para soportar autenticación basada en sesión
+- Renovación automática de tokens expirados
+- Implementación de manejo de errores 401 (No autorizado)
+- Integración de tokens JWT en la libreta de notas
 
 ## Versión 0.0.5.8 - 🏓 Ping-Pong
 - Nuevos endpoints para la API
+- Estado actual de los prompts y los flujos de n8n en Docs
 
 ## Versión 0.0.5.7 - 🏓 Ping-Pong
 - Actualización de la API (consultas del calendario)

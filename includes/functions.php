@@ -20,8 +20,9 @@ function getAppointments($startDate, $endDate, $calendarType = null) {
     // Añadir orden por fecha a todas las consultas
     $orderBy = " ORDER BY a.start_time ASC";
     
-    // Cuando startDate y endDate son null, obtenemos todas las citas o filtramos solo por tipo
+    // Preparar la consulta SQL según los parámetros
     if ($startDate === null || $endDate === null) {
+        // Cuando startDate y endDate son null, obtenemos todas las citas o filtramos solo por tipo
         if ($calendarType && $calendarType !== 'general') {
             $sql = $baseQuery . " WHERE a.calendar_type = ?" . $orderBy;
             $stmt = mysqli_prepare($conn, $sql);
@@ -35,7 +36,6 @@ function getAppointments($startDate, $endDate, $calendarType = null) {
         $sql = $baseQuery . " WHERE a.start_time >= ? AND a.start_time <= ?";
         
         // Si se especifica un tipo de calendario, filtrar por ese tipo
-        // Para el calendario general, obtener todas las citas
         if ($calendarType && $calendarType !== 'general') {
             $sql .= " AND a.calendar_type = ?";
             $sql .= $orderBy;
@@ -43,13 +43,23 @@ function getAppointments($startDate, $endDate, $calendarType = null) {
             $stmt = mysqli_prepare($conn, $sql);
             mysqli_stmt_bind_param($stmt, "sss", $startDate, $endDate, $calendarType);
         } else {
+            // Para el calendario general, obtener todas las citas en el rango
             $sql .= $orderBy;
             $stmt = mysqli_prepare($conn, $sql);
             mysqli_stmt_bind_param($stmt, "ss", $startDate, $endDate);
         }
     }
     
-    mysqli_stmt_execute($stmt);
+    // Ejecutar la consulta
+    if (!$stmt) {
+        error_log("Error en la preparación de la consulta: " . mysqli_error($conn));
+        return []; // Devolver array vacío en caso de error
+    }
+    
+    if (!mysqli_stmt_execute($stmt)) {
+        error_log("Error al ejecutar consulta de citas: " . mysqli_stmt_error($stmt));
+        return [];
+    }
     
     $result = mysqli_stmt_get_result($stmt);
     $appointments = [];

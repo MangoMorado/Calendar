@@ -12,7 +12,7 @@ import {
     handleEventDrop, 
     handleEventResize 
 } from './modules/events.js';
-import { showNotification } from './modules/ui.js';
+import { showNotification, openModal, closeModal } from './modules/ui.js';
 import { loadUsersIntoSelect } from './modules/modal.js';
 
 // Funciones auxiliares para verificación
@@ -316,10 +316,3 @@ import('./modules/events.js').then(module => {
 }).catch(error => {
     console.error('Error al cargar el módulo de eventos:', error);
 });
-
-// Función auxiliar para cerrar el modal
-function closeModal(modal) {
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}

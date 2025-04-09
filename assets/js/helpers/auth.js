@@ -1,0 +1,102 @@
+/**
+ * Utilidades para manejar la autenticación JWT
+ */
+
+/**
+ * Solicita y almacena un token JWT basado en la sesión actual
+ * 
+ * @returns {Promise} - Promesa que se resuelve cuando el token ha sido obtenido y almacenado
+ */
+function storeAuthToken() {
+    // Verificar si ya tenemos un token
+    if (localStorage.getItem('jwt_token')) {
+        return Promise.resolve(true);
+    }
+    
+    // Solicitar un nuevo token a la API
+    return fetch('api/token.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        // Enviamos usuario y contraseña anónimos ya que la sesión PHP maneja la autenticación
+        // El backend debería verificar la sesión PHP en lugar de estas credenciales
+        body: JSON.stringify({
+            email: 'session_auth',
+            password: 'session_auth'
+        }),
+        credentials: 'include'  // Importante: incluir cookies para que PHP reconozca la sesión
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Almacenar el token JWT
+            localStorage.setItem('jwt_token', data.data.token);
+            console.log('Token JWT obtenido y almacenado correctamente');
+            return true;
+        } else {
+            console.error('Error al obtener token JWT:', data.message);
+            return false;
+        }
+    })
+    .catch(error => {
+        console.error('Error de conexión al obtener token JWT:', error);
+        return false;
+    });
+}
+
+/**
+ * Verifica si el usuario tiene un token JWT almacenado
+ * 
+ * @returns {boolean} - true si hay un token
+ */
+function isAuthenticatedWithJWT() {
+    return !!localStorage.getItem('jwt_token');
+}
+
+/**
+ * Elimina el token JWT (parte del proceso de logout)
+ */
+function clearAuthToken() {
+    localStorage.removeItem('jwt_token');
+    console.log('Token JWT eliminado');
+}
+
+/**
+ * Maneja respuestas con error 401 (No autorizado)
+ * 
+ * @param {Response} response - La respuesta HTTP
+ * @returns {Promise} - Promesa con la respuesta procesada
+ */
+function handle401Error(response) {
+    if (response.status === 401) {
+        console.warn('Token JWT no válido o expirado. Intentando renovar...');
+        
+        // Eliminar el token actual
+        clearAuthToken();
+        
+        // Intentar obtener un nuevo token
+        return storeAuthToken()
+            .then(success => {
+                if (success) {
+                    console.log('Token renovado exitosamente. Reintentando petición...');
+                    // Aquí podrías reintentar la petición original
+                    return { success: false, message: 'Token renovado. Por favor, reintenta la operación.' };
+                } else {
+                    console.error('No se pudo renovar el token. Redireccionando al login...');
+                    window.location.href = '/login.php';
+                    return { success: false, message: 'Sesión expirada. Redireccionando...' };
+                }
+            });
+    }
+    
+    return response.json();
+}
+
+// Ejecutar automáticamente si la página está en estado "complete"
+if (document.readyState === 'complete') {
+    storeAuthToken();
+} else {
+    // Si no está completa, esperar a que cargue
+    window.addEventListener('load', storeAuthToken);
+} 
