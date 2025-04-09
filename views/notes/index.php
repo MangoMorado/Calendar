@@ -80,6 +80,10 @@ $extraStyles = '
     </div>
 </div>
 
+<!-- Scripts de autenticación y API -->
+<script src="assets/js/helpers/auth.js"></script>
+<script src="assets/js/helpers/api.js"></script>
+
 <script>
 // Variables globales
 let currentFilter = 'all';
@@ -88,8 +92,11 @@ let activeNoteId = null;
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', function() {
-    // Cargar las notas al cargar la página
-    loadNotes();
+    // Inicializar la autenticación JWT al cargar la página
+    window.auth.storeAuthToken().then(() => {
+        // Cargar las notas después de obtener el token
+        loadNotes();
+    });
     
     // Configurar eventos para filtros
     document.querySelectorAll('.btn-filter').forEach(button => {
@@ -132,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Cargar todas las notas del usuario
 function loadNotes() {
-    fetchWithAuthAndErrorHandling('api/notes.php?action=get_notes')
+    window.fetchWithAuthAndErrorHandling('api/notes.php?action=get_notes')
         .then(data => {
             if (data.success) {
                 allNotes = data.data.notes;
@@ -279,10 +286,13 @@ function loadNoteDetail(noteId) {
     `;
     
     // Cargar detalle mediante API
-    fetchWithAuthAndErrorHandling(`api/notes.php?action=get_note&id=${noteId}`)
+    window.fetchWithAuthAndErrorHandling(`api/notes.php?action=get_note&id=${noteId}`)
         .then(data => {
-            if (data.success) {
-                renderNoteDetail(data.note, data.can_edit);
+            console.log('Respuesta API:', data); // Para depuración
+            
+            if (data.success && data.data && data.data.note) {
+                // La nota está dentro de data.data.note
+                renderNoteDetail(data.data.note, data.data.can_edit);
             } else {
                 document.getElementById('noteDetail').innerHTML = `
                     <div class="alert alert-warning">
@@ -303,78 +313,111 @@ function loadNoteDetail(noteId) {
 
 // Renderizar detalle de nota
 function renderNoteDetail(note, canEdit) {
-    // Formatear fechas
-    const createdDate = new Date(note.created_at);
-    const formattedCreatedDate = createdDate.toLocaleString('es-ES');
+    console.log('Renderizando nota:', note); // Para depuración
     
-    let updatedInfo = '';
-    if (note.created_at !== note.updated_at) {
-        const updatedDate = new Date(note.updated_at);
-        const formattedUpdatedDate = updatedDate.toLocaleString('es-ES');
-        updatedInfo = `
-            <div class="meta-item updated">
-                <i class="bi bi-clock-history"></i>
-                <span>Actualizado: ${formattedUpdatedDate}</span>
+    // Verificar que note sea un objeto válido
+    if (!note || typeof note !== 'object') {
+        console.error('La nota no es un objeto válido:', note);
+        document.getElementById('noteDetail').innerHTML = `
+            <div class="alert alert-warning">
+                La nota no contiene datos válidos.
+            </div>
+        `;
+        return;
+    }
+    
+    try {
+        // Formatear fechas con manejo de errores
+        let formattedCreatedDate = 'Fecha desconocida';
+        if (note.created_at) {
+            try {
+                const createdDate = new Date(note.created_at);
+                formattedCreatedDate = createdDate.toLocaleString('es-ES');
+            } catch (e) {
+                console.error('Error al formatear fecha de creación:', e);
+            }
+        }
+        
+        let updatedInfo = '';
+        if (note.created_at && note.updated_at && note.created_at !== note.updated_at) {
+            try {
+                const updatedDate = new Date(note.updated_at);
+                const formattedUpdatedDate = updatedDate.toLocaleString('es-ES');
+                updatedInfo = `
+                    <div class="meta-item updated">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Actualizado: ${formattedUpdatedDate}</span>
+                    </div>
+                `;
+            } catch (e) {
+                console.error('Error al formatear fecha de actualización:', e);
+            }
+        }
+        
+        // Configurar iconos y textos según tipo y visibilidad (con valores por defecto)
+        const typeLabels = {
+            'nota': 'Nota',
+            'sugerencia': 'Sugerencia',
+            'otro': 'Otro'
+        };
+        const typeLabelText = (note.type && typeLabels[note.type]) ? typeLabels[note.type] : 'Nota';
+        
+        const visibilityIcon = (note.visibility === 'todos') ? 'bi-eye' : 'bi-eye-slash';
+        const visibilityText = (note.visibility === 'todos') ? 'Visible para todos' : 'Solo yo';
+        
+        // Crear HTML para el detalle con comprobaciones para evitar undefined
+        let html = `
+            <div class="note-header">
+                <h3>${note.title || 'Sin título'}</h3>
+                <div class="note-actions">
+                    ${canEdit ? `
+                        <a href="notes.php?action=edit&id=${note.id}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                        <button class="btn btn-sm btn-danger" onclick="showDeleteModal(${note.id})">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
+                    ` : ''}
+                    <a href="notes.php?action=view&id=${note.id}" class="btn btn-sm btn-secondary">
+                        <i class="bi bi-box-arrow-up-right"></i> Ver página completa
+                    </a>
+                </div>
+            </div>
+            
+            <div class="note-meta-info">
+                <div class="meta-item type ${note.type || 'nota'}">
+                    <i class="bi bi-tag"></i>
+                    <span>${typeLabelText}</span>
+                </div>
+                <div class="meta-item author">
+                    <i class="bi bi-person"></i>
+                    <span>Por: ${note.author_name || 'Usuario'}</span>
+                </div>
+                <div class="meta-item date">
+                    <i class="bi bi-calendar"></i>
+                    <span>Creado: ${formattedCreatedDate}</span>
+                </div>
+                ${updatedInfo}
+                <div class="meta-item visibility ${note.visibility || 'solo_yo'}">
+                    <i class="bi ${visibilityIcon}"></i>
+                    <span>${visibilityText}</span>
+                </div>
+            </div>
+            
+            <div class="note-content">
+                ${(note.content || 'Sin contenido').replace(/\n/g, '<br>')}
+            </div>
+        `;
+        
+        document.getElementById('noteDetail').innerHTML = html;
+    } catch (error) {
+        console.error('Error al renderizar detalle de nota:', error);
+        document.getElementById('noteDetail').innerHTML = `
+            <div class="alert alert-danger">
+                Error al procesar los datos de la nota: ${error.message}
             </div>
         `;
     }
-    
-    // Configurar iconos y textos según tipo y visibilidad
-    const typeLabels = {
-        'nota': 'Nota',
-        'sugerencia': 'Sugerencia',
-        'otro': 'Otro'
-    };
-    const typeLabelText = typeLabels[note.type] || 'Nota';
-    
-    const visibilityIcon = note.visibility === 'todos' ? 'bi-eye' : 'bi-eye-slash';
-    const visibilityText = note.visibility === 'todos' ? 'Visible para todos' : 'Solo yo';
-    
-    // Crear HTML para el detalle
-    let html = `
-        <div class="note-header">
-            <h3>${note.title}</h3>
-            <div class="note-actions">
-                ${canEdit ? `
-                    <a href="notes.php?action=edit&id=${note.id}" class="btn btn-sm btn-primary">
-                        <i class="bi bi-pencil"></i> Editar
-                    </a>
-                    <button class="btn btn-sm btn-danger" onclick="showDeleteModal(${note.id})">
-                        <i class="bi bi-trash"></i> Eliminar
-                    </button>
-                ` : ''}
-                <a href="notes.php?action=view&id=${note.id}" class="btn btn-sm btn-secondary">
-                    <i class="bi bi-box-arrow-up-right"></i> Ver página completa
-                </a>
-            </div>
-        </div>
-        
-        <div class="note-meta-info">
-            <div class="meta-item type ${note.type}">
-                <i class="bi bi-tag"></i>
-                <span>${typeLabelText}</span>
-            </div>
-            <div class="meta-item author">
-                <i class="bi bi-person"></i>
-                <span>Por: ${note.author_name}</span>
-            </div>
-            <div class="meta-item date">
-                <i class="bi bi-calendar"></i>
-                <span>Creado: ${formattedCreatedDate}</span>
-            </div>
-            ${updatedInfo}
-            <div class="meta-item visibility ${note.visibility}">
-                <i class="bi ${visibilityIcon}"></i>
-                <span>${visibilityText}</span>
-            </div>
-        </div>
-        
-        <div class="note-content">
-            ${note.content.replace(/\n/g, '<br>')}
-        </div>
-    `;
-    
-    document.getElementById('noteDetail').innerHTML = html;
 }
 
 // Mostrar modal de confirmación de eliminación

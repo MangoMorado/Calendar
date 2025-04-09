@@ -4,7 +4,6 @@
 - Estado de las citas segun codigo de color (Verde, Amarillo: reprogramar, Rojo)
 - Sistema de cola de citas, que el sistema reciba citas del chatbot y que un humano las programe
 - Mejoras de seguridad
-- Agregar Dias laborales a la configuración
 - Bloquear agendas (impedir agendar bajo condiciones personalizables)
 - Agregar sistema CRUD de Calendarios
 - Agregar sistema de notificación por WhatsApp / Correo electronico
@@ -24,6 +23,10 @@
 - Crear estructura de clases para modelos principales (User, Appointment)
 - carga lazy de eventos para calendarios con muchas citas
 - Sistema de notificaciones por WhatsApp (mañana tienes estas citas)
+
+## Versión 0.0.6 - ⚙️ Settings Update
+- Agregar Dias laborales a la configuración
+- Corrección de bugs conocidos
 
 ## Versión 0.0.5.9 - 🏓 Ping-Pong
 - Implementación de autenticación JWT para APIs

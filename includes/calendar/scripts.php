@@ -27,7 +27,8 @@ function getCalendarScripts($eventsJson, $settings, $calendarType) {
         slotMinTime: "<?php echo $settings['slotMinTime']; ?>",
         slotMaxTime: "<?php echo $settings['slotMaxTime']; ?>",
         slotDuration: "<?php echo $settings['slotDuration']; ?>",
-        timeFormat: "12h"
+        timeFormat: "<?php echo $settings['timeFormat']; ?>",
+        businessDays: <?php echo json_encode($settings['businessDays'] ?? [1, 2, 3, 4, 5]); ?>
     };
     window.currentCalendarType = "<?php echo $calendarType; ?>";
 </script>

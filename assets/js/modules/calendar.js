@@ -72,10 +72,14 @@ export function initCalendar(elements, config, state) {
             navLinks: !isMobile, // Desactivar enlaces de navegación en móviles
             dayMaxEvents: isMobile ? 2 : true, // Limitar número de eventos visibles en móviles
             businessHours: {
-                daysOfWeek: [1, 2, 3, 4, 5], // Lunes a Viernes
+                daysOfWeek: settings.businessDays || [1, 2, 3, 4, 5], // Usar días hábiles configurados
                 startTime: settings.businessHours?.startTime || '08:00',
                 endTime: settings.businessHours?.endTime || '18:00'
             },
+            
+            // Ocultar días no laborables
+            hiddenDays: Array.from({length: 7}, (_, i) => i)
+                .filter(day => !settings.businessDays || !settings.businessDays.includes(day)),
             
             // Formato de visualización de la hora
             eventTimeFormat: {

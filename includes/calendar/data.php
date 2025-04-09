@@ -88,6 +88,14 @@ function getCalendarSettings() {
     $settings['slotDuration'] = $settings['slotDuration'] ?? '00:30:00';
     $settings['timeFormat'] = $settings['timeFormat'] ?? '12h';
     
+    // Procesar los días hábiles 
+    if (isset($settings['businessDays'])) {
+        $settings['businessDays'] = json_decode($settings['businessDays'], true);
+    } else {
+        // Por defecto, lunes a viernes (1-5)
+        $settings['businessDays'] = [1, 2, 3, 4, 5];
+    }
+    
     return $settings;
 }
 

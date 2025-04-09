@@ -2,12 +2,15 @@
  * Utilidades para manejar la autenticación JWT
  */
 
+// Crear objeto auth solo si no existe ya
+window.auth = window.auth || {};
+
 /**
  * Solicita y almacena un token JWT basado en la sesión actual
  * 
  * @returns {Promise} - Promesa que se resuelve cuando el token ha sido obtenido y almacenado
  */
-function storeAuthToken() {
+window.auth.storeAuthToken = window.auth.storeAuthToken || function() {
     // Verificar si ya tenemos un token
     if (localStorage.getItem('jwt_token')) {
         return Promise.resolve(true);
@@ -43,24 +46,24 @@ function storeAuthToken() {
         console.error('Error de conexión al obtener token JWT:', error);
         return false;
     });
-}
+};
 
 /**
  * Verifica si el usuario tiene un token JWT almacenado
  * 
  * @returns {boolean} - true si hay un token
  */
-function isAuthenticatedWithJWT() {
+window.auth.isAuthenticatedWithJWT = window.auth.isAuthenticatedWithJWT || function() {
     return !!localStorage.getItem('jwt_token');
-}
+};
 
 /**
  * Elimina el token JWT (parte del proceso de logout)
  */
-function clearAuthToken() {
+window.auth.clearAuthToken = window.auth.clearAuthToken || function() {
     localStorage.removeItem('jwt_token');
     console.log('Token JWT eliminado');
-}
+};
 
 /**
  * Maneja respuestas con error 401 (No autorizado)
@@ -68,15 +71,15 @@ function clearAuthToken() {
  * @param {Response} response - La respuesta HTTP
  * @returns {Promise} - Promesa con la respuesta procesada
  */
-function handle401Error(response) {
+window.auth.handle401Error = window.auth.handle401Error || function(response) {
     if (response.status === 401) {
         console.warn('Token JWT no válido o expirado. Intentando renovar...');
         
         // Eliminar el token actual
-        clearAuthToken();
+        window.auth.clearAuthToken();
         
         // Intentar obtener un nuevo token
-        return storeAuthToken()
+        return window.auth.storeAuthToken()
             .then(success => {
                 if (success) {
                     console.log('Token renovado exitosamente. Reintentando petición...');
@@ -91,12 +94,12 @@ function handle401Error(response) {
     }
     
     return response.json();
-}
+};
 
 // Ejecutar automáticamente si la página está en estado "complete"
 if (document.readyState === 'complete') {
-    storeAuthToken();
+    window.auth.storeAuthToken();
 } else {
     // Si no está completa, esperar a que cargue
-    window.addEventListener('load', storeAuthToken);
+    window.addEventListener('load', window.auth.storeAuthToken);
 } 

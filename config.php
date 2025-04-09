@@ -23,6 +23,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $slotDuration = $_POST['slotDuration'] ?? '00:30:00';
     $timeFormat = $_POST['timeFormat'] ?? '12h';
     
+    // Procesar días hábiles seleccionados
+    $businessDays = [];
+    for ($i = 0; $i <= 6; $i++) {
+        if (isset($_POST['businessDay' . $i])) {
+            $businessDays[] = $i;
+        }
+    }
+    $businessDaysJson = json_encode($businessDays);
+    
     // Validar los valores
     if (strtotime($slotMaxTime) <= strtotime($slotMinTime)) {
         $message = 'La hora máxima debe ser posterior a la hora mínima';
@@ -33,11 +42,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ('slotMinTime', ?),
                 ('slotMaxTime', ?),
                 ('slotDuration', ?),
-                ('timeFormat', ?)
+                ('timeFormat', ?),
+                ('businessDays', ?)
                 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)";
         
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssss", $slotMinTime, $slotMaxTime, $slotDuration, $timeFormat);
+        mysqli_stmt_bind_param($stmt, "sssss", $slotMinTime, $slotMaxTime, $slotDuration, $timeFormat, $businessDaysJson);
         
         if (mysqli_stmt_execute($stmt)) {
             $success = true;
@@ -61,6 +71,12 @@ $slotMinTime = $settings['slotMinTime'] ?? '00:00:00';
 $slotMaxTime = $settings['slotMaxTime'] ?? '24:00:00';
 $slotDuration = $settings['slotDuration'] ?? '00:30:00';
 $timeFormat = $settings['timeFormat'] ?? '12h';
+
+// Obtener días hábiles o establecer por defecto (lunes a viernes)
+$businessDays = isset($settings['businessDays']) ? json_decode($settings['businessDays'], true) : [1, 2, 3, 4, 5];
+if (!is_array($businessDays)) {
+    $businessDays = [1, 2, 3, 4, 5]; // Lunes a viernes por defecto
+}
 
 // Definir título de la página
 $pageTitle = 'Configuración del Sistema | Mundo Animal';
@@ -118,6 +134,37 @@ include 'includes/header.php';
                     </select>
                     <small class="form-text text-muted">Formato de visualización de las horas</small>
                 </div>
+                
+                <div class="form-group">
+                    <label>Días hábiles:</label>
+                    <div class="business-days-container">
+                        <table class="table table-borderless business-days-table">
+                            <tbody>
+                                <tr>
+                                    <?php 
+                                    $days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+                                    for ($i = 0; $i < 7; $i++) {
+                                        // Ajustar el índice para que domingo sea 0, lunes 1, etc.
+                                        $dayIndex = $i + 1;
+                                        if ($dayIndex == 7) $dayIndex = 0;
+                                        $checked = in_array($dayIndex, $businessDays) ? 'checked' : '';
+                                    ?>
+                                        <td class="business-day-cell">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="businessDay<?php echo $dayIndex; ?>" 
+                                                      name="businessDay<?php echo $dayIndex; ?>" <?php echo $checked; ?>>
+                                                <label class="form-check-label" for="businessDay<?php echo $dayIndex; ?>">
+                                                    <?php echo $days[$i]; ?>
+                                                </label>
+                                            </div>
+                                        </td>
+                                    <?php } ?>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <small class="form-text text-muted">Selecciona los días que se mostrarán en el calendario</small>
+                </div>
             </div>
 
             <div class="form-actions">
@@ -128,6 +175,169 @@ include 'includes/header.php';
         </form>
     </div>
 </div>
+
+<style>
+.business-days-container {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 10px;
+    background-color: #f9f9f9;
+}
+
+.business-days-table {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.business-day-cell {
+    padding: 10px;
+    text-align: center;
+    width: 14.28%; /* 100% / 7 días */
+}
+
+.form-check {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.form-check-input {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 8px;
+    transform: scale(1.2);
+}
+
+.form-check-label {
+    margin-left: 0;
+    font-weight: 500;
+}
+
+/* Estilos responsivos para pantallas pequeñas */
+@media (max-width: 767px) {
+    .business-days-table {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    
+    .business-days-table tbody, .business-days-table tr {
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+    
+    .business-day-cell {
+        flex: 0 0 33.33%;
+        max-width: 33.33%;
+        padding: 8px 4px;
+    }
+}
+
+/* Estilos para pantallas muy pequeñas */
+@media (max-width: 480px) {
+    .business-day-cell {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+.quick-selection-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.quick-selection-buttons .btn {
+    min-width: 80px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.quick-selection-buttons .btn:hover {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+</style>
+
+<!-- Scripts para mejorar la experiencia de usuario en la selección de días -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Añadir efecto visual al hacer hover sobre las celdas de días
+    const dayCells = document.querySelectorAll('.business-day-cell');
+    dayCells.forEach(cell => {
+        cell.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#e9ecef';
+        });
+        cell.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+        
+        // Permitir hacer clic en toda la celda para marcar/desmarcar
+        cell.addEventListener('click', function(e) {
+            // Si se hizo clic directamente en el input o label, no hacer nada adicional
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'LABEL') {
+                return;
+            }
+            
+            // Encontrar el checkbox dentro de esta celda y cambiar su estado
+            const checkbox = this.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+        });
+    });
+    
+    // Botones rápidos para seleccionar/deseleccionar grupos comunes
+    function addQuickSelectionButtons() {
+        const container = document.querySelector('.business-days-container');
+        const quickButtons = document.createElement('div');
+        quickButtons.className = 'quick-selection-buttons';
+        quickButtons.innerHTML = `
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="selectWeekdays">L-V</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="selectWeekend">S-D</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="selectAll">Todos</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">Ninguno</button>
+        `;
+        
+        container.insertBefore(quickButtons, container.firstChild);
+        
+        // Agregar eventos a los botones
+        document.getElementById('selectWeekdays').addEventListener('click', function() {
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`businessDay${i}`).checked = true;
+            }
+            document.getElementById('businessDay0').checked = false;
+            document.getElementById('businessDay6').checked = false;
+        });
+        
+        document.getElementById('selectWeekend').addEventListener('click', function() {
+            document.getElementById('businessDay0').checked = true;
+            document.getElementById('businessDay6').checked = true;
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`businessDay${i}`).checked = false;
+            }
+        });
+        
+        document.getElementById('selectAll').addEventListener('click', function() {
+            for (let i = 0; i <= 6; i++) {
+                document.getElementById(`businessDay${i}`).checked = true;
+            }
+        });
+        
+        document.getElementById('deselectAll').addEventListener('click', function() {
+            for (let i = 0; i <= 6; i++) {
+                document.getElementById(`businessDay${i}`).checked = false;
+            }
+        });
+    }
+    
+    addQuickSelectionButtons();
+});
+</script>
 
 <?php
 // Incluir el footer

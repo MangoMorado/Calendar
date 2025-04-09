@@ -3,6 +3,9 @@
  * Incluye funcionalidad para agregar tokens JWT automáticamente
  */
 
+// Crear objeto api solo si no existe ya
+window.api = window.api || {};
+
 /**
  * Realiza una petición fetch con autenticación JWT
  * 
@@ -10,7 +13,7 @@
  * @param {object} options - Opciones de fetch (method, body, etc)
  * @returns {Promise} - Promesa con la respuesta del fetch
  */
-function fetchWithAuth(url, options = {}) {
+window.api.fetchWithAuth = window.api.fetchWithAuth || function(url, options = {}) {
     // Obtener el token JWT del almacenamiento local
     const token = localStorage.getItem('jwt_token');
     
@@ -38,7 +41,7 @@ function fetchWithAuth(url, options = {}) {
         ...options,
         headers
     });
-}
+};
 
 /**
  * Realiza una petición fetch con autenticación JWT y manejo de errores 401
@@ -47,29 +50,33 @@ function fetchWithAuth(url, options = {}) {
  * @param {object} options - Opciones de fetch (method, body, etc)
  * @returns {Promise} - Promesa con la respuesta procesada
  */
-function fetchWithAuthAndErrorHandling(url, options = {}) {
-    return fetchWithAuth(url, options)
+window.api.fetchWithAuthAndErrorHandling = window.api.fetchWithAuthAndErrorHandling || function(url, options = {}) {
+    return window.api.fetchWithAuth(url, options)
         .then(response => {
             if (!response.ok && response.status === 401) {
                 // Si hay un error 401, utilizamos el manejador especial
-                return handle401Error(response);
+                return window.auth.handle401Error(response);
             }
             return response.json();
         });
-}
+};
 
 /**
  * Verifica si hay un token JWT válido almacenado
  * 
  * @returns {boolean} - true si hay un token almacenado
  */
-function hasValidToken() {
+window.api.hasValidToken = window.api.hasValidToken || function() {
     return !!localStorage.getItem('jwt_token');
-}
+};
 
 /**
  * Elimina el token JWT almacenado (útil para logout)
  */
-function clearAuthToken() {
+window.api.clearAuthToken = window.api.clearAuthToken || function() {
     localStorage.removeItem('jwt_token');
-} 
+};
+
+// También exportar funciones individuales para facilitar el uso (sólo si no existen ya)
+window.fetchWithAuth = window.fetchWithAuth || window.api.fetchWithAuth;
+window.fetchWithAuthAndErrorHandling = window.fetchWithAuthAndErrorHandling || window.api.fetchWithAuthAndErrorHandling; 
