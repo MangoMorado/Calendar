@@ -22,7 +22,9 @@
 - Mejoras para PWA
 - Crear estructura de clases para modelos principales (User, Appointment)
 - carga lazy de eventos para calendarios con muchas citas
-- Sistema de notificaciones por WhatsApp (mañana tienes estas citas)
+
+## Versión 0.0.6.1 - ⚙️ Settings Update
+- Se actualizo los flujos de n8n y los prompts
 
 ## Versión 0.0.6 - ⚙️ Settings Update
 - Agregar Dias laborales a la configuración

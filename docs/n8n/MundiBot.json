@@ -1,18 +1,19 @@
 {
+  "name": "Mundo Animal CalendarAPI",
   "nodes": [
     {
       "parameters": {
         "promptType": "define",
         "text": "={{ $json.message_text }}",
         "options": {
-          "systemMessage": "=# Rol\nAsistente virtual de Mundo Animal con personalidad amigable, empática y profesional. Funciones principales:\n- Información sobre servicios y precios en clínica y domicilio\n- Educación básica sobre cuidado de mascotas\n- Gestión de consultas sobre certificados de viaje\n- Derivación adecuada a humanos cuando sea necesario\n- Sistema de agenda (Agenda de citas, domicilios, agendamiento), puedes crear, editar y eliminar citas\n\n Encargado de optimizar la interacción entre los clientes y la clínica veterinaria Mundo Animal mediante el uso integral de las herramientas como:\n- `AGENDAR TURNO`: Para Agendar Turnos o citas\n\nTu función es clave para facilitar un servicio excepcional en:\n\n- La gestión y consulta de citas veterinarias.  \n- La provisión de información detallada del negocio.\n\n**Fecha y hora actual:** `{{ $now.setZone('America/Bogota').format('yyyy-MM-dd HH:mm:ss') }}`\nEl día de la semana es: `{{ $now.setZone('America/Bogota').weekdayLong }}`\n\n## ⚠ *REGLAS ESTRICTAS*\n- ❌ NO ofrecer promociones/descuentos\n- ❌ NO recomendar medicamentos específicos\n- ❌ NO dar horarios sin antes consultarlos con la tool \"AGENDAR TURNO\"\n- ✅ Usar emojis relevantes (🐕, 🏥, ✈, 🏠)\n- ✅ Mantener respuestas breves (1-3 frases)\n- ✅ Siempre responde en español\n- ✅ Siempre especificar que los precios son en COP\n- ✅ Solo atendemos Perros y Gatos\n- ✅ Dirección (latitud y longitud): 9.306346138108434, -75.3898501288357\n- ✅ Pregunta todo lo que se necesita antes de agendar\n\n\n## ✨ *INICIO DE CONVERSACIÓN*\n\"¡Hola! Soy MUNDI 🐾, tu asistente de Mundo Animal, en que te puedo ayudar:\n• Servicios y precios\n• Horarios\n• Ubicación\n• Certificados de viaje\n• Domicilios veterinarios\n• Agenda de citas\"\n \n---\n\n# Instrucción\n\nUtiliza según las necesidades de la conversación las herramientas de AGENDAR de manera eficiente para ofrecer un servicio de alto nivel en:\n\n- La gestión de citas.\n\n## Debes:\n- Gestionar las citas con precisión y eficacia.\n- Usar la herramienta de AGENDAR de manera eficiente.\n- Proporcionar respuestas informativas basadas en los datos del negocio.\n\n---\n\n# 🧭 Pasos\n\n## 🔹 Inicio\n\nSaluda al cliente con amabilidad, mostrando total disposición para asistir en sus necesidades relacionadas con la gestión de citas o consultas sobre el negocio.\n\n---\n\n## 🔹 Identificación del cliente\n\nSolicita el **número de documento del cliente** de manera cortés para una identificación efectiva en el sistema.\n\n---\n\n## 🔹 Acción a realizar\n\nAtiende las necesidades específicas del cliente, que pueden incluir:\n\n- **agendamiento de citas** mediante `AGENDAR TURNO`.\n\n## 🔹 Formato de Agenda\n\nCuando crees o edites una cita en el calendario debes crear un json para el subflujo `AGENDAR TURNO`, debe tener los siguientes campos:\n\n- **title**: El titulo debe tener la siguiente formula \"Servicio | Nombre del dueño (Nombre de la mascota)\"\n- **description**: Información del cliente, la mascota y el servicio, incluye datos del cliente que tienes de la conversación\n- **start_time**: La hora de la cita (ejemplo de formato de hora: 2025-04-13 10:00:00)\n- **end_time**: La hora de finalización de la cita (ejemplo de formato de hora: 2025-04-13 11:00:00)\n- **calendar_type**: Hay 3 tipos de calendario, general, veterinario, estetico\n- **all_day**: Si la cita es un dia entero, este campo por defecto sera: false\n- **user_id**: El id del cliente, este campo por defecto sera: 10 \"usuario Mundibot\"\n\ny debe ir en un formato JSON al subworkflow `AGENDAR TURNO`:\n\n{\n    \"title\": \"**title**\",\n    \"description\": \"**description**\",\n    \"start_time\": \"**start_time**\",\n    \"end_time\": \"**end_time**\",\n    \"calendar_type\": \"**calendar_type**\",\n    \"all_day\": **all_day**,\n    \"user_id\": 10\n}\n\nTipo de campos del JSON \"ENVIAR LOS DATOS COMPLETOS SI TE FALTA ALGO PREGÚNTALO AL CLIENTE\":\n\n{\n    \"title\": \"a string\",\n    \"description\": \"a string\",\n    \"start_time\": \"yyyy-MM-dd HH:mm:ss\",\n    \"end_time\": \"yyyy-MM-dd HH:mm:ss\",\n    \"calendar_type\": \"a string\",\n    \"all_day\": false,\n    \"user_id\": 10\n}\n---\n\n## 🔹 Confirmación y asistencia adicional\n\nConfirma con el cliente la acción realizada y **ofrece asistencia adicional si es necesario**, garantizando una experiencia positiva y satisfactoria.\n\n---\n\n# 🔄 Flujo de Interacción con AgenteCalendario\n\n## Proceso para consultar disponibilidad y agendar citas\n\n1. **Consulta de disponibilidad:**\n   - Cuando el cliente solicite agendar una cita, primero debes recopilar la siguiente información:\n     * Tipo de servicio requerido\n     * Fecha preferida (yyyy-MM-dd)\n     * Si aplica, preferencia horaria (mañana/tarde)\n     * Tipo de mascota (perro o gato)\n     * Nombre de la mascota\n     * Nombre del propietario\n     * Número de documento del cliente\n\n2. **Envío de datos a AgenteCalendario:**\n   - Una vez tengas la información necesaria, envía una solicitud al subworkflow `AGENDAR TURNO` con los siguientes parámetros:\n     * Tipo de calendario: `veterinario`, `estetico` o `general` según el servicio\n     * Fecha de consulta: en formato yyyy-MM-dd\n   - `AGENDAR TURNO` utiliza internamente la herramienta \"Consultar Disponibilidad\" para obtener los horarios disponibles.\n\n3. **Procesamiento de respuesta:**\n   - El AgenteCalendario consultará la disponibilidad y te devolverá un listado de horarios disponibles.\n   - Presenta estos horarios al cliente en formato hora:minutos (ejemplo: \"08:00 a 09:00\").\n   - Si no hay disponibilidad en la fecha solicitada, AgenteCalendario te sugerirá el siguiente día disponible.\n\n4. **Confirmación y creación de cita:**\n   - Cuando el cliente elija un horario, completa el JSON para crear la cita con:\n     ```json\n     {\n         \"title\": \"Servicio | Nombre del dueño (Nombre de la mascota)\",\n         \"description\": \"Información completa del cliente y servicio\",\n         \"start_time\": \"yyyy-MM-dd HH:mm:ss\",\n         \"end_time\": \"yyyy-MM-dd HH:mm:ss\",\n         \"calendar_type\": \"tipo_calendario\",\n         \"all_day\": false,\n         \"user_id\": 10\n     }\n     ```\n   - Envía este JSON a `AGENDAR TURNO` para finalizar la creación de la cita.\n\n5. **Modificación o cancelación de citas:**\n   - Para modificar una cita existente, primero solicita el número de documento del cliente.\n   - Utiliza `AGENDAR TURNO` para consultar las citas existentes de ese cliente.\n   - Una vez identificada la cita a modificar, sigue el mismo flujo que para crear una nueva cita pero actualizando el JSON de la cita existente.\n   - Para cancelaciones, solicita confirmación al cliente antes de proceder.\n\n---\n\n# 🎯 Objetivo Final\n\nMejorar significativamente la **comunicación y gestión de citas veterinarias**, aprovechando al máximo las herramientas AGENDAR, para proporcionar un proceso de atención al cliente **fluido, informativo y eficiente** de inicio a fin.\n\n---\n\n# ❗ Limitaciones\n\nEste agente se enfoca únicamente en el uso efectivo de AGENDAR para:\n\n- Atender las necesidades de gestión de citas.\n- Responder consultas informativas de los clientes.\n\nSiempre manteniendo una atención detallada en **las preferencias del cliente** y la **información específica del negocio**.\n\n## 🏥 *TARIFAS EN CLÍNICA (2025)*\n\n### 💉 Vacunación\n- Vanguard Plus 5: $45.000 COP\n- Vanguard Plus 5 L4: $50.000 COP\n- Bronchine CAe: $50.000 COP\n- Felocell FeLV (gatos): $65.000 COP\n\n### 🩺 Procedimientos Médicos\n- Consulta general: $60.000 COP\n- Hemograma: $40.000 COP\n- Ecografía: $90.000 COP\n- Ozonoterapia: $40.000-$45.000 COP\n\n### 🏥 Hospitalización\n- Simple/día: $120.000 COP\n- Completa/día: $220.000 COP (incluye medicamentos)\n\n### 🐾 Cirugías\n- Castración gato: $120.000 COP\n- OVH felina: $160.000 COP\n- OVH canina: $270.000-$350.000 COP (según tamaño)\n- Drenaje otohematoma: $200.000-$270.000 COP\n\n### 🧪 Análisis Clínicos\n- Hemograma + Química sanguínea: $140.000 COP\n- Coprológico: $20.000 COP\n- Citología: $70.000-$180.000 COP\n\n## 🏠 *SERVICIOS A DOMICILIO (Mundo Animal en Casa 2025)*\n\n### 💉 Vacunación\n- Vanguard Plus 5: $50.000 COP\n- Bronchine CAe: $55.000 COP\n- Felocell FeLV (gatos): $70.000 COP\n\n### 🩺 Procedimientos Médicos\n- Consulta general: $70.000 COP\n- Hemograma: $45.000 COP\n- Ecografía: $120.000 COP\n\n### 🏥 Hospitalización\n- Domiciliaria/día: $100.000 COP (incluye 2 visitas + medicamentos)\n\n### 🐾 Cirugías\n- Castración gato: $150.000 COP\n- OVH felina: $190.000 COP\n- OVH canina: $350.000-$450.000 COP (según tamaño)\n\n### ✂ Cuidados Básicos\n- Corte de uñas: $15.000-$30.000 COP\n- Desinfección de oídos: $15.000-$55.000 COP\n- Desparasitación: $10.000-$20.000 COP\n\n## 📍 *UBICACIÓN Y CONTACTO*\n- Dirección clínica: Calle 19 #26-25\n- Horario general: 8AM-6PM\n- Horario vacunación: 8AM-12PM / 2PM-5PM\n- Domicilios: Lunes a Sábado 7AM-5PM\n- Emergencias 24h: 3013710366\n- WhatsApp citas: +57 320568913"
+          "systemMessage": "=# Rol\nAsistente virtual de Mundo Animal con personalidad amigable, empática y profesional. Funciones principales:\n- Información sobre servicios y precios en clínica y domicilio\n- Educación básica sobre cuidado de mascotas\n- Gestión de consultas sobre certificados de viaje\n- Derivación adecuada a humanos cuando sea necesario\n- Sistema de agenda (Agenda de citas, domicilios, agendamiento), puedes crear, editar y eliminar citas\n\n Encargado de optimizar la interacción entre los clientes y la clínica veterinaria Mundo Animal mediante el uso integral de las herramientas como:\n- `AGENDAR TURNO`: Para Agendar Turnos o citas\n\nTu función es clave para facilitar un servicio excepcional en:\n\n- La gestión y consulta de citas veterinarias.  \n- La provisión de información detallada del negocio.\n\n**Fecha y hora actual:** `{{ $now.setZone('America/Bogota').format('yyyy-MM-dd HH:mm:ss') }}`\nEl día de la semana es: `{{ $now.setZone('America/Bogota').weekdayLong }}`\n\n## ⚠ *REGLAS ESTRICTAS*\n- ❌ NO ofrecer promociones/descuentos\n- ❌ NO recomendar medicamentos específicos\n- ❌ NO dar horarios sin antes consultarlos con la tool \"AGENDAR TURNO\"\n- ✅ Usar emojis relevantes\n- ✅ Mantener respuestas breves (1-3 frases)\n- ✅ Siempre responde en español\n- ✅ Siempre especificar que los precios son en COP\n- ✅ Solo atendemos Perros y Gatos\n- ✅ Dirección de Mundo Animal (latitud y longitud): 9.306346138108434, -75.3898501288357\n- ✅ Pregunta todo lo que se necesita antes de agendar\n- ✅ Todas las fechas deben ir formateadas ('yyyy-MM-dd HH:mm:ss)\n- ✅ Todas las consultas a AGENDAR TURNO deben incluir SIEMPRE estos dos parámetros:\n   - **start_time**: Fecha y hora de inicio de la consulta\n     * Si el usuario no especifica una fecha, debes asignar una fecha coherente según el contexto\n     * Ejemplo: Si piden \"cita para mañana\", usa la fecha de mañana\n   - **end_time**: Fecha y hora de finalización de la consulta\n     * Si no conoces la duración específica, suma 1 día completo a la fecha de inicio\n     * Ejemplo: Si start_time es \"2025-04-14 00:00:00\", end_time sería \"2025-04-15 00:00:00\"\n\n## ✨ *INICIO DE CONVERSACIÓN*\n\"¡Hola! Soy MUNDI 🐾, tu asistente de Mundo Animal, en que te puedo ayudar:\n• Servicios y precios\n• Horarios\n• Ubicación\n• Certificados de viaje\n• Domicilios veterinarios\n• Agenda de citas\"\n \n---\n\n# Instrucción\n\nUtiliza según las necesidades de la conversación las herramientas de AGENDAR de manera eficiente para ofrecer un servicio de alto nivel en:\n\n- La gestión de citas.\n\n## Debes:\n- Gestionar las citas con precisión y eficacia.\n- Usar la herramienta de AGENDAR de manera eficiente.\n- Proporcionar respuestas informativas basadas en los datos del negocio.\n\n---\n\n# 🧭 Pasos\n\n## 🔹 Inicio\n\nSaluda al cliente con amabilidad, mostrando total disposición para asistir en sus necesidades relacionadas con la gestión de citas o consultas sobre el negocio.\n\nEvitta decir \"Hola\" o saludar nuevamente si en la conversación ya lo has dicho otras veces.\n\n---\n\n## 🔹 Identificación del cliente:\n\nSi el usuario esta registrado ya sabes:\n- **id**: {{ $json.id }}\n- **Nombre del cliente**: {{ $json.name }}\n- **Documento del cliente**: {{ $json.documento }}\n- **Dirección del cliente**: {{ $json.direccion }}\n- **Email del cliente**: {{ $json.email }}\n- **Mascotas del cliente**: {{ $json.mascotas }}\n\nSaludalo de forma cordial, y muestrale los datos \"excepto el id\", pregunta si esos siguen siendo los datos, de responder no:\n- Pregunta que campo cambio y ejecuta Registrar Usuario para actualizar el usuario\n\nSi no te llego esta información y usuarioRegistrado: {{ $json.usuarioRegistrado }}\n\nEntonces solicita de manera cortés los siguientes campos y usa la Tool de Registrar Usuario para registrarlo\n- nombre:\n- documento:\n- direccion:\n- email:\n- mascotas:\n\nlos campos que debes enviar a la base de datos son:\n- telefono: {{ $json.from }}\n- nombre: nombre del cliente\n- documento: numero de documento\n- direccion: dirección del cliente\n- email: correo electronico\n- fecha_registro: {{ $now.setZone('America/Bogota')}}\n- ultima_actividad: {{ $now.setZone('America/Bogota')}}\n- mascotas: información de las mascotas del cliente\n- notas: información importante de la consulta\n- estado: asigna un estado segun la conversación\n\nSi el usuario no te responde algun campo, insiste en el numero de documento y nombre, los otros campos solicitalos cuando sea domicilios, visitas.\n\n---\n\n## 🔹 Acción a realizar\n\nAtiende las necesidades específicas del cliente, que pueden incluir:\n\n- **agendamiento de citas** mediante `AGENDAR TURNO`.\n\n## 🔹 Formato de Agenda\n\nCuando crees o edites una cita en el calendario debes crear un json para el subflujo `AGENDAR TURNO`, debe tener los siguientes campos:\n\n- **title**: El titulo debe tener la siguiente formula \"Servicio | Nombre del dueño (Nombre de la mascota)\"\n- **description**: Información del cliente, la mascota y el servicio, incluye datos del cliente que tienes de la conversación\n- **start_time**: La hora de la cita (ejemplo de formato de hora: 2025-04-13 10:00:00)\n- **end_time**: La hora de finalización de la cita (ejemplo de formato de hora: 2025-04-13 11:00:00)\n- **calendar_type**: Hay 3 tipos de calendario, general, veterinario, estetico\n- **all_day**: Si la cita es un dia entero, este campo por defecto sera: false\n- **user_id**: El id del cliente, este campo por defecto sera: 10 \"usuario Mundibot\"\n- **id**:El id de la cita creada, este campo por defecto es null\n\ny debe ir en un formato JSON al subworkflow `AGENDAR TURNO`:\n\n{\n    \"title\": \"**title**\",\n    \"description\": \"**description**\",\n    \"start_time\": \"**start_time**\",\n    \"end_time\": \"**end_time**\",\n    \"calendar_type\": \"**calendar_type**\",\n    \"all_day\": **all_day**,\n    \"user_id\": 10,\n    \"id\": null\n}\n\nTipo de campos del JSON \"ENVIAR LOS DATOS COMPLETOS SI TE FALTA ALGO PREGÚNTALO AL CLIENTE\":\n\n{\n    \"title\": \"a string\",\n    \"description\": \"a string\",\n    \"start_time\": \"yyyy-MM-dd HH:mm:ss\",\n    \"end_time\": \"yyyy-MM-dd HH:mm:ss\",\n    \"calendar_type\": \"a string\",\n    \"all_day\": false,\n    \"user_id\": 10\n    \"id\": \"number\"\n}\n---\n\n## 🔹 Confirmación y asistencia adicional\n\nConfirma con el cliente la acción realizada y **ofrece asistencia adicional si es necesario**, garantizando una experiencia positiva y satisfactoria.\n\n---\n\n# 🔄 Flujo de Interacción con AgenteCalendario\n\n## Proceso para consultar disponibilidad y agendar citas\n\n1. **Consulta de disponibilidad:**\n   - Cuando el cliente solicite agendar una cita, primero debes recopilar la siguiente información:\n     * Tipo de servicio requerido\n     * Fecha preferida (yyyy-MM-dd)\n     * Si aplica, preferencia horaria (mañana/tarde)\n     * Tipo de mascota (perro o gato)\n     * Nombre de la mascota\n     * Nombre del propietario\n     * Número de documento del cliente\n\n2. **Envío de datos a AgenteCalendario:**\n   - Una vez tengas la información necesaria, envía una solicitud al subworkflow `AGENDAR TURNO` con los siguientes parámetros:\n     * Tipo de calendario: `veterinario`, `estetico` o `general` según el servicio\n     * Fecha de consulta: en formato yyyy-MM-dd\n   - `AGENDAR TURNO` utiliza internamente la herramienta \"Consultar Disponibilidad\" para obtener los horarios disponibles.\n\n3. **Procesamiento de respuesta:**\n   - El AgenteCalendario consultará la disponibilidad y te devolverá un listado de horarios disponibles.\n   - Presenta estos horarios al cliente en formato hora:minutos (ejemplo: \"08:00 a 09:00\").\n   - Si no hay disponibilidad en la fecha solicitada, AgenteCalendario te sugerirá el siguiente día disponible.\n\n4. **Confirmación y creación de cita:**\n   - Cuando el cliente elija un horario, completa el JSON para crear la cita con:\n     ```json\n     {\n         \"title\": \"Servicio | Nombre del dueño (Nombre de la mascota)\",\n         \"description\": \"Información completa del cliente y servicio\",\n         \"start_time\": \"yyyy-MM-dd HH:mm:ss\",\n         \"end_time\": \"yyyy-MM-dd HH:mm:ss\",\n         \"calendar_type\": \"tipo_calendario\",\n         \"all_day\": false,\n         \"user_id\": 10\n     }\n     ```\n   - Envía este JSON a `AGENDAR TURNO` para finalizar la creación de la cita.\n\n5. **Modificación o cancelación de citas:**\n   - Para modificar una cita existente, primero solicita el número de documento del cliente.\n   - Utiliza `AGENDAR TURNO` para consultar las citas existentes de ese cliente.\n   - Una vez identificada la cita a modificar, sigue el mismo flujo que para crear una nueva cita pero actualizando el JSON de la cita existente.\n   - Para cancelaciones, solicita confirmación al cliente antes de proceder.\n\n### Flujo detallado para modificación de citas:\n\n1. **Identificación de la cita a modificar:**\n   - Solicita al cliente el número de documento o algún dato identificativo (nombre de mascota).\n   - Envía estos datos a `AGENDAR TURNO` con la operación \"Consulta de Agenda\" para recibir las citas activas del cliente.\n   - Presenta al cliente las citas encontradas y pide que confirme cuál desea modificar.\n\n2. **Datos necesarios para la modificación:**\n   - Cuando el cliente seleccione la cita a modificar, obtén el `id` de la cita.\n   - Pregunta al cliente qué aspecto desea modificar:\n     * Fecha y hora\n     * Tipo de servicio\n     * Información adicional\n   - Si desea cambiar la fecha/hora, sigue el flujo de consulta de disponibilidad ya descrito.\n\n3. **Preparación del JSON para actualizar:**\n   - Incluye TODOS los campos requeridos en el JSON:\n   ```json\n   {\n       \"id\": \"id_de_la_cita\",\n       \"title\": \"Servicio | Nombre del dueño (Nombre de la mascota)\",\n       \"description\": \"Información completa del cliente y servicio\",\n       \"start_time\": \"yyyy-MM-dd HH:mm:ss\",\n       \"end_time\": \"yyyy-MM-dd HH:mm:ss\",\n       \"calendar_type\": \"tipo_calendario\",\n       \"all_day\": false,\n       \"user_id\": 10\n   }\n   ```\n   - Mantén sin cambios los campos que no se modifican.\n   - Actualiza los campos necesarios según lo solicitado por el cliente.\n\n4. **Confirmación de cambios:**\n   - Antes de proceder, confirma con el cliente los cambios a realizar.\n   - Envía el JSON a `AGENDAR TURNO` con la operación \"Actualizar Cita\".\n   - Informa al cliente el resultado de la actualización.\n\n### Flujo detallado para eliminación/cancelación de citas:\n\n1. **Identificación de la cita a cancelar:**\n   - Solicita al cliente el número de documento o algún dato identificativo (nombre de mascota).\n   - Envía estos datos a `AGENDAR TURNO` con la operación \"Consulta de Agenda\" para recibir las citas activas del cliente.\n   - Presenta al cliente las citas encontradas y pide que confirme cuál desea cancelar.\n\n2. **Confirmación de cancelación:**\n   - Una vez identificada la cita, muestra al cliente todos los detalles de la cita a cancelar.\n   - Solicita confirmación explícita al cliente para proceder con la cancelación.\n   - Puedes explicar brevemente la política de cancelaciones si corresponde.\n\n3. **Proceso de cancelación:**\n   - Después de recibir la confirmación, envía el ID de la cita a `AGENDAR TURNO` con la operación \"Eliminar Cita\":\n   ```json\n   {\n       \"id\": \"id_de_la_cita\"\n   }\n   ```\n   - Confirma al cliente que la cancelación se ha realizado exitosamente.\n   - Opcionalmente, ofrece reagendar la cita para otra fecha si el cliente lo desea.\n\n---\n\n# 🎯 Objetivo Final\n\nMejorar significativamente la **comunicación y gestión de citas veterinarias**, aprovechando al máximo las herramientas AGENDAR, para proporcionar un proceso de atención al cliente **fluido, informativo y eficiente** de inicio a fin.\n\n---\n\n# ❗ Limitaciones\n\nEste agente se enfoca únicamente en el uso efectivo de AGENDAR para:\n\n- Atender las necesidades de gestión de citas.\n- Responder consultas informativas de los clientes.\n\nSiempre manteniendo una atención detallada en **las preferencias del cliente** y la **información específica del negocio**.\n\n## 🏥 *TARIFAS EN CLÍNICA (2025)*\n\n### 💉 Vacunación\n- Vanguard Plus 5: $45.000 COP\n- Vanguard Plus 5 L4: $50.000 COP\n- Bronchine CAe: $50.000 COP\n- Felocell FeLV (gatos): $65.000 COP\n\n### 🩺 Procedimientos Médicos\n- Consulta general: $60.000 COP\n- Hemograma: $40.000 COP\n- Ecografía: $90.000 COP\n- Ozonoterapia: $40.000-$45.000 COP\n\n### 🏥 Hospitalización\n- Simple/día: $120.000 COP\n- Completa/día: $220.000 COP (incluye medicamentos)\n\n### 🐾 Cirugías\n- Castración gato: $120.000 COP\n- OVH felina: $160.000 COP\n- OVH canina: $270.000-$350.000 COP (según tamaño)\n- Drenaje otohematoma: $200.000-$270.000 COP\n\n### 🧪 Análisis Clínicos\n- Hemograma + Química sanguínea: $140.000 COP\n- Coprológico: $20.000 COP\n- Citología: $70.000-$180.000 COP\n\n## 🏠 *SERVICIOS A DOMICILIO (Mundo Animal en Casa 2025)*\n\n### 💉 Vacunación\n- Vanguard Plus 5: $50.000 COP\n- Bronchine CAe: $55.000 COP\n- Felocell FeLV (gatos): $70.000 COP\n\n### 🩺 Procedimientos Médicos\n- Consulta general: $70.000 COP\n- Hemograma: $45.000 COP\n- Ecografía: $120.000 COP\n\n### 🏥 Hospitalización\n- Domiciliaria/día: $100.000 COP (incluye 2 visitas + medicamentos)\n\n### 🐾 Cirugías\n- Castración gato: $150.000 COP\n- OVH felina: $190.000 COP\n- OVH canina: $350.000-$450.000 COP (según tamaño)\n\n### ✂ Cuidados Básicos\n- Corte de uñas: $15.000-$30.000 COP\n- Desinfección de oídos: $15.000-$55.000 COP\n- Desparasitación: $10.000-$20.000 COP\n\n## 📍 *UBICACIÓN Y CONTACTO*\n- Dirección clínica: Calle 19 #26-25\n- Horario general: 8AM-6PM\n- Horario vacunación: 8AM-12PM / 2PM-5PM\n- Domicilios: Lunes a Sábado 7AM-5PM\n- Emergencias 24h: 3013710366\n- WhatsApp citas: +57 320568913"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.8,
       "position": [
-        -1560,
-        40
+        -1060,
+        -120
       ],
       "id": "8d34e7a0-aff6-440a-b4d4-4d98654568b8",
       "name": "AI Agent"
@@ -21,14 +22,13 @@
       "parameters": {
         "sessionIdType": "customKey",
         "sessionKey": "={{ $('Webhook').item.json.body.data.key.remoteJid }}",
-        "tableName": "n8n_chat_histories_clinica",
         "contextWindowLength": 10
       },
       "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
       "typeVersion": 1.3,
       "position": [
-        -1660,
-        240
+        -1160,
+        80
       ],
       "id": "39f11993-6efd-4172-b37f-457963de8b90",
       "name": "Postgres Chat Memory",
@@ -43,16 +43,17 @@
       "parameters": {
         "model": {
           "__rl": true,
+          "value": "gpt-4o",
           "mode": "list",
-          "value": "gpt-4o-mini"
+          "cachedResultName": "gpt-4o"
         },
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
       "position": [
-        -1800,
-        220
+        -1300,
+        60
       ],
       "id": "0b09037e-1c14-4884-b045-8a2bf0725489",
       "name": "OpenAI Chat Model",
@@ -94,8 +95,8 @@
       "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
       "typeVersion": 1,
       "position": [
-        -1760,
-        520
+        -1260,
+        360
       ],
       "id": "907f0e9f-e2af-4ba3-bb30-0cfba280427e",
       "name": "Supabase Vector Store1",
@@ -113,8 +114,8 @@
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1.2,
       "position": [
-        -1760,
-        660
+        -1260,
+        500
       ],
       "id": "3d6ebcec-6a9d-4110-a873-7d2cbfdb5af9",
       "name": "Embeddings OpenAI1",
@@ -137,8 +138,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
       "position": [
-        -1480,
-        520
+        -980,
+        360
       ],
       "id": "14d73a2c-21c7-48a5-9b61-7426fb51336c",
       "name": "OpenAI Chat Model1",
@@ -157,8 +158,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
       "typeVersion": 1,
       "position": [
-        -1680,
-        380
+        -1180,
+        220
       ],
       "id": "f2d814bb-f5d3-4895-907e-232f4c7b0488",
       "name": "Vector store tool"
@@ -194,8 +195,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1200,
-        40
+        -700,
+        -120
       ],
       "id": "6ff624df-2a4f-4f49-9296-f8047dd5148d",
       "name": "Respuesta"
@@ -457,7 +458,7 @@
           "mode": "list",
           "cachedResultName": "GPT-4O-MINI"
         },
-        "text": "=El usuario dijo esto:  {{ $('DescargaImg').item.json.caption }}\nSobre esta imagen.\n\nSi no dijo nada descríbela, será importante para próximas consultas",
+        "text": "=El usuario dijo esto:  {{ $('DescargaImg').item.json.caption }}\nSobre esta imagen.\n\nSi no dijo nada descríbela, si ves texto, transcríbela, será importante para próximas consultas",
         "inputType": "base64",
         "options": {}
       },
@@ -517,6 +518,42 @@
               "name": "name",
               "value": "={{ $('Switch').item.json.body.data.pushName }}",
               "type": "string"
+            },
+            {
+              "id": "ca08bfb8-ccb1-42e2-a69d-cfd51222f361",
+              "name": "documento",
+              "value": "={{ $('ValidarUsuario').item.json[0].documento }}",
+              "type": "string"
+            },
+            {
+              "id": "2bb7f6a9-cee5-417d-9519-a5db75b49188",
+              "name": "dirección",
+              "value": "=direccion\": \"={{ $('ValidarUsuario').item.json[0].direccion }}",
+              "type": "string"
+            },
+            {
+              "id": "087355b4-161e-4085-ae91-f3a0a2817f9e",
+              "name": "email",
+              "value": "={{ $('ValidarUsuario').item.json[0].email }}",
+              "type": "string"
+            },
+            {
+              "id": "17aeb219-1e58-40b9-bbe0-d12c7deffa75",
+              "name": "mascotas",
+              "value": "={{ $('ValidarUsuario').item.json[0].mascotas }}",
+              "type": "string"
+            },
+            {
+              "id": "3853b80a-03be-44e4-a061-8928c27c2f63",
+              "name": "usuarioRegistrado",
+              "value": "={{ $json.usuarioRegistrado }}",
+              "type": "string"
+            },
+            {
+              "id": "55f058c6-61bf-45e7-bf1e-ffa2e81e9fc4",
+              "name": "id",
+              "value": "",
+              "type": "string"
             }
           ]
         },
@@ -525,8 +562,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1780,
-        40
+        -1280,
+        -120
       ],
       "id": "fab2cd03-c57b-469f-bb0d-e2934fc9cde5",
       "name": "Fields"
@@ -548,7 +585,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1940,
+        -1920,
         40
       ],
       "id": "58cfc300-1fc0-4121-a24e-166186520818",
@@ -750,14 +787,15 @@
     {
       "parameters": {
         "content": "# Recibir Mensaje",
-        "height": 480,
-        "width": 360
+        "height": 340,
+        "width": 360,
+        "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
         -3300,
-        0
+        60
       ],
       "id": "1cddf529-c97e-46d4-8b81-ddc1862e5dff",
       "name": "Sticky Note"
@@ -766,7 +804,7 @@
       "parameters": {
         "content": "## Interpretar diferentes tipos de mensaje",
         "height": 860,
-        "width": 820,
+        "width": 1140,
         "color": 2
       },
       "type": "n8n-nodes-base.stickyNote",
@@ -780,16 +818,16 @@
     },
     {
       "parameters": {
-        "content": "## Preparar consulta",
-        "height": 240,
-        "width": 480,
+        "content": "## Información del Usuario",
+        "height": 420,
+        "width": 500,
         "color": 3
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -2120,
-        -60
+        -1800,
+        -180
       ],
       "id": "6d0bce8d-3881-4760-a0f5-c7fc4b9871f1",
       "name": "Sticky Note2"
@@ -804,8 +842,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1800,
-        360
+        -1300,
+        200
       ],
       "id": "7ed0c416-040b-4850-8c57-394936e879ba",
       "name": "Sticky Note3"
@@ -813,15 +851,15 @@
     {
       "parameters": {
         "content": "## Operaciones con el calendario",
-        "height": 300,
-        "width": 580,
+        "height": 220,
+        "width": 280,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1360,
-        240
+        -860,
+        80
       ],
       "id": "e168e354-9d17-4a9b-9680-c654480f1020",
       "name": "Sticky Note4"
@@ -829,15 +867,15 @@
     {
       "parameters": {
         "content": "## Bot",
-        "height": 480,
+        "height": 380,
         "width": 720,
         "color": 6
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1800,
-        -120
+        -1300,
+        -180
       ],
       "id": "b799dadf-ca91-4e99-b101-4f25a9ea49f8",
       "name": "Sticky Note5"
@@ -854,82 +892,9 @@
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
-          "value": {
-            "user_id": 0
-          },
+          "value": {},
           "matchingColumns": [],
-          "schema": [
-            {
-              "id": "title",
-              "displayName": "title",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "description",
-              "displayName": "description",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "start_time",
-              "displayName": "start_time",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "end_time",
-              "displayName": "end_time",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "calendar_type",
-              "displayName": "calendar_type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "all_day",
-              "displayName": "all_day",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "boolean",
-              "removed": false
-            },
-            {
-              "id": "user_id",
-              "displayName": "user_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "number",
-              "removed": false
-            }
-          ],
+          "schema": [],
           "attemptToConvertTypes": false,
           "convertFieldsToString": false
         }
@@ -937,25 +902,326 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.1,
       "position": [
-        -1320,
-        320
+        -700,
+        160
       ],
       "id": "e5f99ac3-2216-49ad-8be5-2e57e4cdf52d",
       "name": "AGENDAR TURNO"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT * FROM usuarios WHERE telefono = '{{ $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] }}' LIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1780,
+        -100
+      ],
+      "id": "ebd932b0-4476-4dad-bbc8-cfee2c76ffc4",
+      "name": "ValidarUsuario",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "6oB8WaRLlio9tDTl",
+          "name": "PostgresPortainer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "df6c824a-320c-4bbc-aeb5-555d44047359",
+              "leftValue": "={{ $json.length > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1640,
+        -100
+      ],
+      "id": "4552bba8-c94b-4df6-8e37-ceec2430433d",
+      "name": "UsuarioExiste"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a89d21fe-2d10-4f7b-a439-c2d068646a47",
+              "name": "usuarioRegistrado",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "8bd0a377-1c7d-4cfc-bcc0-d1f8166449b8",
+              "name": "text",
+              "value": "={{ $('Txt').item.json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1460,
+        -20
+      ],
+      "id": "ebc90bf6-e1d5-4959-8f80-035b4752bfed",
+      "name": "UsuarioNoRegistrado"
+    },
+    {
+      "parameters": {
+        "content": "## BD Usuarios",
+        "height": 220,
+        "width": 280,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -860,
+        300
+      ],
+      "id": "c672f457-1761-4bb5-8733-8a371a04765a",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "usuarios",
+          "mode": "list",
+          "cachedResultName": "usuarios"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('id', ``, 'number') }}",
+            "telefono": "={{ $('Switch').item.json.body.data.key.remoteJid }}",
+            "nombre": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('nombre', ``, 'string') }}",
+            "documento": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('documento', ``, 'string') }}",
+            "direccion": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('direccion', ``, 'string') }}",
+            "email": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('email', ``, 'string') }}",
+            "fecha_registro": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fecha_registro', ``, 'string') }}",
+            "ultima_actividad": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('ultima_actividad', ``, 'string') }}",
+            "mascotas": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('mascotas', `ingresa aca la información de la mascota del usuario, en caso de no tener información por defecto: '[]'::jsonb, aca la respuesta es un json, agrega información como: nombre, raza, especie, edad, etc, todo esto sacalo de la conversación con el cliente`, 'string') }}",
+            "notas": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('notas', ``, 'string') }}",
+            "estado": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('estado', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "telefono",
+              "displayName": "telefono",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "documento",
+              "displayName": "documento",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "direccion",
+              "displayName": "direccion",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_registro",
+              "displayName": "fecha_registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ultima_actividad",
+              "displayName": "ultima_actividad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mascotas",
+              "displayName": "mascotas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notas",
+              "displayName": "notas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        -780,
+        380
+      ],
+      "id": "2337e733-1f9d-4301-bf78-1412a6790d24",
+      "name": "Registrar Usuario",
+      "credentials": {
+        "postgres": {
+          "id": "6oB8WaRLlio9tDTl",
+          "name": "PostgresPortainer"
+        }
+      }
     }
   ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "connection": "keep-alive",
+            "host": "n8n.mangomorado.com",
+            "x-forwarded-scheme": "https",
+            "x-forwarded-proto": "https",
+            "x-forwarded-for": "172.17.0.1",
+            "x-real-ip": "172.17.0.1",
+            "content-length": "888",
+            "content-type": "application/json",
+            "user-agent": "axios/1.7.9",
+            "accept-encoding": "gzip, compress, deflate, br"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "event": "messages.upsert",
+            "instance": "Parrot",
+            "data": {
+              "key": {
+                "remoteJid": "573217058135@s.whatsapp.net",
+                "fromMe": false,
+                "id": "A81B761745B636D035E228ABABE72DDD"
+              },
+              "pushName": "Sergio Veloza",
+              "status": "DELIVERY_ACK",
+              "message": {
+                "conversation": "Hola",
+                "messageContextInfo": {
+                  "deviceListMetadata": {
+                    "senderKeyHash": "G8mpZt47p4OIUA==",
+                    "senderTimestamp": "1744041508",
+                    "recipientKeyHash": "ll/I4SSEYmwr6w==",
+                    "recipientTimestamp": "1742968216"
+                  },
+                  "deviceListMetadataVersion": 2,
+                  "messageSecret": "n3omBOikG8aTnti87SFXLEzdgVH5hDBGvr2ehaShp94="
+                }
+              },
+              "messageType": "conversation",
+              "messageTimestamp": 1744210706,
+              "instanceId": "20cca9ac-30d4-4cd0-8428-55b6bd540fcd",
+              "source": "android"
+            },
+            "destination": "https://n8n.mangomorado.com/webhook/calendar",
+            "date_time": "2025-04-09T11:58:27.150Z",
+            "sender": "573135629228@s.whatsapp.net",
+            "server_url": "https://evolution.mangomorado.com",
+            "apikey": "01E69C6AAD29-4041-BC9C-B93E31B5146F"
+          },
+          "webhookUrl": "https://n8n.mangomorado.com/webhook/calendar",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
   "connections": {
-    "AI Agent": {
-      "main": [
-        [
-          {
-            "node": "Respuesta",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Postgres Chat Memory": {
       "ai_memory": [
         [
@@ -983,6 +1249,17 @@
         [
           {
             "node": "Evitar Responder a si mismo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respuesta",
             "type": "main",
             "index": 0
           }
@@ -1134,22 +1411,11 @@
         ]
       ]
     },
-    "Fields": {
-      "main": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Txt": {
       "main": [
         [
           {
-            "node": "Fields",
+            "node": "ValidarUsuario",
             "type": "main",
             "index": 0
           }
@@ -1240,7 +1506,69 @@
         ]
       ]
     },
+    "Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "AGENDAR TURNO": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ValidarUsuario": {
+      "main": [
+        [
+          {
+            "node": "UsuarioExiste",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UsuarioExiste": {
+      "main": [
+        [
+          {
+            "node": "Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "UsuarioNoRegistrado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "UsuarioNoRegistrado": {
+      "main": [
+        [
+          {
+            "node": "Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar Usuario": {
       "ai_tool": [
         [
           {
@@ -1252,9 +1580,28 @@
       ]
     }
   },
-  "pinData": {},
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bba6870f-c465-490e-9e9d-be01774b64df",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "492216dba7ead6f870ef4169d10664ed44bcfc662cf5e8e4907018d95ca96a66"
-  }
+  },
+  "id": "c7YfsyCLRr2sTXLw",
+  "tags": [
+    {
+      "createdAt": "2025-04-08T03:26:20.505Z",
+      "updatedAt": "2025-04-08T03:26:20.505Z",
+      "id": "6DZhrxpTyzDPm6sI",
+      "name": "Agenda"
+    },
+    {
+      "createdAt": "2025-03-25T21:31:30.282Z",
+      "updatedAt": "2025-03-25T21:31:30.282Z",
+      "id": "Nx7TdHXx7BAlOiRv",
+      "name": "EvolutionAPI"
+    }
+  ]
 }
