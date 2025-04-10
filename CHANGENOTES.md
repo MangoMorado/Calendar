@@ -1,6 +1,7 @@
 # CHANGENOTES - Calendario MundoAnimal
 
 ## Lista de Cambios por implementar:
+- Agregar calendarios segun profesional
 - Estado de las citas segun codigo de color (Verde, Amarillo: reprogramar, Rojo)
 - Sistema de cola de citas, que el sistema reciba citas del chatbot y que un humano las programe
 - Mejoras de seguridad
@@ -22,6 +23,9 @@
 - Mejoras para PWA
 - Crear estructura de clases para modelos principales (User, Appointment)
 - carga lazy de eventos para calendarios con muchas citas
+
+## Versión 0.0.6.2 - ⚙️ Settings Update
+- Se actualizo los flujos de n8n y los prompts
 
 ## Versión 0.0.6.1 - ⚙️ Settings Update
 - Se actualizo los flujos de n8n y los prompts
