@@ -360,13 +360,31 @@ export function loadUsersIntoSelect(users) {
             console.log(`Usando ${users.length} usuarios del ámbito global.`);
         } else {
             console.error('No se encontraron usuarios disponibles');
+            
+            // Plan B: intentar cargar usuarios desde la API
+            console.log('Intentando obtener usuarios desde la API...');
+            fetch('api/users.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && Array.isArray(data) && data.length > 0) {
+                        console.log(`Se obtuvieron ${data.length} usuarios de la API`);
+                        window.calendarUsers = data; // Guardar en variable global
+                        // Volver a llamar a esta función con los nuevos datos
+                        loadUsersIntoSelect(data);
+                    } else {
+                        console.error('La API no devolvió usuarios válidos:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al obtener usuarios de la API:', error);
+                });
+            
             return;
         }
     }
     
     // Guardar el valor seleccionado actual si existe
     const currentSelectedValue = userSelect.value;
-    console.log("Valor actual seleccionado:", currentSelectedValue);
     
     // Comprobar si realmente tenemos opciones con valores en el select
     let hasValidOptions = false;
@@ -379,9 +397,9 @@ export function loadUsersIntoSelect(users) {
     
     // Si no hay opciones válidas o solo está la opción vacía, forzar la carga de usuarios
     if (!hasValidOptions || userSelect.options.length <= 1) {
-        console.log("Inicializando select con usuarios:", users.length);
+        console.log(`Inicializando select de usuarios con ${users.length} usuarios...`);
         
-        // Limpiar todas las opciones
+        // Limpiar todas las opciones existentes
         userSelect.innerHTML = '';
         
         // Añadir opción por defecto
@@ -390,8 +408,19 @@ export function loadUsersIntoSelect(users) {
         defaultOption.text = "-- Selecciona un usuario --";
         userSelect.appendChild(defaultOption);
         
+        // Verificar si hay usuarios para añadir
+        if (users.length === 0) {
+            console.warn('Array de usuarios está vacío, no se pueden añadir opciones');
+            return;
+        }
+        
         // Añadir usuarios desde la lista
         users.forEach(user => {
+            if (!user || !user.id || !user.name) {
+                console.warn('Usuario inválido en la lista:', user);
+                return; // Saltar este usuario
+            }
+            
             const option = document.createElement('option');
             option.value = user.id;
             option.text = user.name;
@@ -405,23 +434,17 @@ export function loadUsersIntoSelect(users) {
             }
             
             userSelect.appendChild(option);
-            console.log(`Añadido usuario: ${user.name} (ID: ${user.id})`);
+            console.log(`Añadido usuario al select: ${user.name} (ID: ${user.id})`);
         });
         
-        console.log(`Se cargaron ${users.length} usuarios en el select`);
+        console.log(`Select inicializado con ${userSelect.options.length} opciones (${userSelect.options.length - 1} usuarios + opción vacía)`);
     } else {
-        console.log("El select ya tiene opciones válidas, manteniendo estructura actual.");
+        console.log(`El select ya tiene ${userSelect.options.length} opciones válidas, manteniendo estructura actual`);
         
         // Si ya hay un valor seleccionado, mantenerlo
         if (currentSelectedValue) {
             userSelect.value = currentSelectedValue;
         }
-    }
-    
-    // Verificar el estado final del select
-    console.log(`Estado final del select: ${userSelect.options.length} opciones`);
-    for (let i = 0; i < Math.min(userSelect.options.length, 5); i++) {
-        console.log(`- Opción ${i}: valor='${userSelect.options[i].value}', texto='${userSelect.options[i].text}'`);
     }
     
     // Actualizar la vista previa del color

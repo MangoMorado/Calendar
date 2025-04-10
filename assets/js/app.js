@@ -210,6 +210,8 @@ function initializeApp() {
  */
 function initializeUserSelect(users) {
     // Primero verificar si hay usuarios disponibles
+    console.log('Inicializando select de usuarios con:', users);
+    
     if (!Array.isArray(users) || users.length === 0) {
         console.warn('No hay usuarios proporcionados para inicializar el select');
         // Intentar usar los usuarios globales
@@ -218,6 +220,23 @@ function initializeUserSelect(users) {
             console.log(`Usando ${users.length} usuarios del ámbito global para inicializar el select`);
         } else {
             console.error('No se pueden inicializar usuarios en el select');
+            
+            // Plan de emergencia: cargar usuarios usando fetch si es posible
+            fetch('api/users.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && Array.isArray(data) && data.length > 0) {
+                        console.log('Usuarios obtenidos por fetch de API:', data);
+                        window.calendarUsers = data;
+                        initializeUserSelect(data); // Reintentar con los datos obtenidos
+                    } else {
+                        console.error('No se pudieron obtener usuarios de la API');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al obtener usuarios:', error);
+                });
+            
             return;
         }
     }
@@ -249,9 +268,8 @@ function initializeUserSelect(users) {
             option.dataset.color = user.color;
         }
         userSelect.appendChild(option);
+        console.log(`Agregado usuario al select: ${user.name} (ID: ${user.id})`);
     });
-    
-    console.log(`Se inicializó el select con ${userSelect.options.length} opciones (1 vacía + ${users.length} usuarios)`);
 }
 
 // Exponer el manejador de eliminación a nivel global

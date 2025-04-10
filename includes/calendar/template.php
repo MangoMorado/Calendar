@@ -6,6 +6,8 @@
 
 // Función para generar la estructura HTML del calendario
 function renderCalendarTemplate($calendarType = 'general') {
+    global $conn;
+    
     // Obtener el rango de fechas para mostrar
     $today = new DateTime();
     $weekStart = clone $today;
@@ -13,6 +15,11 @@ function renderCalendarTemplate($calendarType = 'general') {
     $weekEnd = clone $weekStart;
     $weekEnd->modify('+6 days');
     $dateRange = $weekStart->format('d M') . ' - ' . $weekEnd->format('d M Y');
+    
+    // Obtener todos los usuarios para crear pestañas de calendario
+    $sql = "SELECT id, name, color FROM users WHERE calendar_visible = 1 ORDER BY name";
+    $result = mysqli_query($conn, $sql);
+    $users = mysqli_fetch_all($result, MYSQLI_ASSOC);
     
     // HTML de la plantilla
     ob_start();
@@ -34,6 +41,18 @@ function renderCalendarTemplate($calendarType = 'general') {
                 <a href="index.php" class="calendar-tab <?php echo $calendarType === 'general' ? 'active' : ''; ?>">General</a>
                 <a href="index.php?calendar=estetico" class="calendar-tab <?php echo $calendarType === 'estetico' ? 'active' : ''; ?>">Estético</a>
                 <a href="index.php?calendar=veterinario" class="calendar-tab <?php echo $calendarType === 'veterinario' ? 'active' : ''; ?>">Veterinario</a>
+                
+                <!-- Separador para los calendarios de usuarios -->
+                <div class="calendar-tabs-divider"></div>
+                
+                <!-- Calendarios por usuario -->
+                <?php foreach ($users as $user): ?>
+                    <a href="index.php?calendar=user_<?php echo $user['id']; ?>" 
+                       class="calendar-tab user-calendar-tab <?php echo $calendarType === 'user_' . $user['id'] ? 'active' : ''; ?>"
+                       style="border-color: <?php echo $user['color']; ?>; <?php echo $calendarType === 'user_' . $user['id'] ? 'background-color: ' . $user['color'] . '; color: white;' : ''; ?>">
+                        <i class="bi bi-person-fill"></i> <?php echo htmlspecialchars($user['name']); ?>
+                    </a>
+                <?php endforeach; ?>
             </div>
         </div>
         
@@ -122,6 +141,33 @@ function renderCalendarTemplate($calendarType = 'general') {
             display: flex !important;
             animation: slideIn 0.3s ease;
         }
+        
+        /* Estilos para los tabs de calendario de usuario */
+        .calendar-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .calendar-tabs-divider {
+            width: 100%;
+            border-top: 1px solid #ddd;
+            margin: 10px 0;
+        }
+        
+        .user-calendar-tab {
+            border-left-width: 4px;
+            border-left-style: solid;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .user-calendar-tab i {
+            font-size: 14px;
+        }
 
         @keyframes slideIn {
             from {
@@ -149,6 +195,13 @@ function renderCalendarTemplate($calendarType = 'general') {
             veterinario: "Veterinario",
             general: "General"
         };
+        
+        // Agregar colores y nombres para los calendarios de usuarios
+        <?php foreach ($users as $user): ?>
+        window.calendarColors['user_<?php echo $user['id']; ?>'] = "<?php echo $user['color']; ?>";
+        window.calendarNames['user_<?php echo $user['id']; ?>'] = "<?php echo addslashes($user['name']); ?>";
+        <?php endforeach; ?>
+        
         window.lastAction = null;
         window.lastEventState = null;
         window.elements = null;

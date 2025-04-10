@@ -153,4 +153,13 @@ class UserController {
         header('Location: users.php');
         exit;
     }
+    
+    /**
+     * Retorna el modelo de usuario para permitir acceso desde fuera del controlador
+     * 
+     * @return UserModel El modelo de usuario
+     */
+    public function getModel() {
+        return $this->model;
+    }
 } 

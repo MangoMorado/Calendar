@@ -8,14 +8,24 @@
 function getCalendarData($calendarType = 'general') {
     global $conn;
     
-    // Validar el tipo de calendario
-    $availableCalendars = getCalendarTypes();
-    if (!array_key_exists($calendarType, $availableCalendars)) {
-        $calendarType = 'general';
+    // Verificar si es un calendario de usuario específico
+    $isUserCalendar = false;
+    $userId = null;
+    
+    if (strpos($calendarType, 'user_') === 0) {
+        $isUserCalendar = true;
+        $userId = (int) substr($calendarType, 5);
+        error_log("Obteniendo datos para el calendario del usuario ID: $userId");
+    } else {
+        // Validar el tipo de calendario estándar
+        $availableCalendars = getCalendarTypes();
+        if (!array_key_exists($calendarType, $availableCalendars)) {
+            $calendarType = 'general';
+        }
     }
     
     // Obtener todos los usuarios para asignarlos a las citas
-    $usersQuery = "SELECT id, name, COALESCE(color, '#3788d8') as color FROM users";
+    $usersQuery = "SELECT id, name, COALESCE(color, '#3788d8') as color FROM users WHERE calendar_visible = 1";
     $usersResult = mysqli_query($conn, $usersQuery);
     $users = [];
     
@@ -23,17 +33,42 @@ function getCalendarData($calendarType = 'general') {
         $users[$user['id']] = $user;
     }
     
+    // Registrar cuántos usuarios se están recuperando
+    error_log("Se obtuvieron " . count($users) . " usuarios con calendar_visible=1");
+    
+    // Si no se obtuvieron usuarios, podría ser un problema con la base de datos
+    if (count($users) === 0) {
+        error_log("ADVERTENCIA: No se encontraron usuarios con calendar_visible=1");
+        // Consultar todos los usuarios para depuración
+        $debugQuery = "SELECT id, name, calendar_visible FROM users";
+        $debugResult = mysqli_query($conn, $debugQuery);
+        if ($debugResult) {
+            error_log("Total de usuarios en la base de datos: " . mysqli_num_rows($debugResult));
+            while ($debugUser = mysqli_fetch_assoc($debugResult)) {
+                error_log("Usuario: ID=" . $debugUser['id'] . ", Nombre=" . $debugUser['name'] . 
+                        ", calendar_visible=" . $debugUser['calendar_visible']);
+            }
+        }
+    }
+    
     // Construir la consulta SQL para obtener las citas con la información del usuario
     $sql = "SELECT a.*, u.name as user, COALESCE(u.color, '#3788d8') as user_color 
             FROM appointments a 
             LEFT JOIN users u ON a.user_id = u.id";
     
-    // Filtrar por tipo de calendario si no es el general
-    if ($calendarType !== 'general') {
+    // Añadir condiciones según el tipo de calendario
+    if ($isUserCalendar) {
+        // Filtrar por usuario específico
+        $sql .= " WHERE a.user_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $userId);
+    } elseif ($calendarType !== 'general') {
+        // Filtrar por tipo de calendario si no es el general
         $sql .= " WHERE a.calendar_type = ?";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "s", $calendarType);
     } else {
+        // Para el calendario general, obtenemos todas las citas
         $stmt = mysqli_prepare($conn, $sql);
     }
     

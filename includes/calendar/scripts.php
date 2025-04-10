@@ -5,15 +5,14 @@
  */
 
 // Función para generar los scripts del calendario
-function getCalendarScripts($eventsJson, $settings, $calendarType) {
-    global $calendarData; // Necesitamos acceder a los datos del calendario
+function getCalendarScripts($eventsJson, $settings, $calendarType, $users = []) {
     ob_start();
     ?>
 <!-- Dependencias externas -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales/es.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.17/locales/es.global.min.js"></script>
 
 <!-- Elemento para tooltips de eventos -->
 <div id="eventTooltip" class="event-tooltip"></div>
@@ -22,7 +21,7 @@ function getCalendarScripts($eventsJson, $settings, $calendarType) {
 <script>
     // Variables globales para ser utilizadas por los módulos
     window.eventsJson = <?php echo $eventsJson; ?>;
-    window.calendarUsers = <?php echo json_encode($calendarData['users'] ?? []); ?>;
+    window.calendarUsers = <?php echo json_encode($users ?? []); ?>;
     window.calendarSettings = {
         slotMinTime: "<?php echo $settings['slotMinTime']; ?>",
         slotMaxTime: "<?php echo $settings['slotMaxTime']; ?>",

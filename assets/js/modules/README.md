@@ -44,6 +44,6 @@ Para añadir nuevas funcionalidades:
 
 ## Dependencias Externas
 
-- FullCalendar 6.1.15 (cargado globalmente)
+- FullCalendar 6.1.17 (cargado globalmente)
 - Sin dependencia de jQuery para la lógica principal
 - Bootstrap para algunos componentes UI 

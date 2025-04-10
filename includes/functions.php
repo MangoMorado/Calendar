@@ -19,11 +19,26 @@ function getAppointments($startDate, $endDate, $calendarType = null) {
     
     // Añadir orden por fecha a todas las consultas
     $orderBy = " ORDER BY a.start_time ASC";
+
+    // Verificar si es un calendario de usuario específico
+    $isUserCalendar = false;
+    $userId = null;
+    
+    if ($calendarType && strpos($calendarType, 'user_') === 0) {
+        $isUserCalendar = true;
+        $userId = (int) substr($calendarType, 5);
+        error_log("Filtrando citas para el usuario ID: $userId");
+    }
     
     // Preparar la consulta SQL según los parámetros
     if ($startDate === null || $endDate === null) {
         // Cuando startDate y endDate son null, obtenemos todas las citas o filtramos solo por tipo
-        if ($calendarType && $calendarType !== 'general') {
+        if ($isUserCalendar) {
+            // Filtrar por usuario específico
+            $sql = $baseQuery . " WHERE a.user_id = ?" . $orderBy;
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $userId);
+        } elseif ($calendarType && $calendarType !== 'general') {
             $sql = $baseQuery . " WHERE a.calendar_type = ?" . $orderBy;
             $stmt = mysqli_prepare($conn, $sql);
             mysqli_stmt_bind_param($stmt, "s", $calendarType);
@@ -35,8 +50,16 @@ function getAppointments($startDate, $endDate, $calendarType = null) {
         // Filtrar por rango de fechas
         $sql = $baseQuery . " WHERE a.start_time >= ? AND a.start_time <= ?";
         
+        // Si es un calendario de usuario, filtrar por ese usuario
+        if ($isUserCalendar) {
+            $sql .= " AND a.user_id = ?";
+            $sql .= $orderBy;
+            
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "ssi", $startDate, $endDate, $userId);
+        }
         // Si se especifica un tipo de calendario, filtrar por ese tipo
-        if ($calendarType && $calendarType !== 'general') {
+        elseif ($calendarType && $calendarType !== 'general') {
             $sql .= " AND a.calendar_type = ?";
             $sql .= $orderBy;
             
@@ -279,11 +302,36 @@ function getCalendarTypes() {
 }
 
 /**
- * Obtener el nombre del calendario según su tipo
+ * Obtener el nombre del tipo de calendario
  */
 function getCalendarName($type) {
-    $types = getCalendarTypes();
-    return isset($types[$type]) ? $types[$type] : 'Calendario';
+    // Si es un calendario de usuario específico
+    if (strpos($type, 'user_') === 0) {
+        $userId = (int) substr($type, 5);
+        // Obtener el nombre del usuario
+        global $conn;
+        $sql = "SELECT name FROM users WHERE id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $userId);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $user = mysqli_fetch_assoc($result);
+        
+        if ($user) {
+            return "Calendario de " . htmlspecialchars($user['name']);
+        } else {
+            return "Calendario de Usuario";
+        }
+    }
+    
+    // Para los calendarios estándar
+    $calendarNames = [
+        'general' => 'Calendario General',
+        'estetico' => 'Calendario Estético',
+        'veterinario' => 'Calendario Veterinario'
+    ];
+    
+    return $calendarNames[$type] ?? 'Calendario';
 }
 
 /**

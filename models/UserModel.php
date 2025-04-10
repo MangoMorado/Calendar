@@ -7,13 +7,13 @@ class UserModel {
     }
     
     public function getAllUsers() {
-        $sql = "SELECT id, name, email, role, color, created_at FROM users ORDER BY created_at DESC";
+        $sql = "SELECT id, name, email, role, color, calendar_visible, created_at FROM users ORDER BY created_at DESC";
         $result = mysqli_query($this->conn, $sql);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
     
     public function getUserById($id) {
-        $sql = "SELECT id, name, email, role, color FROM users WHERE id = ?";
+        $sql = "SELECT id, name, email, role, color, calendar_visible FROM users WHERE id = ?";
         $stmt = mysqli_prepare($this->conn, $sql);
         mysqli_stmt_bind_param($stmt, "i", $id);
         mysqli_stmt_execute($stmt);

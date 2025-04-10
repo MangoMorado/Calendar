@@ -11,6 +11,29 @@ require_once 'includes/calendar/modal.php';
 require_once 'includes/calendar/scripts.php';
 
 /**
+ * Función principal para inicializar y renderizar el calendario completo
+ * Esta es la función que se llama desde index.php
+ * 
+ * @param string $calendarType Tipo de calendario a mostrar
+ * @return string HTML renderizado del calendario
+ */
+function initCalendar($calendarType = 'general') {
+    // Inicializar datos del calendario
+    $calendarData = initializeCalendar($calendarType);
+    
+    // Renderizar el calendario con esos datos
+    $renderedCalendar = renderCalendar($calendarData);
+    
+    // Almacenar el HTML del modal y los scripts como variables globales para usarlos en index.php
+    global $modalHtml, $calendarScripts;
+    $modalHtml = $renderedCalendar['modalHtml'];
+    $calendarScripts = $renderedCalendar['calendarScripts'];
+    
+    // Devolver el HTML del calendario
+    return $renderedCalendar['calendarHtml'];
+}
+
+/**
  * Función para inicializar el calendario completo
  * 
  * @param string $calendarType Tipo de calendario a mostrar
@@ -19,7 +42,11 @@ require_once 'includes/calendar/scripts.php';
 function initializeCalendar($calendarType = 'general') {
     // Validar el tipo de calendario
     $availableCalendars = getCalendarTypes();
-    if (!array_key_exists($calendarType, $availableCalendars)) {
+    
+    // Si es un calendario de usuario, no validamos contra los tipos disponibles estándar
+    $isUserCalendar = strpos($calendarType, 'user_') === 0;
+    
+    if (!$isUserCalendar && !array_key_exists($calendarType, $availableCalendars)) {
         $calendarType = 'general';
     }
     
@@ -59,7 +86,8 @@ function renderCalendar($calendarData) {
     $calendarScripts = getCalendarScripts(
         $calendarData['eventsJson'], 
         $calendarData['settings'], 
-        $calendarData['calendarType']
+        $calendarData['calendarType'],
+        $calendarData['users']
     );
     
     // Construir y devolver la estructura HTML

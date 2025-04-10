@@ -28,6 +28,7 @@ if (mysqli_query($conn, $sql)) {
         role ENUM('admin', 'user') NOT NULL DEFAULT 'user',
         history TEXT,
         color VARCHAR(7) DEFAULT '#3788d8',
+        calendar_visible TINYINT(1) NOT NULL DEFAULT 1,
         reset_token VARCHAR(255) DEFAULT NULL,
         reset_token_expiry DATETIME DEFAULT NULL,
         created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
@@ -36,6 +37,21 @@ if (mysqli_query($conn, $sql)) {
     
     if (!mysqli_query($conn, $sql)) {
         echo "Error al crear tabla de usuarios: " . mysqli_error($conn);
+    }
+
+    // Verificar si la tabla users ya tiene la columna calendar_visible
+    $checkCalendarVisibleColumn = "SHOW COLUMNS FROM users LIKE 'calendar_visible'";
+    $calendarVisibleResult = mysqli_query($conn, $checkCalendarVisibleColumn);
+    if (mysqli_num_rows($calendarVisibleResult) == 0) {
+        $alterCalendarVisibleSql = "ALTER TABLE users ADD COLUMN calendar_visible TINYINT(1) NOT NULL DEFAULT 1";
+        $result = mysqli_query($conn, $alterCalendarVisibleSql);
+        if ($result) {
+            error_log("Columna calendar_visible añadida a la tabla users correctamente");
+        } else {
+            error_log("Error al añadir la columna calendar_visible: " . mysqli_error($conn));
+        }
+    } else {
+        error_log("La columna calendar_visible ya existe en la tabla users");
     }
 
     // Verificar si la tabla users ya tiene la columna color

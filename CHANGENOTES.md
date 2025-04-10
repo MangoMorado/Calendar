@@ -1,37 +1,43 @@
 # CHANGENOTES - Calendario MundoAnimal
 
 ## Lista de Cambios por implementar:
-- Agregar calendarios segun profesional
-- Estado de las citas segun codigo de color (Verde, Amarillo: reprogramar, Rojo)
+- Estado de las citas según código de color (Verde, Amarillo: reprogramar, Rojo)
 - Sistema de cola de citas, que el sistema reciba citas del chatbot y que un humano las programe
 - Mejoras de seguridad
 - Bloquear agendas (impedir agendar bajo condiciones personalizables)
 - Agregar sistema CRUD de Calendarios
-- Agregar sistema de notificación por WhatsApp / Correo electronico
+- Agregar sistema de notificación por WhatsApp / Correo electrónico
 - Mejoras de velocidad de carga
 - Optimización de Consultas: Para mejor rendimiento con grandes volúmenes de datos
 - Mejora de Responsividad: Para mejorar la experiencia en dispositivos móviles
-- Dashboard con estadisticas 🥭
+- Dashboard con estadísticas 🥭
 - Integración con Google Calendar
-- Integracion con Vetesoft (https://app.vetesoft.org/login/)
+- Integración con Vetesoft (https://app.vetesoft.org/login/)
 - Organizar el sistema bajo el modelo MVC
 - Agregar sistema de pruebas automatizadas
 - Documentación extendida
 - Agregar sistema de personalización "Skins"
 - Agregar sistema de configuración modular, pensando la app para varios tipos de usuarios (debe modificarse, nombre de la app, footer, logo, favicon)
-- Agregar Favicons
 - Mejoras para PWA
 - Crear estructura de clases para modelos principales (User, Appointment)
 - carga lazy de eventos para calendarios con muchas citas
 
+## Versión 0.0.6.3 - ⚙️ Settings Update
+- Se actualizó FullCalendar a la versión 6.1.17
+- Se implementó API para obtención de usuarios
+- Se mejoró la robustez de la selección de usuarios en formularios
+- Se agregaron registros de depuración para facilitar la resolución de problemas
+- Se implementó mecanismo de recuperación ante fallos en la carga de usuarios
+- Se agregaron filtros según usuarios, estos filtros pueden modificarse en el panel de usuarios
+
 ## Versión 0.0.6.2 - ⚙️ Settings Update
-- Se actualizo los flujos de n8n y los prompts
+- Se actualizó los flujos de n8n y los prompts
 
 ## Versión 0.0.6.1 - ⚙️ Settings Update
-- Se actualizo los flujos de n8n y los prompts
+- Se actualizó los flujos de n8n y los prompts
 
 ## Versión 0.0.6 - ⚙️ Settings Update
-- Agregar Dias laborales a la configuración
+- Agregar Días laborales a la configuración
 - Corrección de bugs conocidos
 
 ## Versión 0.0.5.9 - 🏓 Ping-Pong
@@ -58,29 +64,29 @@
 - Se corrigieron errores conocidos
 
 ## Versión 0.0.5.4 - 🏓 Ping-Pong
-- Se corrigio Error en iOS que no muestra el menu hamburguesa
+- Se corrigió Error en iOS que no muestra el menú hamburguesa
 
 ## Versión 0.0.5.3 - 🏓 Ping-Pong
-- Se corrigio bug que duplicaba citas
-- Se completo la migración de JS vanilla a ES6
+- Se corrigió bug que duplicaba citas
+- Se completó la migración de JS vanilla a ES6
 
 ## Versión 0.0.5.2 - 🏓 Ping-Pong
-- lo que la actualización 0.0.5.1 debia hacer
+- lo que la actualización 0.0.5.1 debía hacer
 
 ## Versión 0.0.5.1 - 🏓 Ping-Pong
 - Corrección de error 403
 
 ## Versión 0.0.5 - 🏓 Ping-Pong
 - Se corrigieron errores conocidos
-- Se agrego un nuevo sistema de API que permite interactuar con la APP, para su integración con n8n
-- Se agrego colecciones de postman para pruebas de la API
-- Se agrego mensaje de confirmación para mover citas
-- Se agrego acción de deshhacer al mover citas
-- Se elimino la leyenda de colores del calendario
-- Se Agrego botón deshacer
+- Se agregó un nuevo sistema de API que permite interactuar con la APP, para su integración con n8n
+- Se agregó colecciones de postman para pruebas de la API
+- Se agregó mensaje de confirmación para mover citas
+- Se agregó acción de deshhacer al mover citas
+- Se eliminó la leyenda de colores del calendario
+- Se Agregó botón deshacer
 
 ## Versión 0.0.4 - 🕵️ Sherlock
-- Se empezo migración gradual a MVC (Auth, Notes)
+- Se empezó migración gradual a MVC (Auth, Notes)
 - Agregar panel CRUD de usuarios "Solo para Admins"
 - Colores para diferenciar los profesionales
 - Solución de errores con el sistema de drag and drop
@@ -89,15 +95,15 @@
 - Libreta de notas
 
 ## Versión 0.0.3 - 🪲 Organizando la Casa
-- Busqueda y correciones de bugs
-- Se actualizo FullCalendar a la versión 6.1.15
-- Se dividio en modulos el archivo de estilos
-- Se dividio en modulos la logica del calendario
-- Se actualizo el sistema grid de cuadriculas css
-- Se Desarrollo una nueva API
-- Ahora si se preciona la tecla ESC del teclado con un modal abierto se cierra
+- Búsqueda y correcciones de bugs
+- Se actualizó FullCalendar a la versión 6.1.15
+- Se dividió en módulos el archivo de estilos
+- Se dividió en módulos la lógica del calendario
+- Se actualizó el sistema grid de cuadrículas css
+- Se desarrolló una nueva API
+- Ahora si se presiona la tecla ESC del teclado con un modal abierto se cierra
 - Vista por defecto en Escritorio: Semana, Vista por defecto en movil: Lista
-- Nueva función: Eventos de todo el dia
+- Nueva función: Eventos de todo el día
 
 ### 🏗️ Modularización
 - Implementación de estructura modular para el calendario
@@ -126,13 +132,13 @@
 
 ## Versión 0.0.2 - 📅 UX Calendar Update
 - Nuevo sistema de configuración:
-  - Seleccion de hora de inicio / fin
-  - Seleccion de duración de los Slots
+  - Selección de hora de inicio / fin
+  - Selección de duración de los Slots
   - Formato de Hora (12 hrs / 24 hrs)
 - Nuevo sistema de funciones modular:
   - appointments: Manejo de citas
   - Calendar: Manejo del calendario
-  - ui: manejor de Interfaces
+  - ui: manejo de Interfaces
 - Nuevo sistema Drag and Drop
 
 ## 🪲 Bug detectados:
@@ -184,4 +190,4 @@
 - Calendario interactivo con FullCalendar
 - Creación, edición y eliminación de citas
 - Vistas por día, semana y mes
-- Diseño responsivo básico 
+- Diseño responsivo básico

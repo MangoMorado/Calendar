@@ -26,7 +26,7 @@ Una aplicación web completa para gestionar citas y reuniones en una clínica ve
 - PHP 7.0 o superior
 - MySQL 5.6 o superior
 - JavaScript (ES6+)
-- [FullCalendar](https://fullcalendar.io/) v6.1.15
+- [FullCalendar](https://fullcalendar.io/) v6.1.17
 - Bootstrap Icons
 - HTML5/CSS3
 

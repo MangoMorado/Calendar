@@ -20,7 +20,7 @@ $userDetails = getUserById($currentUser['id']);
 
 // Estilos adicionales para el fullcalendar
 $extraStyles = '
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.css" rel="stylesheet">
 ';
 
 // Definir título de la página
