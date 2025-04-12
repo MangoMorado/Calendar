@@ -228,6 +228,49 @@ fetch('http://localhost/Calendar/api/ping.php')
 });
 ```
 
+### 8. Obtener Usuarios
+
+```javascript
+// Ejemplo usando fetch
+fetch('http://localhost/Calendar/api/users.php', {
+  credentials: 'include' // Importante para enviar la cookie de sesión
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Usuarios:', data);
+});
+
+// Ejemplo usando jQuery
+$.ajax({
+  url: 'http://localhost/Calendar/api/users.php',
+  method: 'GET',
+  xhrFields: {
+    withCredentials: true
+  },
+  success: function(data) {
+    console.log('Usuarios:', data);
+  }
+});
+```
+
+La respuesta incluirá los usuarios con su calendario visible:
+```json
+[
+  {
+    "id": 1,
+    "name": "Nombre Usuario",
+    "color": "#3788d8"
+  },
+  {
+    "id": 2,
+    "name": "Otro Usuario",
+    "color": "#ff9f89"
+  }
+]
+```
+
+Nota: Solo se devuelven los usuarios con `calendar_visible = 1` en la base de datos. Si un usuario no tiene un color definido, se usará el color por defecto `#3788d8`.
+
 ## Manejo de Errores
 
 Todas las respuestas de error siguen este formato:

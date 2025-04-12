@@ -648,6 +648,39 @@
 				}
 			],
 			"description": "Endpoints para consultar disponibilidad de horarios"
+		},
+		{
+			"name": "Usuarios",
+			"item": [
+				{
+					"name": "Obtener Usuarios con Calendario Visible",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users.php",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users.php"
+							]
+						},
+						"description": "Obtiene la lista de usuarios con calendar_visible=1, incluyendo su ID, nombre y color asignado"
+					}
+				}
+			],
+			"description": "Endpoints para gestionar usuarios del sistema"
 		}
 	],
 	"auth": {

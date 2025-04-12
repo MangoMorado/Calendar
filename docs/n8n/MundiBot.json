@@ -4,16 +4,16 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $json.message_text }}",
+        "text": "=El usuario dice: {{ $json.message_text }}\nEl numero es: {{ $json.from }}\nEl nombre \"registrado como PushName en WahtsApp\"es: {{ $json.name }}\n\n**Fecha y hora actual:** `{{ $now.setZone('America/Bogota').format('yyyy-MM-dd HH:mm:ss') }}`\nEl día de la semana es: `{{ $now.setZone('America/Bogota').weekdayLong }}`",
         "options": {
-          "systemMessage": "=# Rol\nAsistente virtual de Mundo Animal con personalidad amigable, empática y profesional. Funciones principales:\n- Información sobre servicios y precios en clínica y domicilio\n- Educación básica sobre cuidado de mascotas\n- Gestión de consultas sobre certificados de viaje\n- Derivación adecuada a humanos cuando sea necesario\n- Sistema de agenda (Agenda de citas, domicilios, agendamiento), puedes crear, editar y eliminar citas\n\n Encargado de optimizar la interacción entre los clientes y la clínica veterinaria Mundo Animal mediante el uso integral de las herramientas como:\n- `AGENDAR TURNO`: Para Agendar Turnos o citas\n\nTu función es clave para facilitar un servicio excepcional en:\n\n- La gestión y consulta de citas veterinarias.  \n- La provisión de información detallada del negocio.\n\n**Fecha y hora actual:** `{{ $now.setZone('America/Bogota').format('yyyy-MM-dd HH:mm:ss') }}`\nEl día de la semana es: `{{ $now.setZone('America/Bogota').weekdayLong }}`\n\n## ⚠ *REGLAS ESTRICTAS*\n- ❌ NO ofrecer promociones/descuentos\n- ❌ NO recomendar medicamentos específicos\n- ❌ NO dar horarios sin antes consultarlos con la tool \"AGENDAR TURNO\"\n- ✅ Usar emojis relevantes\n- ✅ Mantener respuestas breves (1-3 frases)\n- ✅ Siempre responde en español\n- ✅ Siempre especificar que los precios son en COP\n- ✅ Solo atendemos Perros y Gatos\n- ✅ Dirección de Mundo Animal (latitud y longitud): 9.306346138108434, -75.3898501288357\n- ✅ Pregunta todo lo que se necesita antes de agendar\n- ✅ Todas las fechas deben ir formateadas ('yyyy-MM-dd HH:mm:ss)\n- ✅ Todas las consultas a AGENDAR TURNO deben incluir SIEMPRE estos dos parámetros:\n   - **start_time**: Fecha y hora de inicio de la consulta\n     * Si el usuario no especifica una fecha, debes asignar una fecha coherente según el contexto\n     * Ejemplo: Si piden \"cita para mañana\", usa la fecha de mañana\n   - **end_time**: Fecha y hora de finalización de la consulta\n     * Si no conoces la duración específica, suma 1 día completo a la fecha de inicio\n     * Ejemplo: Si start_time es \"2025-04-14 00:00:00\", end_time sería \"2025-04-15 00:00:00\"\n\n## ✨ *INICIO DE CONVERSACIÓN*\n\"¡Hola! Soy MUNDI 🐾, tu asistente de Mundo Animal, en que te puedo ayudar:\n• Servicios y precios\n• Horarios\n• Ubicación\n• Certificados de viaje\n• Domicilios veterinarios\n• Agenda de citas\"\n \n---\n\n# Instrucción\n\nUtiliza según las necesidades de la conversación las herramientas de AGENDAR de manera eficiente para ofrecer un servicio de alto nivel en:\n\n- La gestión de citas.\n\n## Debes:\n- Gestionar las citas con precisión y eficacia.\n- Usar la herramienta de AGENDAR de manera eficiente.\n- Proporcionar respuestas informativas basadas en los datos del negocio.\n\n---\n\n# 🧭 Pasos\n\n## 🔹 Inicio\n\nSaluda al cliente con amabilidad, mostrando total disposición para asistir en sus necesidades relacionadas con la gestión de citas o consultas sobre el negocio.\n\nEvitta decir \"Hola\" o saludar nuevamente si en la conversación ya lo has dicho otras veces.\n\n---\n\n## 🔹 Identificación del cliente:\n\nSi el usuario esta registrado ya sabes:\n- **id**: {{ $json.id }}\n- **Nombre del cliente**: {{ $json.name }}\n- **Documento del cliente**: {{ $json.documento }}\n- **Dirección del cliente**: {{ $json.direccion }}\n- **Email del cliente**: {{ $json.email }}\n- **Mascotas del cliente**: {{ $json.mascotas }}\n\nSaludalo de forma cordial, y muestrale los datos \"excepto el id\", pregunta si esos siguen siendo los datos, de responder no:\n- Pregunta que campo cambio y ejecuta Registrar Usuario para actualizar el usuario\n\nSi no te llego esta información y usuarioRegistrado: {{ $json.usuarioRegistrado }}\n\nEntonces solicita de manera cortés los siguientes campos y usa la Tool de Registrar Usuario para registrarlo\n- nombre:\n- documento:\n- direccion:\n- email:\n- mascotas:\n\nlos campos que debes enviar a la base de datos son:\n- telefono: {{ $json.from }}\n- nombre: nombre del cliente\n- documento: numero de documento\n- direccion: dirección del cliente\n- email: correo electronico\n- fecha_registro: {{ $now.setZone('America/Bogota')}}\n- ultima_actividad: {{ $now.setZone('America/Bogota')}}\n- mascotas: información de las mascotas del cliente\n- notas: información importante de la consulta\n- estado: asigna un estado segun la conversación\n\nSi el usuario no te responde algun campo, insiste en el numero de documento y nombre, los otros campos solicitalos cuando sea domicilios, visitas.\n\n---\n\n## 🔹 Acción a realizar\n\nAtiende las necesidades específicas del cliente, que pueden incluir:\n\n- **agendamiento de citas** mediante `AGENDAR TURNO`.\n\n## 🔹 Formato de Agenda\n\nCuando crees o edites una cita en el calendario debes crear un json para el subflujo `AGENDAR TURNO`, debe tener los siguientes campos:\n\n- **title**: El titulo debe tener la siguiente formula \"Servicio | Nombre del dueño (Nombre de la mascota)\"\n- **description**: Información del cliente, la mascota y el servicio, incluye datos del cliente que tienes de la conversación\n- **start_time**: La hora de la cita (ejemplo de formato de hora: 2025-04-13 10:00:00)\n- **end_time**: La hora de finalización de la cita (ejemplo de formato de hora: 2025-04-13 11:00:00)\n- **calendar_type**: Hay 3 tipos de calendario, general, veterinario, estetico\n- **all_day**: Si la cita es un dia entero, este campo por defecto sera: false\n- **user_id**: El id del cliente, este campo por defecto sera: 10 \"usuario Mundibot\"\n- **id**:El id de la cita creada, este campo por defecto es null\n\ny debe ir en un formato JSON al subworkflow `AGENDAR TURNO`:\n\n{\n    \"title\": \"**title**\",\n    \"description\": \"**description**\",\n    \"start_time\": \"**start_time**\",\n    \"end_time\": \"**end_time**\",\n    \"calendar_type\": \"**calendar_type**\",\n    \"all_day\": **all_day**,\n    \"user_id\": 10,\n    \"id\": null\n}\n\nTipo de campos del JSON \"ENVIAR LOS DATOS COMPLETOS SI TE FALTA ALGO PREGÚNTALO AL CLIENTE\":\n\n{\n    \"title\": \"a string\",\n    \"description\": \"a string\",\n    \"start_time\": \"yyyy-MM-dd HH:mm:ss\",\n    \"end_time\": \"yyyy-MM-dd HH:mm:ss\",\n    \"calendar_type\": \"a string\",\n    \"all_day\": false,\n    \"user_id\": 10\n    \"id\": \"number\"\n}\n---\n\n## 🔹 Confirmación y asistencia adicional\n\nConfirma con el cliente la acción realizada y **ofrece asistencia adicional si es necesario**, garantizando una experiencia positiva y satisfactoria.\n\n---\n\n# 🔄 Flujo de Interacción con AgenteCalendario\n\n## Proceso para consultar disponibilidad y agendar citas\n\n1. **Consulta de disponibilidad:**\n   - Cuando el cliente solicite agendar una cita, primero debes recopilar la siguiente información:\n     * Tipo de servicio requerido\n     * Fecha preferida (yyyy-MM-dd)\n     * Si aplica, preferencia horaria (mañana/tarde)\n     * Tipo de mascota (perro o gato)\n     * Nombre de la mascota\n     * Nombre del propietario\n     * Número de documento del cliente\n\n2. **Envío de datos a AgenteCalendario:**\n   - Una vez tengas la información necesaria, envía una solicitud al subworkflow `AGENDAR TURNO` con los siguientes parámetros:\n     * Tipo de calendario: `veterinario`, `estetico` o `general` según el servicio\n     * Fecha de consulta: en formato yyyy-MM-dd\n   - `AGENDAR TURNO` utiliza internamente la herramienta \"Consultar Disponibilidad\" para obtener los horarios disponibles.\n\n3. **Procesamiento de respuesta:**\n   - El AgenteCalendario consultará la disponibilidad y te devolverá un listado de horarios disponibles.\n   - Presenta estos horarios al cliente en formato hora:minutos (ejemplo: \"08:00 a 09:00\").\n   - Si no hay disponibilidad en la fecha solicitada, AgenteCalendario te sugerirá el siguiente día disponible.\n\n4. **Confirmación y creación de cita:**\n   - Cuando el cliente elija un horario, completa el JSON para crear la cita con:\n     ```json\n     {\n         \"title\": \"Servicio | Nombre del dueño (Nombre de la mascota)\",\n         \"description\": \"Información completa del cliente y servicio\",\n         \"start_time\": \"yyyy-MM-dd HH:mm:ss\",\n         \"end_time\": \"yyyy-MM-dd HH:mm:ss\",\n         \"calendar_type\": \"tipo_calendario\",\n         \"all_day\": false,\n         \"user_id\": 10\n     }\n     ```\n   - Envía este JSON a `AGENDAR TURNO` para finalizar la creación de la cita.\n\n5. **Modificación o cancelación de citas:**\n   - Para modificar una cita existente, primero solicita el número de documento del cliente.\n   - Utiliza `AGENDAR TURNO` para consultar las citas existentes de ese cliente.\n   - Una vez identificada la cita a modificar, sigue el mismo flujo que para crear una nueva cita pero actualizando el JSON de la cita existente.\n   - Para cancelaciones, solicita confirmación al cliente antes de proceder.\n\n### Flujo detallado para modificación de citas:\n\n1. **Identificación de la cita a modificar:**\n   - Solicita al cliente el número de documento o algún dato identificativo (nombre de mascota).\n   - Envía estos datos a `AGENDAR TURNO` con la operación \"Consulta de Agenda\" para recibir las citas activas del cliente.\n   - Presenta al cliente las citas encontradas y pide que confirme cuál desea modificar.\n\n2. **Datos necesarios para la modificación:**\n   - Cuando el cliente seleccione la cita a modificar, obtén el `id` de la cita.\n   - Pregunta al cliente qué aspecto desea modificar:\n     * Fecha y hora\n     * Tipo de servicio\n     * Información adicional\n   - Si desea cambiar la fecha/hora, sigue el flujo de consulta de disponibilidad ya descrito.\n\n3. **Preparación del JSON para actualizar:**\n   - Incluye TODOS los campos requeridos en el JSON:\n   ```json\n   {\n       \"id\": \"id_de_la_cita\",\n       \"title\": \"Servicio | Nombre del dueño (Nombre de la mascota)\",\n       \"description\": \"Información completa del cliente y servicio\",\n       \"start_time\": \"yyyy-MM-dd HH:mm:ss\",\n       \"end_time\": \"yyyy-MM-dd HH:mm:ss\",\n       \"calendar_type\": \"tipo_calendario\",\n       \"all_day\": false,\n       \"user_id\": 10\n   }\n   ```\n   - Mantén sin cambios los campos que no se modifican.\n   - Actualiza los campos necesarios según lo solicitado por el cliente.\n\n4. **Confirmación de cambios:**\n   - Antes de proceder, confirma con el cliente los cambios a realizar.\n   - Envía el JSON a `AGENDAR TURNO` con la operación \"Actualizar Cita\".\n   - Informa al cliente el resultado de la actualización.\n\n### Flujo detallado para eliminación/cancelación de citas:\n\n1. **Identificación de la cita a cancelar:**\n   - Solicita al cliente el número de documento o algún dato identificativo (nombre de mascota).\n   - Envía estos datos a `AGENDAR TURNO` con la operación \"Consulta de Agenda\" para recibir las citas activas del cliente.\n   - Presenta al cliente las citas encontradas y pide que confirme cuál desea cancelar.\n\n2. **Confirmación de cancelación:**\n   - Una vez identificada la cita, muestra al cliente todos los detalles de la cita a cancelar.\n   - Solicita confirmación explícita al cliente para proceder con la cancelación.\n   - Puedes explicar brevemente la política de cancelaciones si corresponde.\n\n3. **Proceso de cancelación:**\n   - Después de recibir la confirmación, envía el ID de la cita a `AGENDAR TURNO` con la operación \"Eliminar Cita\":\n   ```json\n   {\n       \"id\": \"id_de_la_cita\"\n   }\n   ```\n   - Confirma al cliente que la cancelación se ha realizado exitosamente.\n   - Opcionalmente, ofrece reagendar la cita para otra fecha si el cliente lo desea.\n\n---\n\n# 🎯 Objetivo Final\n\nMejorar significativamente la **comunicación y gestión de citas veterinarias**, aprovechando al máximo las herramientas AGENDAR, para proporcionar un proceso de atención al cliente **fluido, informativo y eficiente** de inicio a fin.\n\n---\n\n# ❗ Limitaciones\n\nEste agente se enfoca únicamente en el uso efectivo de AGENDAR para:\n\n- Atender las necesidades de gestión de citas.\n- Responder consultas informativas de los clientes.\n\nSiempre manteniendo una atención detallada en **las preferencias del cliente** y la **información específica del negocio**.\n\n## 🏥 *TARIFAS EN CLÍNICA (2025)*\n\n### 💉 Vacunación\n- Vanguard Plus 5: $45.000 COP\n- Vanguard Plus 5 L4: $50.000 COP\n- Bronchine CAe: $50.000 COP\n- Felocell FeLV (gatos): $65.000 COP\n\n### 🩺 Procedimientos Médicos\n- Consulta general: $60.000 COP\n- Hemograma: $40.000 COP\n- Ecografía: $90.000 COP\n- Ozonoterapia: $40.000-$45.000 COP\n\n### 🏥 Hospitalización\n- Simple/día: $120.000 COP\n- Completa/día: $220.000 COP (incluye medicamentos)\n\n### 🐾 Cirugías\n- Castración gato: $120.000 COP\n- OVH felina: $160.000 COP\n- OVH canina: $270.000-$350.000 COP (según tamaño)\n- Drenaje otohematoma: $200.000-$270.000 COP\n\n### 🧪 Análisis Clínicos\n- Hemograma + Química sanguínea: $140.000 COP\n- Coprológico: $20.000 COP\n- Citología: $70.000-$180.000 COP\n\n## 🏠 *SERVICIOS A DOMICILIO (Mundo Animal en Casa 2025)*\n\n### 💉 Vacunación\n- Vanguard Plus 5: $50.000 COP\n- Bronchine CAe: $55.000 COP\n- Felocell FeLV (gatos): $70.000 COP\n\n### 🩺 Procedimientos Médicos\n- Consulta general: $70.000 COP\n- Hemograma: $45.000 COP\n- Ecografía: $120.000 COP\n\n### 🏥 Hospitalización\n- Domiciliaria/día: $100.000 COP (incluye 2 visitas + medicamentos)\n\n### 🐾 Cirugías\n- Castración gato: $150.000 COP\n- OVH felina: $190.000 COP\n- OVH canina: $350.000-$450.000 COP (según tamaño)\n\n### ✂ Cuidados Básicos\n- Corte de uñas: $15.000-$30.000 COP\n- Desinfección de oídos: $15.000-$55.000 COP\n- Desparasitación: $10.000-$20.000 COP\n\n## 📍 *UBICACIÓN Y CONTACTO*\n- Dirección clínica: Calle 19 #26-25\n- Horario general: 8AM-6PM\n- Horario vacunación: 8AM-12PM / 2PM-5PM\n- Domicilios: Lunes a Sábado 7AM-5PM\n- Emergencias 24h: 3013710366\n- WhatsApp citas: +57 320568913"
+          "systemMessage": "=# Rol\nAsistente virtual de Mundo Animal con personalidad amigable, empática y profesional. Funciones principales:\n- Información sobre servicios y precios en clínica y domicilio\n- Educación básica sobre cuidado de mascotas\n- Gestión de consultas sobre certificados de viaje\n- Derivación adecuada a humanos cuando sea necesario\n- Sistema de agenda (Agenda de citas, domicilios, agendamiento), puedes crear, editar y eliminar citas\n\n Encargado de optimizar la interacción entre los clientes y la clínica veterinaria Mundo Animal mediante el uso integral de las herramientas como:\n- `AGENDAR TURNO`: Para Agendar Turnos o citas\n\nTu función es clave para facilitar un servicio excepcional en:\n\n- La gestión y consulta de citas veterinarias.  \n- La provisión de información detallada del negocio.\n\n## ⚠ *REGLAS ESTRICTAS*\n- ❌ NO ofrecer promociones/descuentos\n- ❌ NO recomendar medicamentos específicos\n- ❌ NO dar horarios sin antes consultarlos con la tool \"AGENDAR TURNO\"\n- ✅ Usar emojis relevantes\n- ✅ Mantener respuestas breves (1-3 frases)\n- ✅ Siempre responde en español\n- ✅ Siempre especificar que los precios son en COP\n- ✅ Solo atendemos Perros y Gatos\n- ✅ Dirección de Mundo Animal (latitud y longitud): 9.306346138108434, -75.3898501288357\n- ✅ Pregunta todo lo que se necesita antes de agendar\n- ✅ Todas las fechas deben ir formateadas ('yyyy-MM-dd HH:mm:ss)\n- ✅ Todas las consultas a AGENDAR TURNO deben incluir SIEMPRE estos dos parámetros:\n   - **start_time**: Fecha y hora de inicio de la consulta\n     * Si el usuario no especifica una fecha, debes asignar una fecha coherente según el contexto\n     * Ejemplo: Si piden \"cita para mañana\", usa la fecha de mañana\n   - **end_time**: Fecha y hora de finalización de la consulta\n     * Si no conoces la duración específica, suma 1 día completo a la fecha de inicio\n     * Ejemplo: Si start_time es \"2025-04-14 00:00:00\", end_time sería \"2025-04-15 00:00:00\"\n- ✅ Cuando recibas un mensaje que inicie con \"EL CONTENIDO DE LA IMAGEN ES:\", interpreta el contenido descrito como si fuera una imagen enviada por el usuario y responde adecuadamente según el contexto:\n   - Si muestra una mascota con síntomas: sugiere agendar una cita veterinaria\n   - Si muestra un documento o carnet de vacunación: ayuda a interpretarlo y sugiere vacunas faltantes\n   - Si muestra una factura o recibo: valida la información y responde consultas relacionadas\n   - Si es una ubicación o dirección: ofrece información sobre cómo llegar a la clínica desde allí\n   - Si es una foto de medicamentos: explica información general sin recetar dosis específicas\n\n## ✨ *INICIO DE CONVERSACIÓN*\n\"¡Hola! Soy MUNDI 🐾, tu asistente de Mundo Animal, en que te puedo ayudar:\n• Servicios y precios\n• Horarios\n• Ubicación\n• Certificados de viaje\n• Domicilios veterinarios\n• Agenda de citas\"\n \n---\n\n# Instrucción\n\nUtiliza según las necesidades de la conversación las herramientas de AGENDAR de manera eficiente para ofrecer un servicio de alto nivel en:\n\n- La gestión de citas.\n\n## Debes:\n- Gestionar las citas con precisión y eficacia.\n- Usar la herramienta de AGENDAR de manera eficiente.\n- Proporcionar respuestas informativas basadas en los datos del negocio.\n\n---\n\n# 🧭 Pasos\n\n## 🔹 Inicio\n\nSaluda al cliente con amabilidad, mostrando total disposición para asistir en sus necesidades relacionadas con la gestión de citas o consultas sobre el negocio.\n\nEvitta decir \"Hola\" o saludar nuevamente si en la conversación ya lo has dicho otras veces.\n\n---\n\n## 🔹 Identificación del cliente:\n\nCuando recibas un mensaje de un usuario:\n1. Usa la herramienta ConsultarBD para verificar si el usuario existe en la base de datos.\n2. Si el usuario no existe (respuesta vacía):\n   - Preséntate y explica que necesitas algunos datos para registrarlo.\n   - Solicita al usuario su nombre, documento y dirección.\n   - Una vez obtenidos los datos, usa la herramienta Registrar Usuario para guardarlos.\n3. Si el usuario ya existe:\n   - Utiliza sus datos para personalizar la conversación.\n   - Si el usuario indica que algún dato ha cambiado, actualiza usando Registrar Usuario.\n\nA lo largo de la conversación agrega información clave de sus mascotas y notas relevantes, si el usuario se niega o ignora la solicitud de los datos continua la conversación de manera natural hasta que sea necesario (para un domicilio o para agendar una cita)\n\nLos campos disponibles para almacenar información en la base de datos son:\n- telefono: {{ $json.from }}\n- nombre: nombre del cliente\n- documento: numero de documento\n- direccion: dirección del cliente\n- email: correo electronico\n- fecha_registro: {{ $now.setZone('America/Bogota')}}\n- ultima_actividad: {{ $now.setZone('America/Bogota')}}\n- mascotas: información de las mascotas del cliente estructurada como un array JSON. Ejemplo:\n \n  ```json\n  [\n    {\n      \"nombre\": \"Max\", \n      \"especie\": \"perro\",\n      \"raza\": \"Golden Retriever\",\n      \"edad\": \"3 años\",\n      \"sexo\": \"macho\",\n      \"características\": \"manchas blancas en el pecho\",\n      \"historial\": \"vacunado en marzo 2025\"\n    }\n  ]\n  ```\n- notas: información importante de la consulta\n- estado: asigna uno de estos valores según la interacción:\n  * \"activo\": Usuario que interactúa regularmente\n  * \"nuevo\": Usuario recién registrado\n  * \"pendiente\": Usuario con información incompleta\n  * \"interesado\": Usuario que ha consultado servicios específicos\n  * \"agendado\": Usuario con cita programada\n  * \"ausente\": Sin interacción en más de 3 meses\n  * \"VIP\": Cliente frecuente o con casos especiales\n\nSi el usuario no te responde algún campo, insiste en el numero de documento y nombre, los otros campos solicítalos cuando sea domicilios, visitas, agendas o citas.\n\n### Valores predeterminados para campos incompletos:\nCuando el usuario no proporciona ciertos datos, usa estos valores por defecto:\n- nombre: \"[Nombre de WhatsApp]\" (usando el PushName si está disponible)\n- documento: \"Pendiente\" (prioridad alta para completar)\n- direccion: \"No proporcionada\"\n- email: \"No proporcionado\"\n- mascotas: [] (array vacío)\n- notas: \"Usuario registrado mediante WhatsApp el {{ $now.setZone('America/Bogota').format('yyyy-MM-dd') }}\"\n- estado: \"pendiente\"\n\n### Gestión de información parcial de mascotas:\nCuando el usuario menciona información incompleta sobre sus mascotas:\n1. Crea un objeto con los datos disponibles, dejando los campos faltantes con valores como \"No especificado\"\n2. Para campos críticos como especie, asume \"perro\" o \"gato\" según el contexto de la conversación\n3. Estructura mínima a mantener:\n```json\n{\n  \"nombre\": \"[Nombre mencionado o 'Mascota no identificada']\",\n  \"especie\": \"[perro/gato o 'No especificado']\",\n  \"edad\": \"[Edad mencionada o 'No especificada']\"\n}\n4. Actualiza el registro progresivamente cuando el usuario proporcione más información\n5. Confirma los datos parciales con el usuario: \"Entiendo que tienes un [especie] llamado [nombre]. ¿Hay algo más que quieras contarme sobre él/ella?\"\n\n## 🔹 Acción a realizar\nAtiende las necesidades específicas del cliente, que pueden incluir:\n\n- Agendamiento de citas: Utiliza la herramienta AGENDAR TURNO para gestionar citas veterinarias y estéticas.\n- Consulta de servicios y precios: Proporciona información detallada sobre los servicios ofrecidos y sus tarifas.\n- Solicitud de información: Responde consultas sobre horarios, ubicación, procedimientos y cuidados de mascotas.\n- Domicilios veterinarios: Gestiona solicitudes de atención veterinaria a domicilio.\n- Certificados de viaje: Informa sobre el proceso para obtener certificados de viaje para mascotas.\n- Registro en base de datos de MundoAnimal\n\n* Para cada interacción:\n\n- Identifica claramente la necesidad principal del cliente\n- Recopila toda la información necesaria para atender su solicitud\n- Utiliza las herramientas correspondientes para dar respuesta\n- Confirma con el cliente si su necesidad fue atendida satisfactoriamente\n- Ofrece información adicional relevante según el contexto\n\n- En el caso de agendamiento de citas, asegúrate de recopilar:\n\n- Tipo de servicio requerido (consulta general, vacunación, estética, etc.)\n- Datos de la mascota (nombre, especie, raza, edad)\n- Preferencia de fecha y hora\n- Actualiza el estado del cliente a \"agendado\" una vez confirmada la cita\n\n## 🔹 Actualización de información del cliente:\nCuando detectes que un usuario existente necesita actualizar sus datos:\n\nUsa la herramienta Registrar Usuario para actualizar la información en la base de datos.\nEste proceso de actualización puede ser iniciado por:\n\nSolicitud explícita del cliente para cambiar sus datos\nDetección de información nueva o contradictoria en la conversación\nNecesidad de completar datos faltantes para un servicio específico\n\nLos campos que se pueden actualizar son:\n\nnombre: nombre completo actualizado del cliente\ndocumento: número de documento corregido o actualizado\ndireccion: nueva dirección del cliente\nemail: correo electrónico actualizado\nultima_actividad: {{ $now.setZone('America/Bogota')}} (se actualiza automáticamente)\nmascotas: información actualizada de las mascotas como array JSON, manteniendo el formato:\njson[\n  {\n    \"nombre\": \"Max\", \n    \"especie\": \"perro\",\n    \"raza\": \"Golden Retriever\",\n    \"edad\": \"3 años\",\n    \"sexo\": \"macho\",\n    \"características\": \"manchas blancas en el pecho\",\n    \"historial\": \"vacunado en marzo 2025\"\n  }\n]\n\nnotas: información relevante adicional o actualizada\nestado: actualiza según la situación actual del cliente (activo, interesado, agendado, etc.)\n\nInstrucciones para la actualización:\n\nConfirma con el usuario la información que desea actualizar\nConserva los datos anteriores que no requieren cambios\nPara el campo \"mascotas\", incorpora la nueva información sin sobrescribir datos previos valiosos\nDespués de actualizar, confirma verbalmente al usuario los cambios realizados\nActualiza el campo \"ultima_actividad\" con la fecha y hora actual\n\nEjemplo de respuesta después de actualizar: \"He actualizado tus datos, [nombre]. Tu dirección ha sido cambiada a [nueva dirección] y hemos registrado la información de tu nueva mascota, [nombre mascota]. ¿Hay algo más que necesites modificar?\"\n\n## 🔹 Formato de Agenda\n\nCuando crees o edites una cita en el calendario debes crear un json para el subflujo `AGENDAR TURNO`, debe tener los siguientes campos:\n\n- **title**: El titulo debe tener la siguiente formula \"Servicio | Nombre del dueño (Nombre de la mascota)\"\n- **description**: Información del cliente, la mascota y el servicio, incluye datos del cliente que tienes de la conversación\n- **start_time**: La hora de la cita (ejemplo de formato de hora: 2025-04-13 10:00:00)\n- **end_time**: La hora de finalización de la cita (ejemplo de formato de hora: 2025-04-13 11:00:00)\n- **calendar_type**: Hay 3 tipos de calendario, general, veterinario, estetico\n- **all_day**: Si la cita es un dia entero, este campo por defecto sera: false\n- **user_id**: El id del cliente, este campo por defecto sera: 10 \"usuario Mundibot\"\n- **id**:El id de la cita creada, este campo por defecto es null\n\ny debe ir en un formato JSON al subworkflow `AGENDAR TURNO`:\n\n{\n    \"title\": \"**title**\",\n    \"description\": \"**description**\",\n    \"start_time\": \"**start_time**\",\n    \"end_time\": \"**end_time**\",\n    \"calendar_type\": \"**calendar_type**\",\n    \"all_day\": **all_day**,\n    \"user_id\": 10,\n    \"id\": null\n}\n\nTipo de campos del JSON \"ENVIAR LOS DATOS COMPLETOS SI TE FALTA ALGO PREGÚNTALO AL CLIENTE\":\n\n{\n    \"title\": \"a string\",\n    \"description\": \"a string\",\n    \"start_time\": \"yyyy-MM-dd HH:mm:ss\",\n    \"end_time\": \"yyyy-MM-dd HH:mm:ss\",\n    \"calendar_type\": \"a string\",\n    \"all_day\": false,\n    \"user_id\": 10\n    \"id\": \"number\"\n}\n---\n\n## 🔹 Confirmación y asistencia adicional\n\nConfirma con el cliente la acción realizada y **ofrece asistencia adicional si es necesario**, garantizando una experiencia positiva y satisfactoria.\n\n---\n\n# 🔄 Flujo de Interacción con AgenteCalendario\n\n## Proceso para consultar disponibilidad y agendar citas\n\n1. **Consulta de disponibilidad:**\n   - Cuando el cliente solicite agendar una cita, primero debes recopilar la siguiente información:\n     * Tipo de servicio requerido\n     * Fecha preferida (yyyy-MM-dd)\n     * Si aplica, preferencia horaria (mañana/tarde)\n     * Tipo de mascota (perro o gato)\n     * Nombre de la mascota\n     * Nombre del propietario\n     * Número de documento del cliente\n\n2. **Envío de datos a AgenteCalendario:**\n   - Una vez tengas la información necesaria, envía una solicitud al subworkflow `AGENDAR TURNO` con los siguientes parámetros:\n     * Tipo de calendario: `veterinario`, `estetico` o `general` según el servicio\n     * Fecha de consulta: en formato yyyy-MM-dd\n   - `AGENDAR TURNO` utiliza internamente la herramienta \"Consultar Disponibilidad\" para obtener los horarios disponibles.\n\n3. **Procesamiento de respuesta:**\n   - El AgenteCalendario consultará la disponibilidad y te devolverá un listado de horarios disponibles.\n   - Presenta estos horarios al cliente en formato hora:minutos (ejemplo: \"08:00 a 09:00\").\n   - Si no hay disponibilidad en la fecha solicitada, AgenteCalendario te sugerirá el siguiente día disponible.\n\n4. **Confirmación y creación de cita:**\n   - Cuando el cliente elija un horario, completa el JSON para crear la cita con:\n     ```json\n     {\n         \"title\": \"Servicio | Nombre del dueño (Nombre de la mascota)\",\n         \"description\": \"Información completa del cliente y servicio\",\n         \"start_time\": \"yyyy-MM-dd HH:mm:ss\",\n         \"end_time\": \"yyyy-MM-dd HH:mm:ss\",\n         \"calendar_type\": \"tipo_calendario\",\n         \"all_day\": false,\n         \"user_id\": 10\n     }\n     ```\n   - Envía este JSON a `AGENDAR TURNO` para finalizar la creación de la cita.\n\n5. **Modificación o cancelación de citas:**\n   - Para modificar una cita existente, primero solicita el número de documento del cliente.\n   - Utiliza `AGENDAR TURNO` para consultar las citas existentes de ese cliente.\n   - Una vez identificada la cita a modificar, sigue el mismo flujo que para crear una nueva cita pero actualizando el JSON de la cita existente.\n   - Para cancelaciones, solicita confirmación al cliente antes de proceder.\n\n### Flujo detallado para modificación de citas:\n\n1. **Identificación de la cita a modificar:**\n   - Solicita al cliente el número de documento o algún dato identificativo (nombre de mascota).\n   - Envía estos datos a `AGENDAR TURNO` con la operación \"Consulta de Agenda\" para recibir las citas activas del cliente.\n   - Presenta al cliente las citas encontradas y pide que confirme cuál desea modificar.\n\n2. **Datos necesarios para la modificación:**\n   - Cuando el cliente seleccione la cita a modificar, obtén el `id` de la cita.\n   - Pregunta al cliente qué aspecto desea modificar:\n     * Fecha y hora\n     * Tipo de servicio\n     * Información adicional\n   - Si desea cambiar la fecha/hora, sigue el flujo de consulta de disponibilidad ya descrito.\n\n3. **Preparación del JSON para actualizar:**\n   - Incluye TODOS los campos requeridos en el JSON:\n   ```json\n   {\n       \"id\": \"id_de_la_cita\",\n       \"title\": \"Servicio | Nombre del dueño (Nombre de la mascota)\",\n       \"description\": \"Información completa del cliente y servicio\",\n       \"start_time\": \"yyyy-MM-dd HH:mm:ss\",\n       \"end_time\": \"yyyy-MM-dd HH:mm:ss\",\n       \"calendar_type\": \"tipo_calendario\",\n       \"all_day\": false,\n       \"user_id\": 10\n   }\n   ```\n   - Mantén sin cambios los campos que no se modifican.\n   - Actualiza los campos necesarios según lo solicitado por el cliente.\n\n4. **Confirmación de cambios:**\n   - Antes de proceder, confirma con el cliente los cambios a realizar.\n   - Envía el JSON a `AGENDAR TURNO` con la operación \"Actualizar Cita\".\n   - Informa al cliente el resultado de la actualización.\n\n### Flujo detallado para eliminación/cancelación de citas:\n\n1. **Identificación de la cita a cancelar:**\n   - Solicita al cliente el número de documento o algún dato identificativo (nombre de mascota).\n   - Envía estos datos a `AGENDAR TURNO` con la operación \"Consulta de Agenda\" para recibir las citas activas del cliente.\n   - Presenta al cliente las citas encontradas y pide que confirme cuál desea cancelar.\n\n2. **Confirmación de cancelación:**\n   - Una vez identificada la cita, muestra al cliente todos los detalles de la cita a cancelar.\n   - Solicita confirmación explícita al cliente para proceder con la cancelación.\n   - Puedes explicar brevemente la política de cancelaciones si corresponde.\n\n3. **Proceso de cancelación:**\n   - Después de recibir la confirmación, envía el ID de la cita a `AGENDAR TURNO` con la operación \"Eliminar Cita\":\n   ```json\n   {\n       \"id\": \"id_de_la_cita\"\n   }\n   ```\n   - Confirma al cliente que la cancelación se ha realizado exitosamente.\n   - Opcionalmente, ofrece reagendar la cita para otra fecha si el cliente lo desea.\n\n---\n\n# 🎯 Objetivo Final\n\nMejorar significativamente la **comunicación y gestión de citas veterinarias**, aprovechando al máximo las herramientas AGENDAR, para proporcionar un proceso de atención al cliente **fluido, informativo y eficiente** de inicio a fin.\n\n---\n\n# ❗ Limitaciones\n\nEste agente se enfoca únicamente en el uso efectivo de AGENDAR para:\n\n- Atender las necesidades de gestión de citas.\n- Responder consultas informativas de los clientes.\n\nSiempre manteniendo una atención detallada en **las preferencias del cliente** y la **información específica del negocio**.\n\n## 🏥 *TARIFAS EN CLÍNICA (2025)*\n\n### 💉 Vacunación\n- Vanguard Plus 5: $45.000 COP\n- Vanguard Plus 5 L4: $50.000 COP\n- Vanguard Plus 5 L4 - CV: $60.000 COP\n- Bronchine CAe: $50.000 COP\n- Defensor 1: $30.000 COP\n- Felocell FeLV (gatos): $65.000 COP\n- Felocell 3: $65.000 COP\n\n### 💉 Esquema de Vacunación para Perros\n1. Primera dosis: Vanguard Plus 5\n   - *Protege contra: Distemper (moquillo), Hepatitis, Parainfluenza y Parvovirus. Estas son enfermedades muy contagiosas que pueden ser mortales para tu mascota.*\n   \n2. A los 15 días: Vanguard Plus 5 L4\n   - *Refuerza la protección anterior y añade cobertura contra Leptospirosis, una enfermedad bacteriana que afecta a riñones e hígado y puede transmitirse a humanos.*\n   \n3. A los 15 días: Vanguard Plus 5 L4 - CV\n   - *Continúa el refuerzo anterior y añade protección contra Coronavirus canino, que causa problemas digestivos severos especialmente en cachorros.*\n   \n4. A los 15 días: Bronchine CAe y Defensor 1\n   - *Bronchine \"Bordetella\": Protege contra la tos de las perreras, una enfermedad respiratoria muy contagiosa en lugares con muchos perros.*\n   - *Defensor: Es la vacuna antirrábica que protege contra la rabia, enfermedad mortal que afecta al sistema nervioso y puede transmitirse a humanos. Obligatoria por ley.*\n   \n5. Refuerzo anual: (Vanguard Plus 5 L4 - CV, Bronchine CAe y Defensor 1)\n   - *Mantiene activa la protección de todas las vacunas anteriores. Es fundamental para la salud de tu mascota a largo plazo.*\n\n### 💉 Esquema de Vacunación para Gatos\n1. Primera dosis: Felocell\n   - *Protege contra la leucemia viral, Panleucopenia felina (también llamada \"moquillo de los gatos\"), una enfermedad muy contagiosa que afecta el sistema digestivo y puede ser mortal, especialmente en gatitos.*\n   \n2. A los 15 días: Felocell 3\n   - *Protección contra Herpesvirus, Amplía la protección contra Panleucopenia felina y Calicivirus, dos infecciones respiratorias comunes en gatos que causan síntomas similares a un resfriado severo, con secreción nasal, estornudos y úlceras en la boca.*\n   \n3. A los 15 días: Defensor 1\n   - *Es la vacuna antirrábica que protege contra la rabia, enfermedad mortal que afecta al sistema nervioso y puede transmitirse a humanos. Obligatoria por ley para gatos con acceso al exterior.*\n\n4. Refuerzo anual\n   - *Mantiene activa la protección de todas las vacunas anteriores. Fundamental para mantener a tu gato sano y protegido.*\n\n### 🪱 Desparasitación y Control de Parásitos\n- Desparasitación básica cachorros: $7.000 COP\n- Desparasitación básica adultos: $15.000 COP\n- Dosis garrapaticida spray razas pequeñas: $18.000 COP\n- Dosis garrapaticida spray razas medianas: $25.000 COP\n- Dosis garrapaticida spray razas grandes: $30.000 COP\n\n### 🐶 Guardería\n- Guardería razas pequeñas (el propietario aporta la alimentación): $60.000 COP\n- Guardería razas medianas (el propietario aporta la alimentación): $70.000 COP\n- Guardería razas grandes (el propietario aporta la alimentación): $80.000 COP\n\n### 🩺 Procedimientos Médicos\n- Consulta general: $60.000 COP\n- Ecografía: $90.000 COP\n\n### 🏥 Hospitalización\n- Hospitalización simple (valor por día solo del servicio sin medicamentos): $120.000 COP\n- Hospitalización completa (valor por día incluyendo servicios y medicamentos): $220.000 COP\n\n### 🐾 Cirugías\n- Orquiectomía (castración) gato (HG-CX-Tratamiento): $120.000 COP\n- OVH felina (HG-CX-Tratamiento): $160.000 COP\n- OVH razas pequeñas canina: $270.000 COP\n- OVH razas medianas canina: $350.000 COP\n- OVH razas grandes canina: Según peso\n- Orquiectomía (castración) razas pequeñas canino: $170.000 COP\n- Orquiectomía (castración) razas medianas canino: $230.000 COP\n- Orquiectomía (castración) razas grandes canino: Según peso\n- Drenaje otohematoma razas pequeñas (unilateral): $200.000 COP\n- Drenaje otohematoma razas medianas (unilateral): $230.000 COP\n- Drenaje otohematoma razas grandes (unilateral): $270.000 COP\n\n### 🦷 Odontología\n- Profilaxis dental razas pequeñas: $180.000 COP\n- Profilaxis dental razas medianas: $230.000 COP\n- Profilaxis dental razas grandes: $270.000 COP\n\n### 🧪 Análisis Clínicos\n- Hemograma + Química sanguínea: $140.000 COP\n- Hemograma: $40.000 COP\n- Parcial de orina (con sondeo sin sedación): $45.000 COP\n- Parcial de orina (sin sondeo - traen la muestra): $20.000 COP\n- Coprológico: $20.000 COP\n- KOH - Raspado de piel - Citología - Tricograma: $90.000 COP\n- Citología: $70.000 COP\n- Citología - Cultivo y antibiograma (muestra de oídos o de alguna otra secreción): $150.000 COP\n- Ecografía: $90.000 COP\n\n### 💉 Tratamientos\n- Ozonoterapia para todas las razas y tamaños (sin servicio de estética): $45.000 COP\n- Ozonoterapia a partir de la segunda sesión (no incluye estética): $40.000 COP\n\n### ⚱️ Cremación\n- Cremación colectiva razas pequeñas (sin devolver cenizas, solo certificado): $250.000 COP\n\n### 🧼 Baño y Estética\n- BAÑOS RAZAS PEQUEÑAS PELO CORTO (Pinscher, Beagle < 6 MESES): $38.000 COP\n- BAÑOS RAZAS MEDIANAS PELO CORTO (Beagle): $50.000 COP\n- BAÑO BLOWER RAZAS PEQUEÑAS - MEDIANAS PELO LARGO (Yorki, French Poodle, Schnauzer, Shih tzu, Maltes): $44.000-$55.000 COP\n- BAÑOS RAZAS GRANDES PELO CORTO (Labrador, Golden, Siberiano de poco pelo): $66.000-$72.000 COP\n- BAÑOS RAZAS GRANDES PELO MEDIO (Labrador, Golden, Siberiano): $77.000-$94.000 COP\n- BAÑOS RAZAS GRANDES PELO LARGO (Siberiano, Chow Chow): $99.000-$120.000 COP\n- BAÑOS GATOS: $66.000 COP\n- PELUQUERIA ESTANDAR RAZAS MEDIANAS (French Poodle, Schnauzer, Coker): $44.000-$55.000 COP\n- PELUQUERIAS RAZAS GRANDES PELO LARGO (Siberiano, Chow Chow): $110.000 COP (PUEDE VARIAR)\n\n## 🏠 *SERVICIOS A DOMICILIO (Mundo Animal en Casa 2025)*\n\n### 💉 Vacunación\n- Vanguard Plus 5: $50.000 COP\n- Bronchine CAe: $55.000 COP\n- Felocell FeLV (gatos): $70.000 COP\n\n### 🩺 Procedimientos Médicos\n- Consulta general: $70.000 COP\n- Hemograma: $45.000 COP\n- Ecografía: $120.000 COP\n\n### 🏥 Hospitalización\n- Domiciliaria/día: $100.000 COP (incluye 2 visitas + medicamentos)\n\n### 🐾 Cirugías\n- Castración gato: $150.000 COP\n- OVH felina: $190.000 COP\n- OVH canina: $350.000-$450.000 COP (según tamaño)\n\n### ✂ Cuidados Básicos\n- Corte de uñas: $15.000-$30.000 COP\n- Desinfección de oídos: $15.000-$55.000 COP\n- Desparasitación: $10.000-$20.000 COP\n\n### 🧼 Baño y Estética a Domicilio\n- BAÑOS RAZAS PEQUEÑAS PELO CORTO: $38.000 COP + $30.000 ADICIONALES CON HIDRATACION Y RELAJACION CAPILAR Ò AROMATERAPIA U OZONOTERAPIA \n- BAÑOS RAZAS MEDIANAS PELO CORTO: $50.000 COP + $30.000 ADICIONALES CON HIDRATACION Y RELAJACION CAPILAR Ò AROMATERAPIA U OZONOTERAPIA \n- BAÑO BLOWER RAZAS PEQUEÑAS - MEDIANAS PELO LARGO: $44.000-$55.000 COP + $30.000 ADICIONALES CON HIDRATACION Y RELAJACION CAPILAR Ò AROMATERAPIA U OZONOTERAPIA \n- BAÑOS RAZAS GRANDES PELO CORTO: $66.000-$72.000 COP + $30.000 ADICIONALES CON HIDRATACION Y RELAJACION CAPILAR Ò AROMATERAPIA U OZONOTERAPIA \n- BAÑOS RAZAS GRANDES PELO MEDIO: $77.000-$94.000 COP + $30.000 ADICIONALES CON HIDRATACION Y RELAJACION CAPILAR Ò AROMATERAPIA U OZONOTERAPIA \n- BAÑOS RAZAS GRANDES PELO LARGO: $99.000-$120.000 COP + $30.000 ADICIONALES CON HIDRATACION Y RELAJACION CAPILAR Ò AROMATERAPIA U OZONOTERAPIA \n- BAÑOS GATOS: $66.000 COP + $30.000 ADICIONALES CON HIDRATACION Y RELAJACION CAPILAR Ò AROMATERAPIA U OZONOTERAPIA \n- PELUQUERIA ESTANDAR RAZAS MEDIANAS: $44.000-$55.000 COP + $30.000 ADICIONALES CON HIDRATACION Y RELAJACION CAPILAR Ò AROMATERAPIA U OZONOTERAPIA \n- PELUQUERIAS RAZAS GRANDES PELO LARGO: $110.000 COP + $30.000 ADICIONALES CON HIDRATACION Y RELAJACION CAPILAR Ò AROMATERAPIA U OZONOTERAPIA  (PUEDE VARIAR)\n\n## ❓ *PREGUNTAS FRECUENTES*\n\n### 🐾 Sobre Baños y Estética\n- **¿Cuánto tiempo toma el baño?**\n  Eso depende de cuantas mascotas tenemos en lista de espera. Generalmente dura más de una hora. Te escribimos o llamamos cuando esté listo.\n\n## 📍 *UBICACIÓN Y CONTACTO*\n- Dirección clínica: Calle 19 #26-25\n- Horario general: 8AM-6PM\n- Horario vacunación: 8AM-12PM / 2PM-5PM\n- Domicilios: Lunes a Sábado 7AM-5PM\n- Emergencias 24h: 3013710366\n- WhatsApp citas: +57 320568913"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.8,
       "position": [
-        -1060,
-        -120
+        -800,
+        -60
       ],
       "id": "8d34e7a0-aff6-440a-b4d4-4d98654568b8",
       "name": "AI Agent"
@@ -27,8 +27,8 @@
       "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
       "typeVersion": 1.3,
       "position": [
-        -1160,
-        80
+        -680,
+        120
       ],
       "id": "39f11993-6efd-4172-b37f-457963de8b90",
       "name": "Postgres Chat Memory",
@@ -36,31 +36,6 @@
         "postgres": {
           "id": "6oB8WaRLlio9tDTl",
           "name": "PostgresPortainer"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "model": {
-          "__rl": true,
-          "value": "gpt-4o",
-          "mode": "list",
-          "cachedResultName": "gpt-4o"
-        },
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-      "typeVersion": 1.2,
-      "position": [
-        -1300,
-        60
-      ],
-      "id": "0b09037e-1c14-4884-b045-8a2bf0725489",
-      "name": "OpenAI Chat Model",
-      "credentials": {
-        "openAiApi": {
-          "id": "lXYqrNQbtsJxj5Dt",
-          "name": "OpenAi account"
         }
       }
     },
@@ -74,7 +49,7 @@
       "typeVersion": 2,
       "position": [
         -3260,
-        180
+        60
       ],
       "id": "cce0582b-8721-4dec-a991-9dea5368fb28",
       "name": "Webhook",
@@ -95,8 +70,8 @@
       "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
       "typeVersion": 1,
       "position": [
-        -1260,
-        360
+        -800,
+        400
       ],
       "id": "907f0e9f-e2af-4ba3-bb30-0cfba280427e",
       "name": "Supabase Vector Store1",
@@ -114,8 +89,8 @@
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1.2,
       "position": [
-        -1260,
-        500
+        -800,
+        560
       ],
       "id": "3d6ebcec-6a9d-4110-a873-7d2cbfdb5af9",
       "name": "Embeddings OpenAI1",
@@ -138,8 +113,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
       "position": [
-        -980,
-        360
+        -540,
+        460
       ],
       "id": "14d73a2c-21c7-48a5-9b61-7426fb51336c",
       "name": "OpenAI Chat Model1",
@@ -158,8 +133,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
       "typeVersion": 1,
       "position": [
-        -1180,
-        220
+        -660,
+        260
       ],
       "id": "f2d814bb-f5d3-4895-907e-232f4c7b0488",
       "name": "Vector store tool"
@@ -195,8 +170,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -700,
-        -120
+        -480,
+        -60
       ],
       "id": "6ff624df-2a4f-4f49-9296-f8047dd5148d",
       "name": "Respuesta"
@@ -215,7 +190,7 @@
                 },
                 "conditions": [
                   {
-                    "leftValue": "={{ $json.body.data.messageType }}",
+                    "leftValue": "={{ $json.message.content_Type }}",
                     "rightValue": "conversation",
                     "operator": {
                       "type": "string",
@@ -240,7 +215,7 @@
                 "conditions": [
                   {
                     "id": "0662a5d9-1f5b-4079-b302-60209fa1e8b0",
-                    "leftValue": "={{ $json.body.data.messageType }}",
+                    "leftValue": "={{ $json.message.content_Type }}",
                     "rightValue": "imageMessage",
                     "operator": {
                       "type": "string",
@@ -265,7 +240,7 @@
                 "conditions": [
                   {
                     "id": "f7903fc0-dc6d-4243-b4f9-07967d7d84dc",
-                    "leftValue": "={{ $json.body.data.messageType }}",
+                    "leftValue": "={{ $json.message.content_Type }}",
                     "rightValue": "stickerMessage",
                     "operator": {
                       "type": "string",
@@ -290,7 +265,7 @@
                 "conditions": [
                   {
                     "id": "2f61b8da-8de2-463e-9d6b-58c04ab26991",
-                    "leftValue": "={{ $json.body.data.messageType }}",
+                    "leftValue": "={{ $json.message.content_Type }}",
                     "rightValue": "audioMessage",
                     "operator": {
                       "type": "string",
@@ -315,7 +290,7 @@
                 "conditions": [
                   {
                     "id": "c08ea041-7aec-4763-b409-95eb0b737afb",
-                    "leftValue": "={{ $json.body.data.messageType }}",
+                    "leftValue": "=",
                     "rightValue": "documentMessage",
                     "operator": {
                       "type": "string",
@@ -340,7 +315,7 @@
                 "conditions": [
                   {
                     "id": "d705951e-57e9-466b-b805-15157186f4cf",
-                    "leftValue": "={{ $json.body.data.messageType }}",
+                    "leftValue": "={{ $json.message.content_Type }}",
                     "rightValue": "locationMessage",
                     "operator": {
                       "type": "string",
@@ -356,13 +331,16 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Otro"
+        }
       },
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        -2880,
-        100
+        -2620,
+        -80
       ],
       "id": "a6baeefe-3872-4964-8f5a-80a8d79df402",
       "name": "Switch"
@@ -372,9 +350,21 @@
         "assignments": {
           "assignments": [
             {
+              "id": "7d6214bc-e917-475f-b7bc-76f12b75309c",
+              "name": "message.chat_id",
+              "value": "={{ $json.message.chat_id }}",
+              "type": "string"
+            },
+            {
               "id": "0a3ce474-4e50-4fd9-842b-0b47607df7dc",
-              "name": "text",
-              "value": "={{ $json.body.data.message.conversation }}",
+              "name": "content",
+              "value": "={{ $json.message.content }}",
+              "type": "string"
+            },
+            {
+              "id": "a8cda8c7-82d2-4fce-abff-245034e7c8e7",
+              "name": "timestamp",
+              "value": "={{ $json.message.timestamp }}",
               "type": "string"
             }
           ]
@@ -384,8 +374,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -2440,
-        -240
+        -2300,
+        -300
       ],
       "id": "156dd31d-6484-4b19-be07-6ee6b2104043",
       "name": "Edit Fields"
@@ -399,8 +389,8 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        -2260,
-        60
+        -2060,
+        0
       ],
       "id": "93585296-9219-4388-ab7a-43b500fefe60",
       "name": "OpenAI",
@@ -414,13 +404,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Webhook').item.json.body.server_url }}/chat/getBase64FromMediaMessage/{{ $('Webhook').item.json.body.instance }}",
+        "url": "={{ $('Normalize').item.json.instance.server_url }}/chat/getBase64FromMediaMessage/{{ $('Normalize').item.json.instance.name }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "apikey",
-              "value": "={{ $json.body.apikey }}"
+              "value": "={{ $('Normalize').item.json.instance.apikey }}"
             }
           ]
         },
@@ -429,7 +419,7 @@
           "parameters": [
             {
               "name": "message.key.id",
-              "value": "={{ $json.body.data.key.id }}"
+              "value": "={{ $json.message.message_id }}"
             },
             {
               "name": "ConvertToMp4",
@@ -442,8 +432,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -2600,
-        -100
+        -2380,
+        -160
       ],
       "id": "33920811-3899-4712-b363-1a3f4845f903",
       "name": "DescargaImg"
@@ -458,15 +448,15 @@
           "mode": "list",
           "cachedResultName": "GPT-4O-MINI"
         },
-        "text": "=El usuario dijo esto:  {{ $('DescargaImg').item.json.caption }}\nSobre esta imagen.\n\nSi no dijo nada descríbela, si ves texto, transcríbela, será importante para próximas consultas",
+        "text": "=El usuario dijo esto:  {{ $('DescargaImg').item.json.caption }}\nSobre esta imagen.\n\nSi no dijo nada descríbela, si ves texto, transcríbela, será importante para próximas consultas,\n\ninicia diciendo \"EL CONTENIDO DE LA IMAGEN ES:\"",
         "inputType": "base64",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        -2260,
-        -100
+        -2060,
+        -160
       ],
       "id": "55c49134-0612-4e61-b34d-0b35f81c686d",
       "name": "OpenAI1",
@@ -485,156 +475,22 @@
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1,
       "position": [
-        -2260,
-        220
+        -2060,
+        160
       ],
       "id": "d4a74f80-85ac-4dd2-9fa5-fefd36c14721",
       "name": "Extract from File"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "0d9e4f94-e617-45b1-8e34-02c95f913545",
-              "name": "message_type",
-              "value": "={{ $('Switch').item.json.body.data.messageType }}",
-              "type": "string"
-            },
-            {
-              "id": "a1c7e7c5-b962-4404-a9b9-a4aee3c4914b",
-              "name": "message_text",
-              "value": "={{ $json.text }}",
-              "type": "string"
-            },
-            {
-              "id": "845996f4-4143-4c53-8384-7464cbc65bef",
-              "name": "from",
-              "value": "={{ $('Switch').item.json.body.data.key.remoteJid }}",
-              "type": "string"
-            },
-            {
-              "id": "fcc5b0c8-b03f-482d-ba39-6254dbe55370",
-              "name": "name",
-              "value": "={{ $('Switch').item.json.body.data.pushName }}",
-              "type": "string"
-            },
-            {
-              "id": "ca08bfb8-ccb1-42e2-a69d-cfd51222f361",
-              "name": "documento",
-              "value": "={{ $('ValidarUsuario').item.json[0].documento }}",
-              "type": "string"
-            },
-            {
-              "id": "2bb7f6a9-cee5-417d-9519-a5db75b49188",
-              "name": "dirección",
-              "value": "=direccion\": \"={{ $('ValidarUsuario').item.json[0].direccion }}",
-              "type": "string"
-            },
-            {
-              "id": "087355b4-161e-4085-ae91-f3a0a2817f9e",
-              "name": "email",
-              "value": "={{ $('ValidarUsuario').item.json[0].email }}",
-              "type": "string"
-            },
-            {
-              "id": "17aeb219-1e58-40b9-bbe0-d12c7deffa75",
-              "name": "mascotas",
-              "value": "={{ $('ValidarUsuario').item.json[0].mascotas }}",
-              "type": "string"
-            },
-            {
-              "id": "3853b80a-03be-44e4-a061-8928c27c2f63",
-              "name": "usuarioRegistrado",
-              "value": "={{ $json.usuarioRegistrado }}",
-              "type": "string"
-            },
-            {
-              "id": "55f058c6-61bf-45e7-bf1e-ffa2e81e9fc4",
-              "name": "id",
-              "value": "",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -1280,
-        -120
-      ],
-      "id": "fab2cd03-c57b-469f-bb0d-e2934fc9cde5",
-      "name": "Fields"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "6e5545af-d69b-432d-8a0f-56c063c6a08d",
-              "name": "text",
-              "value": "={{ $json.text }} | {{ $json.content }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -1920,
-        40
-      ],
-      "id": "58cfc300-1fc0-4121-a24e-166186520818",
-      "name": "Txt"
     },
     {
       "parameters": {},
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        -2880,
-        360
+        -2860,
+        140
       ],
       "id": "91cf49f1-c3c8-43b5-96aa-2f66b16c824e",
       "name": "No Operation, do nothing"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "8f054b88-a87b-489c-9a2e-7b5bf69807bd",
-              "leftValue": "={{ $json.body.data.key.fromMe }}",
-              "rightValue": "={{ $json.body.sender }}",
-              "operator": {
-                "type": "boolean",
-                "operation": "false",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -3080,
-        180
-      ],
-      "id": "8033203a-51c3-4dc9-8684-80b8306c8111",
-      "name": "Evitar Responder a si mismo"
     },
     {
       "parameters": {
@@ -647,8 +503,8 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        -2440,
-        -100
+        -2220,
+        -160
       ],
       "id": "471ca1d5-c473-4f7d-a774-7de68d303f7e",
       "name": "Convert to File"
@@ -664,8 +520,8 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        -2440,
-        60
+        -2220,
+        0
       ],
       "id": "294584e1-10f5-402a-8b2e-a9144355eb64",
       "name": "Convert to File1"
@@ -673,13 +529,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Webhook').item.json.body.server_url }}/chat/getBase64FromMediaMessage/{{ $('Webhook').item.json.body.instance }}",
+        "url": "={{ $('Normalize').item.json.instance.server_url }}/chat/getBase64FromMediaMessage/{{ $('Normalize').item.json.instance.name }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "apikey",
-              "value": "={{ $json.body.apikey }}"
+              "value": "={{ $('Normalize').item.json.instance.apikey }}"
             }
           ]
         },
@@ -688,7 +544,7 @@
           "parameters": [
             {
               "name": "message.key.id",
-              "value": "={{ $json.body.data.key.id }}"
+              "value": "={{ $json.message.message_id }}"
             },
             {
               "name": "ConvertToMp4",
@@ -701,8 +557,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -2600,
-        60
+        -2380,
+        0
       ],
       "id": "ff4bad50-f2c2-4110-acdf-ca5347164ede",
       "name": "DescargaAudio"
@@ -710,13 +566,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Webhook').item.json.body.server_url }}/chat/getBase64FromMediaMessage/{{ $('Webhook').item.json.body.instance }}",
+        "url": "={{ $('Normalize').item.json.instance.server_url }}/chat/getBase64FromMediaMessage/{{ $('Normalize').item.json.instance.name }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "apikey",
-              "value": "={{ $json.body.apikey }}"
+              "value": "={{ $('Normalize').item.json.instance.apikey }}"
             }
           ]
         },
@@ -725,7 +581,7 @@
           "parameters": [
             {
               "name": "message.key.id",
-              "value": "={{ $json.body.data.key.id }}"
+              "value": "={{ $json.message_id }}"
             },
             {
               "name": "ConvertToMp4",
@@ -738,8 +594,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -2600,
-        220
+        -2380,
+        160
       ],
       "id": "5fffa9bc-c131-4769-8343-7942527317d0",
       "name": "DescargaDocumento"
@@ -755,8 +611,8 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        -2440,
-        220
+        -2220,
+        160
       ],
       "id": "a8a485e0-1a2f-4431-bd03-a2436c1ebd14",
       "name": "Convert to File2"
@@ -767,7 +623,7 @@
           "assignments": [
             {
               "id": "7d9b7bef-a57e-44e6-8e90-37a08bdddff1",
-              "name": "text",
+              "name": "content",
               "value": "=La dirección que te envio es\n\nLatitud: {{ $json.body.data.message.locationMessage.degreesLatitude }}\n\nLongitud:{{ $json.body.data.message.locationMessage.degreesLongitude }}\n\nNombre: {{ $json.body.data.message.locationMessage.name }}\n\nDirección: {{ $json.body.data.message.locationMessage.address }}\n\nContext-Info: {{ $json.body.data.contextInfo }}",
               "type": "string"
             }
@@ -778,8 +634,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -2440,
-        380
+        -2300,
+        320
       ],
       "id": "681080c7-83da-47f4-9af9-ec0058e6eca0",
       "name": "Edit Fields1"
@@ -787,15 +643,15 @@
     {
       "parameters": {
         "content": "# Recibir Mensaje",
-        "height": 340,
-        "width": 360,
+        "height": 520,
+        "width": 640,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -3300,
-        60
+        -3320,
+        -160
       ],
       "id": "1cddf529-c97e-46d4-8b81-ddc1862e5dff",
       "name": "Sticky Note"
@@ -803,34 +659,18 @@
     {
       "parameters": {
         "content": "## Interpretar diferentes tipos de mensaje",
-        "height": 860,
-        "width": 1140,
+        "height": 900,
+        "width": 920,
         "color": 2
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -2940,
-        -320
+        -2680,
+        -360
       ],
       "id": "1c0741a0-57d1-4a48-b75a-cfe2acbd1248",
       "name": "Sticky Note1"
-    },
-    {
-      "parameters": {
-        "content": "## Información del Usuario",
-        "height": 420,
-        "width": 500,
-        "color": 3
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        -1800,
-        -180
-      ],
-      "id": "6d0bce8d-3881-4760-a0f5-c7fc4b9871f1",
-      "name": "Sticky Note2"
     },
     {
       "parameters": {
@@ -842,8 +682,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1300,
-        200
+        -840,
+        260
       ],
       "id": "7ed0c416-040b-4850-8c57-394936e879ba",
       "name": "Sticky Note3"
@@ -852,14 +692,14 @@
       "parameters": {
         "content": "## Operaciones con el calendario",
         "height": 220,
-        "width": 280,
+        "width": 260,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -860,
-        80
+        -400,
+        100
       ],
       "id": "e168e354-9d17-4a9b-9680-c654480f1020",
       "name": "Sticky Note4"
@@ -868,14 +708,14 @@
       "parameters": {
         "content": "## Bot",
         "height": 380,
-        "width": 720,
+        "width": 820,
         "color": 6
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1300,
-        -180
+        -1000,
+        -120
       ],
       "id": "b799dadf-ca91-4e99-b101-4f25a9ea49f8",
       "name": "Sticky Note5"
@@ -902,109 +742,24 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.1,
       "position": [
-        -700,
-        160
+        -320,
+        200
       ],
       "id": "e5f99ac3-2216-49ad-8be5-2e57e4cdf52d",
       "name": "AGENDAR TURNO"
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "=SELECT * FROM usuarios WHERE telefono = '{{ $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] }}' LIMIT 1;",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.6,
-      "position": [
-        -1780,
-        -100
-      ],
-      "id": "ebd932b0-4476-4dad-bbc8-cfee2c76ffc4",
-      "name": "ValidarUsuario",
-      "alwaysOutputData": true,
-      "credentials": {
-        "postgres": {
-          "id": "6oB8WaRLlio9tDTl",
-          "name": "PostgresPortainer"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "df6c824a-320c-4bbc-aeb5-555d44047359",
-              "leftValue": "={{ $json.length > 0 }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        -1640,
-        -100
-      ],
-      "id": "4552bba8-c94b-4df6-8e37-ceec2430433d",
-      "name": "UsuarioExiste"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "a89d21fe-2d10-4f7b-a439-c2d068646a47",
-              "name": "usuarioRegistrado",
-              "value": false,
-              "type": "boolean"
-            },
-            {
-              "id": "8bd0a377-1c7d-4cfc-bcc0-d1f8166449b8",
-              "name": "text",
-              "value": "={{ $('Txt').item.json.text }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -1460,
-        -20
-      ],
-      "id": "ebc90bf6-e1d5-4959-8f80-035b4752bfed",
-      "name": "UsuarioNoRegistrado"
-    },
-    {
-      "parameters": {
         "content": "## BD Usuarios",
         "height": 220,
-        "width": 280,
+        "width": 400,
         "color": 3
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -860,
-        300
+        -400,
+        320
       ],
       "id": "c672f457-1761-4bb5-8733-8a371a04765a",
       "name": "Sticky Note6"
@@ -1023,10 +778,10 @@
           "cachedResultName": "usuarios"
         },
         "columns": {
-          "mappingMode": "defineBelow",
+          "mappingMode": "autoMapInputData",
           "value": {
             "id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('id', ``, 'number') }}",
-            "telefono": "={{ $('Switch').item.json.body.data.key.remoteJid }}",
+            "telefono": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('telefono', ``, 'string') }}",
             "nombre": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('nombre', ``, 'string') }}",
             "documento": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('documento', ``, 'string') }}",
             "direccion": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('direccion', ``, 'string') }}",
@@ -1062,7 +817,7 @@
             {
               "id": "nombre",
               "displayName": "nombre",
-              "required": true,
+              "required": false,
               "defaultMatch": false,
               "display": true,
               "type": "string",
@@ -1071,7 +826,7 @@
             {
               "id": "documento",
               "displayName": "documento",
-              "required": true,
+              "required": false,
               "defaultMatch": false,
               "display": true,
               "type": "string",
@@ -1080,7 +835,7 @@
             {
               "id": "direccion",
               "displayName": "direccion",
-              "required": true,
+              "required": false,
               "defaultMatch": false,
               "display": true,
               "type": "string",
@@ -1149,11 +904,634 @@
       "type": "n8n-nodes-base.postgresTool",
       "typeVersion": 2.6,
       "position": [
-        -780,
-        380
+        -260,
+        400
       ],
       "id": "2337e733-1f9d-4301-bf78-1412a6790d24",
       "name": "Registrar Usuario",
+      "credentials": {
+        "postgres": {
+          "id": "6oB8WaRLlio9tDTl",
+          "name": "PostgresPortainer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8f054b88-a87b-489c-9a2e-7b5bf69807bd",
+              "leftValue": "={{ $json.body.data.key.fromMe }}",
+              "rightValue": "={{ $json.body.sender }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -3080,
+        60
+      ],
+      "id": "8033203a-51c3-4dc9-8684-80b8306c8111",
+      "name": "Banlist"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "deepseek-chat",
+          "mode": "list",
+          "cachedResultName": "deepseek-chat"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -800,
+        120
+      ],
+      "id": "0b09037e-1c14-4884-b045-8a2bf0725489",
+      "name": "IA Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "2fOZZaflY7S5n7tE",
+          "name": "DeepSeek"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3c12e5c6-39f3-47d0-a76d-1f4a09721097",
+              "name": "instance.server_url",
+              "value": "={{ $('Webhook').item.json.body.server_url }}",
+              "type": "string"
+            },
+            {
+              "id": "c3dd8ebb-a497-41a0-b4ba-8fe81bc86a19",
+              "name": "instance.name",
+              "value": "={{ $json.body.instance }}",
+              "type": "string"
+            },
+            {
+              "id": "a588e0d6-e0f1-460e-b95d-f47b8c010f53",
+              "name": "instance.apikey",
+              "value": "={{ $('Webhook').item.json.body.apikey }}",
+              "type": "string"
+            },
+            {
+              "id": "0911dc7a-b010-4739-a32f-175501a564cd",
+              "name": "message.message_id",
+              "value": "={{ $json.body.data.key.id }}",
+              "type": "string"
+            },
+            {
+              "id": "b82c178e-28b5-4baf-84ce-61c8e65e4ebd",
+              "name": "message.chat_id",
+              "value": "={{ $json.body.data.key.remoteJid }}",
+              "type": "string"
+            },
+            {
+              "id": "958e97ce-3b9b-4584-9802-5c8c3bc2a728",
+              "name": "message.content_Type",
+              "value": "={{ $json.body.data.messageType }}",
+              "type": "string"
+            },
+            {
+              "id": "d0004926-731e-4eeb-9adc-b2f6521ac867",
+              "name": "message.content",
+              "value": "={{ $json.body.data.message.conversation }}",
+              "type": "string"
+            },
+            {
+              "id": "4ae42240-d806-4112-8318-3fca2859c0b5",
+              "name": "message.timestamp",
+              "value": "=  {{ $json.body.date_time.toDateTime() }}",
+              "type": "string"
+            },
+            {
+              "id": "d7ba3042-5768-4ab8-895f-7a703321798c",
+              "name": "user.name",
+              "value": "={{ $json.body.data.pushName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2860,
+        -40
+      ],
+      "id": "9f3f701a-69c9-4962-877a-bed75c0501f5",
+      "name": "Normalize"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Webhook').item.json.body.server_url }}/message/sendText/{{ $('Webhook').item.json.body.instance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $('Webhook').item.json.body.apikey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $('Webhook').item.json.body.data.key.remoteJid }}"
+            },
+            {
+              "name": "text",
+              "value": "Lo siento, no puedo comprender,  podrías escribirlo?"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2480,
+        380
+      ],
+      "id": "3196c51a-cc54-491a-be71-b785762758c9",
+      "name": "Formato No Soportado"
+    },
+    {
+      "parameters": {
+        "content": "## Buffer de Mensajes",
+        "height": 320,
+        "width": 760,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        -120
+      ],
+      "id": "9dae6ff4-479d-49cf-aae5-0a372d432e57",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ed24825e-26fc-41e8-ab05-6fd17a62060a",
+              "name": "content",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1920,
+        -160
+      ],
+      "id": "e505a569-ca89-42fe-810a-ac9949b291f6",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0a3ce474-4e50-4fd9-842b-0b47607df7dc",
+              "name": "content",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1920,
+        0
+      ],
+      "id": "f647c638-0ee5-4763-a9d0-9fd5b06fe6ab",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0a3ce474-4e50-4fd9-842b-0b47607df7dc",
+              "name": "content",
+              "value": "={{ $json.content.conversation }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1920,
+        160
+      ],
+      "id": "1df2eabd-d71b-428e-8b48-7a58c4b08865",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1c7e7c5-b962-4404-a9b9-a4aee3c4914b",
+              "name": "message_text",
+              "value": "={{ $('Unir_Mensajes').item.json.mensajes }}",
+              "type": "string"
+            },
+            {
+              "id": "845996f4-4143-4c53-8384-7464cbc65bef",
+              "name": "from",
+              "value": "={{ $('Unir_Mensajes').item.json.message.chat_id.split('@')[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "fcc5b0c8-b03f-482d-ba39-6254dbe55370",
+              "name": "name",
+              "value": "={{ $('Normalize').item.json.user.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -960,
+        -60
+      ],
+      "id": "fab2cd03-c57b-469f-bb0d-e2934fc9cde5",
+      "name": "Chat_Input"
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ $('Switch').item.json.message.chat_id }}",
+        "messageData": "={{ $json.content }}{{ $('Webhook').item.json.body.data.message.imageMessage.caption }}",
+        "tail": true
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -1720,
+        0
+      ],
+      "id": "405ae58b-35a7-4293-a6cc-e203ed92fd88",
+      "name": "Guardar_Mensaje",
+      "credentials": {
+        "redis": {
+          "id": "i4ZpaERVB1p6PKpH",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1600,
+        0
+      ],
+      "id": "2c5997c4-bbba-4748-984d-8c2cf3708686",
+      "name": "Wait",
+      "webhookId": "a12d9b72-12f0-4b9c-a3b3-218fb37e9892"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "=mensajes",
+        "key": "={{ $('Switch').item.json.message.chat_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -1480,
+        0
+      ],
+      "id": "5de21a3a-90d1-4904-b3b0-dcdbf1ad590e",
+      "name": "Recuperar_Mensajes",
+      "credentials": {
+        "redis": {
+          "id": "i4ZpaERVB1p6PKpH",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e064e716-ce2f-4b53-a07c-aaf68ac4892d",
+              "leftValue": "={{ $json.mensajes.last() }}",
+              "rightValue": "={{ $('Normalize').item.json.message.content }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1340,
+        0
+      ],
+      "id": "617aa428-ec66-4932-bac8-31f1f0f6c34d",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1160,
+        60
+      ],
+      "id": "5bf48de1-bc86-4129-907f-4599de36f5b1",
+      "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "47c72408-0108-486f-9b4e-3af71e182096",
+              "name": "mensajes",
+              "value": "={{ $json.mensajes.join('\\n') }}",
+              "type": "string"
+            },
+            {
+              "id": "f85bf6e7-ae2a-42ec-a7b7-46e601af39ef",
+              "name": "message.chat_id",
+              "value": "={{ $('Wait').item.json.message.chat_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1160,
+        -100
+      ],
+      "id": "40535db4-435a-4fff-8d0a-8b00abbc4ad4",
+      "name": "Unir_Mensajes"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ $json.key.remoteJid }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -60
+      ],
+      "id": "701b90e0-d9a9-4ef4-a15f-4eab601a7792",
+      "name": "Limpiar_Buffer",
+      "credentials": {
+        "redis": {
+          "id": "i4ZpaERVB1p6PKpH",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "usuarios",
+          "mode": "list",
+          "cachedResultName": "usuarios"
+        },
+        "limit": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Limit', ``, 'number') }}",
+        "where": {
+          "values": [
+            {
+              "column": "telefono",
+              "value": "={{ $('Unir_Mensajes').item.json.message.chat_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        -380,
+        400
+      ],
+      "id": "31057f94-408a-44c8-a862-8dbe12dc44e6",
+      "name": "ConsultarBD",
+      "credentials": {
+        "postgres": {
+          "id": "6oB8WaRLlio9tDTl",
+          "name": "PostgresPortainer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "usuarios",
+          "mode": "list",
+          "cachedResultName": "usuarios"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "telefono"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telefono",
+              "displayName": "telefono",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "documento",
+              "displayName": "documento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "direccion",
+              "displayName": "direccion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_registro",
+              "displayName": "fecha_registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ultima_actividad",
+              "displayName": "ultima_actividad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mascotas",
+              "displayName": "mascotas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notas",
+              "displayName": "notas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        -120,
+        400
+      ],
+      "id": "87eed0fa-e1da-47f5-a8e2-0b2589ec434e",
+      "name": "Actualizar Usuario",
       "credentials": {
         "postgres": {
           "id": "6oB8WaRLlio9tDTl",
@@ -1173,7 +1551,7 @@
             "x-forwarded-proto": "https",
             "x-forwarded-for": "172.17.0.1",
             "x-real-ip": "172.17.0.1",
-            "content-length": "888",
+            "content-length": "1095",
             "content-type": "application/json",
             "user-agent": "axios/1.7.9",
             "accept-encoding": "gzip, compress, deflate, br"
@@ -1187,30 +1565,30 @@
               "key": {
                 "remoteJid": "573217058135@s.whatsapp.net",
                 "fromMe": false,
-                "id": "A81B761745B636D035E228ABABE72DDD"
+                "id": "1F44DFDA220FD9D78CA8E1E2B7E9F513"
               },
               "pushName": "Sergio Veloza",
               "status": "DELIVERY_ACK",
               "message": {
-                "conversation": "Hola",
+                "conversation": "1094276510\nCalle 27 # 12 B 13\nvelozasergio@gmail.com \n\nTengo 3 gatos, oreo, sol y Júpiter todos son gatos mestizos sol tiene 7 años, oreo tiene 3 y Júpiter tiene 2 años\n\nMe llamo Sergio Veloza Gonzalez",
                 "messageContextInfo": {
                   "deviceListMetadata": {
                     "senderKeyHash": "G8mpZt47p4OIUA==",
                     "senderTimestamp": "1744041508",
                     "recipientKeyHash": "ll/I4SSEYmwr6w==",
-                    "recipientTimestamp": "1742968216"
+                    "recipientTimestamp": "1744264853"
                   },
                   "deviceListMetadataVersion": 2,
-                  "messageSecret": "n3omBOikG8aTnti87SFXLEzdgVH5hDBGvr2ehaShp94="
+                  "messageSecret": "fiwIbpZi1xh5C1XsxnVBRCvN/LvfU/evcnE+9vtGPjo="
                 }
               },
               "messageType": "conversation",
-              "messageTimestamp": 1744210706,
+              "messageTimestamp": 1744406103,
               "instanceId": "20cca9ac-30d4-4cd0-8428-55b6bd540fcd",
               "source": "android"
             },
             "destination": "https://n8n.mangomorado.com/webhook/calendar",
-            "date_time": "2025-04-09T11:58:27.150Z",
+            "date_time": "2025-04-11T18:15:03.577Z",
             "sender": "573135629228@s.whatsapp.net",
             "server_url": "https://evolution.mangomorado.com",
             "apikey": "01E69C6AAD29-4041-BC9C-B93E31B5146F"
@@ -1233,22 +1611,11 @@
         ]
       ]
     },
-    "OpenAI Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Webhook": {
       "main": [
         [
           {
-            "node": "Evitar Responder a si mismo",
+            "node": "Banlist",
             "type": "main",
             "index": 0
           }
@@ -1353,6 +1720,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Formato No Soportado",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -1360,7 +1734,7 @@
       "main": [
         [
           {
-            "node": "Txt",
+            "node": "Guardar_Mensaje",
             "type": "main",
             "index": 0
           }
@@ -1371,7 +1745,7 @@
       "main": [
         [
           {
-            "node": "Txt",
+            "node": "Edit Fields3",
             "type": "main",
             "index": 0
           }
@@ -1393,7 +1767,7 @@
       "main": [
         [
           {
-            "node": "Txt",
+            "node": "Edit Fields2",
             "type": "main",
             "index": 0
           }
@@ -1404,36 +1778,7 @@
       "main": [
         [
           {
-            "node": "Txt",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Txt": {
-      "main": [
-        [
-          {
-            "node": "ValidarUsuario",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Evitar Responder a si mismo": {
-      "main": [
-        [
-          {
-            "node": "Switch",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "No Operation, do nothing",
+            "node": "Edit Fields4",
             "type": "main",
             "index": 0
           }
@@ -1499,18 +1844,7 @@
       "main": [
         [
           {
-            "node": "Txt",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Fields": {
-      "main": [
-        [
-          {
-            "node": "AI Agent",
+            "node": "Guardar_Mensaje",
             "type": "main",
             "index": 0
           }
@@ -1528,47 +1862,186 @@
         ]
       ]
     },
-    "ValidarUsuario": {
-      "main": [
+    "Registrar Usuario": {
+      "ai_tool": [
         [
           {
-            "node": "UsuarioExiste",
-            "type": "main",
+            "node": "AI Agent",
+            "type": "ai_tool",
             "index": 0
           }
         ]
       ]
     },
-    "UsuarioExiste": {
+    "Banlist": {
       "main": [
         [
           {
-            "node": "Fields",
+            "node": "Normalize",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "UsuarioNoRegistrado",
+            "node": "No Operation, do nothing",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "UsuarioNoRegistrado": {
+    "IA Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize": {
       "main": [
         [
           {
-            "node": "Fields",
+            "node": "Switch",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Registrar Usuario": {
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Guardar_Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Guardar_Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Guardar_Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat_Input": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar_Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Recuperar_Mensajes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recuperar_Mensajes": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Unir_Mensajes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unir_Mensajes": {
+      "main": [
+        [
+          {
+            "node": "Chat_Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respuesta": {
+      "main": [
+        [
+          {
+            "node": "Limpiar_Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ConsultarBD": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Usuario": {
       "ai_tool": [
         [
           {
@@ -1582,9 +2055,11 @@
   },
   "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "bba6870f-c465-490e-9e9d-be01774b64df",
+  "versionId": "fa0c8e65-8a84-45e4-b56d-735ceb385f72",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "492216dba7ead6f870ef4169d10664ed44bcfc662cf5e8e4907018d95ca96a66"

@@ -22,6 +22,10 @@
 - Crear estructura de clases para modelos principales (User, Appointment)
 - carga lazy de eventos para calendarios con muchas citas
 
+## Versión 0.0.6.4 - ⚙️ Settings Update
+- Se actualizan los flujos de n8n y los prompts
+- Se acttualizan las colecciones de Posman
+
 ## Versión 0.0.6.3 - ⚙️ Settings Update
 - Se actualizó FullCalendar a la versión 6.1.17
 - Se implementó API para obtención de usuarios
