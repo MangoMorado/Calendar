@@ -76,6 +76,9 @@ $pageTitle = isset($pageTitle) ? $pageTitle : 'Agenda de Citas | Mundo Animal';
                     <a href="notes.php" class="nav-item" title="Libreta de Notas">
                         <i class="bi bi-journal-text"></i> Libreta de Notas
                     </a>
+                    <a href="https://docs.google.com/spreadsheets/d/1e4MzaDYRqCy1KwPppCuc8Ql53lpirgYCpq_gjO2rHCs/edit?usp=sharing" class="nav-item" target="_blank" rel="noopener noreferrer" title="Inventario">
+                        <i class="bi bi-box-seam"></i> Inventario
+                    </a>
                 </nav>
             </div>
             <?php endif; ?>
@@ -91,6 +94,9 @@ $pageTitle = isset($pageTitle) ? $pageTitle : 'Agenda de Citas | Mundo Animal';
             </a>
             <a href="notes.php" class="mobile-nav-item" title="Libreta de Notas">
                 <i class="bi bi-journal-text"></i> Libreta de Notas
+            </a>
+            <a href="https://docs.google.com/spreadsheets/d/1e4MzaDYRqCy1KwPppCuc8Ql53lpirgYCpq_gjO2rHCs/edit?usp=sharing" class="mobile-nav-item" target="_blank" rel="noopener noreferrer" title="Inventario">
+                <i class="bi bi-box-seam"></i> Inventario
             </a>
         </nav>
     </div>

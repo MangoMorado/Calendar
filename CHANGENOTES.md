@@ -3,7 +3,7 @@
 ## Lista de Cambios por implementar:
 - Estado de las citas según código de color (Verde, Amarillo: reprogramar, Rojo)
 - Sistema de cola de citas, que el sistema reciba citas del chatbot y que un humano las programe
-- Mejoras de seguridad
+- Mejoras de seguridad: Mover la JWT_SECRET fuera del código fuente. Restringir Access-Control-Allow-Origin en producción. Revisar posibles vulnerabilidades (inyección SQL, XSS - aunque el uso de consultas preparadas y htmlspecialchars ayuda).
 - Bloquear agendas (impedir agendar bajo condiciones personalizables)
 - Agregar sistema CRUD de Calendarios
 - Agregar sistema de notificación por WhatsApp / Correo electrónico
@@ -21,6 +21,14 @@
 - Mejoras para PWA
 - Crear estructura de clases para modelos principales (User, Appointment)
 - carga lazy de eventos para calendarios con muchas citas
+- Reparar consistencia: Hay dos formas de manejar las citas (API REST en api/ y el script process_appointment.php). Sería ideal consolidar en una sola (probablemente la API). La eliminación de citas en assets/js/app.js usa el endpoint antiguo y recarga la página, podría mejorarse usando la API y actualizando dinámicamente.
+- Mejorar eficiencia: La obtención y paginación del historial en historial.php podría optimizarse. El sistema de migración automática en config/database.php podría reemplazarse por uno más robusto si la aplicación crece.
+- Bug con el token en la libreta de notas
+
+## Versión 0.0.6.5 - ⚙️ Settings Update
+- Se agrego un boton que redirecciona al inventario de mundo animal
+- Se agrego información sobre el sistema MCP en n8n
+- Se actualizo el prompt de n8n de MundiBot
 
 ## Versión 0.0.6.4 - ⚙️ Settings Update
 - Se actualizan los flujos de n8n y los prompts
