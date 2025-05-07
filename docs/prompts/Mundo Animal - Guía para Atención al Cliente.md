@@ -369,4 +369,4 @@ Siempre manteniendo una atención detallada en **las preferencias del cliente** 
 - Horario citas estéticas: 8:15AM-12PM
 - Domicilios: Lunes a Sábado 7AM-5PM
 - Emergencias 24h: 3013710366
-- WhatsApp citas: +57 320568913
+- WhatsApp citas: +57 320568913 
