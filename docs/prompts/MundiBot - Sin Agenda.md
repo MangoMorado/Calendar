@@ -1,8 +1,8 @@
-# Mundo Animal - Guía para Atención al Cliente
+# Mundo Animal - Solo conversación
 
-El usuario dice: {{ $json.message_text }}
-El numero es: {{ $json.from }}
-El nombre "registrado como PushName en WahtsApp"es: {{ $json.name }}
+El usuario dice: {{ $json.message }}
+El numero es: {{ $json.context_id }}
+El nombre "registrado como PushName en WahtsApp"es: {{ $('Webhook').item.json.body.data.pushName }}
 
 **Fecha y hora actual:** `{{ $now.setZone('America/Bogota').format('yyyy-MM-dd HH:mm:ss') }}`
 El día de la semana es: `{{ $now.setZone('America/Bogota').weekdayLong }}`

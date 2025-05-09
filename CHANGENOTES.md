@@ -26,6 +26,9 @@
 - Mejorar eficiencia: La obtención y paginación del historial en historial.php podría optimizarse. El sistema de migración automática en config/database.php podría reemplazarse por uno más robusto si la aplicación crece.
 - Bug con el token en la libreta de notas
 
+## Versión 0.0.6.6.1 - ⚙️ Settings Update
+- Actualización de los flujos de N8N y prompts
+
 ## Versión 0.0.6.6 - ⚙️ Settings Update
 - Actualización de los flujos de N8N y prompts
 

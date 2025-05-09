@@ -1,0 +1,189 @@
+[
+  {
+    "id": 21,
+    "session_id": "573017083310@s.whatsapp.net",
+    "type": "human",
+    "messages": [
+      {"text": "Hola bnas", "timestamp": "2025-05-08T11:43:33.704Z"},
+      {"text": "Con trasferencia", "timestamp": "2025-05-08T11:43:34.176Z"},
+      {"text": "Y domicilio", "timestamp": "2025-05-08T11:43:34.499Z"},
+      {"text": "De pollo", "timestamp": "2025-05-08T11:43:34.833Z"},
+      {"text": "Una bolsa cuido Hills", "timestamp": "2025-05-08T11:43:35.322Z"}
+    ],
+    "phone": "573017083310",
+    "name": "Claudia Vargas",
+    "date": "2025-05-08 09:43:56",
+    "day": "Thursday"
+  },
+  {
+    "id": 22,
+    "session_id": "573017083310@s.whatsapp.net",
+    "type": "ai",
+    "content": "¡Gracias por comunicarte, Claudia Vargas! 😊 Para poder ayudarte con el domicilio de una bolsa de cuido Hills, es necesario que me confirmes tu dirección y el documento, por favor. Así podré registrarte y continuar con tu solicitud. \n\nDame un momento. 🐶😊",
+    "phone": "573017083310",
+    "date": "2025-05-08T11:43:35.322Z"
+  },
+  {
+    "id": 23,
+    "session_id": "573017083310@s.whatsapp.net",
+    "type": "human",
+    "messages": [
+      {"text": "Bn día", "timestamp": "2025-05-08T11:45:37.146Z"},
+      {"text": "Ok", "timestamp": "2025-05-08T11:45:39.009Z"}
+    ],
+    "phone": "573017083310",
+    "name": "Claudia Vargas",
+    "date": "2025-05-08 09:45:59",
+    "day": "Thursday"
+  },
+  {
+    "id": 24,
+    "session_id": "573017083310@s.whatsapp.net",
+    "type": "ai",
+    "content": "Gracias, Claudia. Cuando puedas, por favor indícame tu dirección y tu número de documento para finalizar el registro y atender tu pedido de domicilio de cuido Hills. ¡Estoy pendiente! Dame un momento. 🐶😊",
+    "phone": "573017083310",
+    "date": "2025-05-08T11:45:39.009Z"
+  },
+  {
+    "id": 25,
+    "session_id": "573017083310@s.whatsapp.net",
+    "type": "human",
+    "messages": [
+      {"text": "Conjunto Toledo", "timestamp": "2025-05-08T11:46:41.659Z"},
+      {"text": "Casa # 6", "timestamp": "2025-05-08T11:46:46.706Z"},
+      {"text": "43602005", "timestamp": "2025-05-08T11:47:00.429Z"}
+    ],
+    "phone": "573017083310",
+    "name": "Claudia Vargas",
+    "date": "2025-05-08 09:47:21",
+    "day": "Thursday"
+  },
+  {
+    "id": 26,
+    "session_id": "573017083310@s.whatsapp.net",
+    "type": "ai",
+    "content": "¡Perfecto, Claudia! Ya tengo tus datos: Conjunto Toledo, Casa # 6 y documento 43602005. ¿Tienes alguna mascota registrada con nosotros (nombre, especie y edad)? Así actualizo todo correctamente.\n\nEn cuanto a tu pedido de domicilio, dame un momento. 🐶😊",
+    "phone": "573017083310",
+    "date": "2025-05-08T11:47:00.429Z"
+  },
+  {
+    "id": 27,
+    "session_id": "573017083310@s.whatsapp.net",
+    "type": "human",
+    "messages": [
+      {"text": "Frida bull dog francés", "timestamp": "2025-05-08T11:48:18.201Z"},
+      {"text": "Donatella bulldog francés", "timestamp": "2025-05-08T11:48:36.344Z"},
+      {"text": "Maia", "timestamp": "2025-05-08T11:48:41.100Z"},
+      {"text": "No sé raza", "timestamp": "2025-05-08T11:48:50.552Z"},
+      {"text": "Criolla", "timestamp": "2025-05-08T11:48:54.598Z"}
+    ],
+    "image_description": "Una imagen de un perro que está acostado en una cama con una colcha negra. El perro tiene un pelaje marrón y está mordiendo un objeto que parece ser un hueso. El fondo muestra un ambiente con luz natural.",
+    "phone": "573017083310",
+    "name": "Claudia Vargas",
+    "date": "2025-05-08 09:48:56",
+    "day": "Thursday"
+  },
+  {
+    "id": 28,
+    "session_id": "573017083310@s.whatsapp.net",
+    "type": "ai",
+    "content": "¡Gracias, Claudia! Entonces tienes:\n- Frida, bulldog francés\n- Donatella, bulldog francés\n- Maia, perrita criolla\n\n¿Deseas agregar alguna característica, edad o información extra de cada una? Esto me ayuda a mantener su historial actualizado y así darte una mejor atención. Sobre el domicilio: dame un momento. 🐶😊\n\nRespecto a la imagen, noto que tu perrita está tranquila mordiendo un hueso en la cama. Si ves algún comportamiento inusual o síntomas de enfermedad, avísame y te ayudo a agendar una consulta veterinaria.",
+    "phone": "573017083310",
+    "date": "2025-05-08T11:48:54.598Z"
+  },
+  {
+    "id": 29,
+    "session_id": "573017083310@s.whatsapp.net",
+    "type": "human",
+    "messages": [],
+    "phone": "573017083310",
+    "name": "Claudia Vargas",
+    "date": "2025-05-08 09:49:15",
+    "day": "Thursday"
+  },
+  {
+    "id": 30,
+    "session_id": "573017083310@s.whatsapp.net",
+    "type": "ai",
+    "content": "Claudia, gracias por los datos. Me gustaría confirmar la siguiente información para cada una de tus perritas:\n- Edad aproximada\n- Sexo (hembra/macho)\n\nSi no tienes algún dato, dime \"No sé\" y lo marco como pendiente. ¡Así completo tu registro correctamente! Dame un momento con lo del domicilio. 🐶😊",
+    "phone": "573017083310",
+    "date": "2025-05-08 09:49:15"
+  },
+  {
+    "id": 31,
+    "session_id": "573045456407@s.whatsapp.net",
+    "type": "human",
+    "messages": [
+      {"text": "Holaa\nQue pena es para cancer la cita de hoy y re agendar para mañana", "timestamp": "2025-05-08T11:49:23.370Z"}
+    ],
+    "phone": "573045456407",
+    "name": "Isabella Santander",
+    "date": "2025-05-08 09:49:38",
+    "day": "Thursday"
+  },
+  {
+    "id": 32,
+    "session_id": "573045456407@s.whatsapp.net",
+    "type": "ai",
+    "content": "¡Gracias por escribirnos, Isabella! Para poder ayudarte con el cambio de cita y la gestión para tu gatito o perrito llamado \"Cancer\", necesito algunos datos para registrarte. Por favor, indícame tu número de documento y tu dirección. Así podremos re agendar todo correctamente. 🐶😊",
+    "phone": "573045456407",
+    "date": "2025-05-08T11:49:23.370Z"
+  },
+  {
+    "id": 33,
+    "session_id": "573017083310@s.whatsapp.net",
+    "type": "human",
+    "messages": [
+      {"text": "Frida 6 años", "timestamp": "2025-05-08T11:49:25.935Z"},
+      {"text": "Donatella no se es adoptada", "timestamp": "2025-05-08T11:49:37.337Z"},
+      {"text": "Maia", "timestamp": "2025-05-08T11:49:40.951Z"}
+    ],
+    "phone": "573017083310",
+    "name": "Claudia Vargas",
+    "date": "2025-05-08 09:50:01",
+    "day": "Thursday"
+  },
+  {
+    "id": 34,
+    "session_id": "573017083310@s.whatsapp.net",
+    "type": "ai",
+    "content": "Claudia, gracias por la información. Tengo:\n- Frida, bulldog francés, 6 años\n- Donatella, bulldog francés, edad no especificada, adoptada\n- Maia, criolla, edad no especificada\n\n¿Podrías confirmarme si todas son hembras? Así aseguro que todo esté correcto en tu registro. Dame un momento con el domicilio. 🐶😊",
+    "phone": "573017083310",
+    "date": "2025-05-08T11:49:40.951Z"
+  },
+  {
+    "id": 35,
+    "session_id": "573017083310@s.whatsapp.net",
+    "type": "human",
+    "messages": [
+      {"text": "Maia 2 años", "timestamp": "2025-05-08T11:50:20.051Z"}
+    ],
+    "phone": "573017083310",
+    "name": "Claudia Vargas",
+    "date": "2025-05-08 09:50:40",
+    "day": "Thursday"
+  },
+  {
+    "id": 36,
+    "session_id": "573017083310@s.whatsapp.net",
+    "type": "ai",
+    "content": "¡Gracias, Claudia! Ya casi completo tu registro. Solo una pregunta: ¿todas tus perritas (Frida, Donatella y Maia) son hembras? Si no sabes el sexo de alguna, dime \"No sé\" y así lo dejo registrado. \n\nDame un momento para tu solicitud de domicilio. 🐶😊",
+    "phone": "573017083310",
+    "date": "2025-05-08T11:50:20.051Z"
+  },
+  {
+    "id": 37,
+    "session_id": "573045456407@s.whatsapp.net",
+    "type": "human",
+    "messages": [
+      {"text": "Es para cancelar unas citas de baño", "timestamp": "2025-05-08T11:50:27.768Z"},
+      {"text": "Que teníamos agendandas para hoy", "timestamp": "2025-05-08T11:50:31.931Z"},
+      {"text": "Y re agendar para mañana", "timestamp": "2025-05-08T11:50:38.159Z"},
+      {"text": "Ava\nLabradoodle\nIsabella Santander\nCc 1093801369\n3045456407 \n\nNo tiene pulgas ni está en celo \n\nBaco \nLabradoodle \nCamilo mahecha\nCc 1020756920\n3045456407-3012347744", "timestamp": "2025-05-08T11:50:43.788Z"}
+    ],
+    "phone": "573045456407",
+    "name": "Isabella Santander",
+    "date": "2025-05-08 09:50:53",
+    "day": "Thursday"
+  }
+] 
