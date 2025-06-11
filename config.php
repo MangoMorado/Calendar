@@ -26,6 +26,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $n8nApiKey = $_POST['n8n_api_key'] ?? '';
     $n8nUrl = $_POST['n8n_url'] ?? '';
     $selectedWorkflow = $_POST['selected_workflow'] ?? '';
+    $evolutionApiUrl = $_POST['evolution_api_url'] ?? '';
+    $evolutionApiKey = $_POST['evolution_api_key'] ?? '';
+    $selectedEvolutionInstance = $_POST['selected_evolution_instance'] ?? '';
+    
+    // Extraer el nombre de la instancia seleccionada
+    $evolutionInstanceName = '';
+    if (!empty($selectedEvolutionInstance) && strpos($selectedEvolutionInstance, '|') !== false) {
+        $parts = explode('|', $selectedEvolutionInstance);
+        if (count($parts) >= 2) {
+            $evolutionInstanceName = $parts[0]; // El nombre está en la primera parte
+        }
+    }
     
     // Procesar días hábiles seleccionados
     $businessDays = [];
@@ -58,11 +70,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ('timezone', ?),
                 ('n8n_api_key', ?),
                 ('n8n_url', ?),
-                ('selected_workflow', ?)
+                ('selected_workflow', ?),
+                ('evolution_api_url', ?),
+                ('evolution_api_key', ?),
+                ('selected_evolution_instance', ?),
+                ('evolution_instance_name', ?)
                 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)";
         
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sssssssss", $slotMinTime, $slotMaxTime, $slotDuration, $timeFormat, $businessDaysJson, $timezone, $n8nApiKey, $n8nUrl, $selectedWorkflow);
+        mysqli_stmt_bind_param($stmt, "sssssssssssss", $slotMinTime, $slotMaxTime, $slotDuration, $timeFormat, $businessDaysJson, $timezone, $n8nApiKey, $n8nUrl, $selectedWorkflow, $evolutionApiUrl, $evolutionApiKey, $selectedEvolutionInstance, $evolutionInstanceName);
         
         if (mysqli_stmt_execute($stmt)) {
             // Guardar la configuración de sesiones
@@ -112,6 +128,10 @@ $timezone = $settings['timezone'] ?? 'America/Bogota';
 $n8nApiKey = $settings['n8n_api_key'] ?? '';
 $n8nUrl = $settings['n8n_url'] ?? '';
 $selectedWorkflow = $settings['selected_workflow'] ?? '';
+$evolutionApiUrl = $settings['evolution_api_url'] ?? '';
+$evolutionApiKey = $settings['evolution_api_key'] ?? '';
+$selectedEvolutionInstance = $settings['selected_evolution_instance'] ?? '';
+$evolutionInstanceName = $settings['evolution_instance_name'] ?? '';
 
 // Obtener días hábiles o establecer por defecto (lunes a viernes)
 $businessDays = isset($settings['businessDays']) ? json_decode($settings['businessDays'], true) : [1, 2, 3, 4, 5];
@@ -148,6 +168,39 @@ if (!empty($n8nUrl) && !empty($n8nApiKey)) {
         $workflowsData = json_decode($response, true);
         if (is_array($workflowsData) && isset($workflowsData['data'])) {
             $workflows = $workflowsData['data'];
+        }
+    }
+}
+
+// Obtener instancias de Evolution API si tenemos URL y API KEY
+$evolutionInstances = [];
+if (!empty($evolutionApiUrl) && !empty($evolutionApiKey)) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, rtrim($evolutionApiUrl, '/') . '/instance/fetchInstances');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'accept: application/json',
+        'apikey: ' . $evolutionApiKey
+    ]);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode === 200 && $response) {
+        $instancesData = json_decode($response, true);
+        if (is_array($instancesData)) {
+            // Filtrar solo las instancias que tienen los campos requeridos
+            foreach ($instancesData as $instance) {
+                if (is_array($instance) && isset($instance['name']) && isset($instance['token'])) {
+                    $evolutionInstances[] = [
+                        'instance' => $instance['name'],
+                        'apikey' => $instance['token']
+                    ];
+                }
+            }
         }
     }
 }
@@ -368,6 +421,46 @@ include 'includes/header.php';
                 <div class="alert alert-warning">
                     <i class="bi bi-exclamation-triangle"></i>
                     No se pudieron obtener los workflows. Verifica la URL y la API KEY.
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Configuración de Evolution API -->
+            <div class="form-section">
+                <h2><i class="bi bi-chat-dots"></i> Integración Evolution API</h2>
+                <div class="form-group">
+                    <label for="evolution_api_url">URL de Evolution API:</label>
+                    <input type="url" id="evolution_api_url" name="evolution_api_url" class="form-control" 
+                           value="<?php echo htmlspecialchars($evolutionApiUrl); ?>" 
+                           placeholder="https://tu-evolution-api.com" required>
+                    <small class="form-text text-muted">URL base de tu instancia de Evolution API</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="evolution_api_key">Evolution API Key:</label>
+                    <input type="password" id="evolution_api_key" name="evolution_api_key" class="form-control" 
+                           value="<?php echo htmlspecialchars($evolutionApiKey); ?>" autocomplete="off" required>
+                    <small class="form-text text-muted">Clave de API para autenticar peticiones a Evolution API. Se guarda de forma segura.</small>
+                </div>
+                
+                <?php if (!empty($evolutionInstances)): ?>
+                <div class="form-group">
+                    <label for="selected_evolution_instance">Instancia Evolution:</label>
+                    <select id="selected_evolution_instance" name="selected_evolution_instance" class="form-control">
+                        <option value="">Selecciona una instancia</option>
+                        <?php foreach ($evolutionInstances as $instance): ?>
+                            <option value="<?php echo htmlspecialchars($instance['instance'] . '|' . $instance['apikey']); ?>" 
+                                    <?php echo $selectedEvolutionInstance === ($instance['instance'] . '|' . $instance['apikey']) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($instance['instance']); ?> (API: <?php echo substr($instance['apikey'], 0, 8) . '...'; ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small class="form-text text-muted">Instancia de Evolution API que se utilizará para las difusiones</small>
+                </div>
+                <?php elseif (!empty($evolutionApiUrl) && !empty($evolutionApiKey)): ?>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    No se pudieron obtener las instancias. Verifica la URL y la API KEY.
                 </div>
                 <?php endif; ?>
             </div>

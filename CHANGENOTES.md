@@ -25,6 +25,25 @@
 - Reparar consistencia: Hay dos formas de manejar las citas (API REST en api/ y el script process_appointment.php). Sería ideal consolidar en una sola (probablemente la API). La eliminación de citas en assets/js/app.js usa el endpoint antiguo y recarga la página, podría mejorarse usando la API y actualizando dinámicamente.
 - Mejorar eficiencia: La obtención y paginación del historial en historial.php podría optimizarse. El sistema de migración automática en config/database.php podría reemplazarse por uno más robusto si la aplicación crece.
 - Bug con el token en la libreta de notas
+- Mejoras detectas en la 0.0.8:
+  - Consistencia: Dos formas de manejar citas (API y process_appointment.php)
+  - Arquitectura: Migración gradual a MVC en progreso
+  - Rendimiento: Optimización de consultas para grandes volúmenes
+  - Seguridad: JWT_SECRET en código fuente
+  - Testing: Falta sistema de pruebas automatizadas
+  - Optimizar Consultas: Implementar paginación y lazy loading
+  - Mejorar Seguridad: Mover secretos a variables de entorno
+  - Agregar Testing: Implementar pruebas unitarias y de integración
+- Agregar CI/CD autodeploy en server y vps
+- Modificar arquitectura para SAAS
+
+## Version 0.0.8 - 💚 Evolution
+- Nueva integración con Evolution API
+  - Permite ingresar la API Key de Evoluution API
+  - Permite ingresar la URL server de Evolution API
+  - Permite obtener el listado de instancias y seleccionar uno
+  - Permite saber si la instancia esta conectada o no
+  - Trabajando en Conectar via QR, eliminar evolution paring.json
 
 ## Version 0.0.7 - 📣 Megáfono
 - Corrección del bug del modal de creación / actualización de citas
