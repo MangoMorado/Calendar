@@ -47,6 +47,20 @@
 ### Version 0.0.9.2 - 📒 Paginas Amarillas
 - Creacion de debugs y test para sesiones
 
+### Version 0.0.9.3 - 📒 Paginas Amarillas
+- Refactor completo del sistema de sesiones:
+  - Eliminado el sistema personalizado de gestión de sesiones y cookies.
+  - Ahora solo se usan sesiones PHP nativas, con configuración centralizada.
+  - Función "recordar equipo" implementada usando solo parámetros nativos de PHP.
+  - Control de timeout por inactividad y duración de sesión configurable desde la base de datos.
+  - Todas las funciones de autenticación y control de sesión están en `includes/auth.php`.
+  - Limpieza de código y eliminación de tablas y scripts obsoletos relacionados a sesiones.
+  - Corrección de errores fatales y warnings relacionados con la gestión de sesiones y configuración de cookies.
+  - Scripts de prueba y verificación de sesiones actualizados.
+- Mejoras menores de seguridad y organización del código.
+- Corrección de bug en la configuración de sesiones desde el panel de administración.
+- Documentación y scripts de test para asegurar la correcta migración y funcionamiento del sistema simplificado.
+
 ## Version 0.0.8 - 💚 Evolution
 - Nueva integración con Evolution API
   - Permite ingresar la API Key de Evoluution API

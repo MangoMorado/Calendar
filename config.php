@@ -74,39 +74,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ('evolution_api_url', ?),
                 ('evolution_api_key', ?),
                 ('selected_evolution_instance', ?),
-                ('evolution_instance_name', ?)
+                ('evolution_instance_name', ?),
+                ('session_timeout', ?),
+                ('remember_me_timeout', ?),
+                ('max_sessions_per_user', ?),
+                ('require_login_on_visit', ?),
+                ('session_cleanup_interval', ?)
                 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)";
         
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sssssssssssss", $slotMinTime, $slotMaxTime, $slotDuration, $timeFormat, $businessDaysJson, $timezone, $n8nApiKey, $n8nUrl, $selectedWorkflow, $evolutionApiUrl, $evolutionApiKey, $selectedEvolutionInstance, $evolutionInstanceName);
+        mysqli_stmt_bind_param($stmt, "ssssssssssssssssss", $slotMinTime, $slotMaxTime, $slotDuration, $timeFormat, $businessDaysJson, $timezone, $n8nApiKey, $n8nUrl, $selectedWorkflow, $evolutionApiUrl, $evolutionApiKey, $selectedEvolutionInstance, $evolutionInstanceName, $sessionTimeout, $rememberMeTimeout, $maxSessionsPerUser, $requireLoginOnVisit, $sessionCleanupInterval);
         
         if (mysqli_stmt_execute($stmt)) {
-            // Guardar la configuración de sesiones
-            global $sessionManager;
-            $sessionSettings = [
-                'session_timeout' => $sessionTimeout,
-                'remember_me_timeout' => $rememberMeTimeout,
-                'max_sessions_per_user' => $maxSessionsPerUser,
-                'require_login_on_visit' => $requireLoginOnVisit,
-                'session_cleanup_interval' => $sessionCleanupInterval
-            ];
-            
-            $allSuccess = true;
-            foreach ($sessionSettings as $key => $value) {
-                if (!$sessionManager->updateSetting($key, $value)) {
-                    $allSuccess = false;
-                    break;
-                }
-            }
-            
-            if ($allSuccess) {
-                $success = true;
-                $message = 'Configuración actualizada correctamente';
-            } else {
-                $message = 'Error al guardar la configuración de sesiones';
-            }
+            $success = true;
+            $message = 'Configuración actualizada correctamente';
         } else {
-            $message = 'Error al guardar la configuración del calendario';
+            $message = 'Error al guardar la configuración';
         }
     }
 }
@@ -139,13 +122,12 @@ if (!is_array($businessDays)) {
     $businessDays = [1, 2, 3, 4, 5]; // Lunes a viernes por defecto
 }
 
-// Obtener configuración actual de sesiones
-global $sessionManager;
-$sessionTimeout = (int)$sessionManager->getSetting('session_timeout', 3600);
-$rememberMeTimeout = (int)$sessionManager->getSetting('remember_me_timeout', 604800);
-$maxSessionsPerUser = (int)$sessionManager->getSetting('max_sessions_per_user', 5);
-$requireLoginOnVisit = (bool)$sessionManager->getSetting('require_login_on_visit', 1);
-$sessionCleanupInterval = (int)$sessionManager->getSetting('session_cleanup_interval', 86400);
+// Obtener configuración actual de sesiones desde la base de datos
+$sessionTimeout = (int)($settings['session_timeout'] ?? 3600);
+$rememberMeTimeout = (int)($settings['remember_me_timeout'] ?? 604800);
+$maxSessionsPerUser = (int)($settings['max_sessions_per_user'] ?? 5);
+$requireLoginOnVisit = (bool)($settings['require_login_on_visit'] ?? 1);
+$sessionCleanupInterval = (int)($settings['session_cleanup_interval'] ?? 86400);
 
 // Obtener workflows de n8n si tenemos URL y API KEY
 $workflows = [];

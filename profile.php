@@ -158,7 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Obtener sesiones activas
 $activeSessions = getUserActiveSessions();
-$currentSessionId = $_COOKIE['session_id'] ?? null;
+$currentSessionId = session_id(); // Usar session_id() en lugar de $_COOKIE['session_id']
 
 // Formatear historial para mostrar
 $historyLines = $userDetails['history'] ? explode("\n", $userDetails['history']) : [];
@@ -447,60 +447,48 @@ function formatExpiration($expiresAt) {
 }
 
 /**
- * Crear sesión temporal de duración específica
+ * Crear sesión temporal de duración específica (versión simplificada)
+ * Como ahora usamos solo sesiones PHP nativas, esta función extiende la duración de la sesión actual
  */
 function createTemporarySession($userId, $durationSeconds) {
-    global $conn;
-    
     try {
-        // Generar ID de sesión único
-        $sessionId = bin2hex(random_bytes(32));
-        
-        // Calcular tiempo de expiración
-        $expiresAt = date('Y-m-d H:i:s', time() + $durationSeconds);
-        
-        // Obtener información del dispositivo
-        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-        
-        // Determinar tipo de dispositivo
-        $deviceInfo = 'Desconocido';
-        if (preg_match('/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i', $userAgent)) {
-            $deviceInfo = 'Móvil';
-        } elseif (preg_match('/Windows/i', $userAgent)) {
-            $deviceInfo = 'Windows';
-        } elseif (preg_match('/Mac/i', $userAgent)) {
-            $deviceInfo = 'Mac';
-        } elseif (preg_match('/Linux/i', $userAgent)) {
-            $deviceInfo = 'Linux';
-        }
-        
-        // Insertar nueva sesión
-        $sql = "INSERT INTO user_sessions (user_id, session_id, ip_address, user_agent, device_info, remember_me, expires_at, is_active) 
-                VALUES (?, ?, ?, ?, ?, 0, ?, 1)";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "isssss", $userId, $sessionId, $ipAddress, $userAgent, $deviceInfo, $expiresAt);
-        
-        if (mysqli_stmt_execute($stmt)) {
-            // Establecer cookie de sesión
-            $cookieExpires = time() + $durationSeconds;
-            setcookie('session_id', $sessionId, $cookieExpires, '/', '', isset($_SERVER['HTTPS']), true);
-            
-            // Actualizar historial del usuario
-            updateUserHistory($userId, "Creó sesión temporal de " . gmdate("H:i:s", $durationSeconds));
-            
-            return [
-                'success' => true,
-                'session_id' => $sessionId,
-                'expires_at' => $expiresAt,
-                'duration' => $durationSeconds
-            ];
-        } else {
+        // Verificar que el usuario esté autenticado
+        if (!isAuthenticated()) {
             return [
                 'success' => false,
-                'message' => 'Error al insertar sesión en la base de datos: ' . mysqli_error($conn)
+                'message' => 'Usuario no autenticado'
             ];
         }
+        
+        // Regenerar ID de sesión para mayor seguridad
+        session_regenerate_id(true);
+        
+        // Marcar la sesión como temporal con duración específica
+        $_SESSION['temporary_session'] = true;
+        $_SESSION['session_expires'] = time() + $durationSeconds;
+        
+        // Configurar la sesión para la duración especificada
+        if ($durationSeconds > 0) {
+            // Configurar cookie de sesión con la duración especificada
+            $cookieParams = session_get_cookie_params();
+            session_set_cookie_params(
+                $durationSeconds,
+                $cookieParams['path'],
+                $cookieParams['domain'],
+                $cookieParams['secure'],
+                $cookieParams['httponly']
+            );
+        }
+        
+        // Actualizar historial del usuario
+        updateUserHistory($userId, "Creó sesión temporal de " . gmdate("H:i:s", $durationSeconds));
+        
+        return [
+            'success' => true,
+            'session_id' => session_id(),
+            'expires_at' => date('Y-m-d H:i:s', time() + $durationSeconds),
+            'duration' => $durationSeconds
+        ];
         
     } catch (Exception $e) {
         return [
