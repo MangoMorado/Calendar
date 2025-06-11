@@ -10,6 +10,7 @@ $conn = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD);
 
 // Verificar conexión
 if (!$conn) {
+    error_log("Error en la conexión: " . mysqli_connect_error());
     die("Error en la conexión: " . mysqli_connect_error());
 }
 
@@ -36,7 +37,7 @@ if (mysqli_query($conn, $sql)) {
     )";
     
     if (!mysqli_query($conn, $sql)) {
-        echo "Error al crear tabla de usuarios: " . mysqli_error($conn);
+        error_log("Error al crear tabla de usuarios: " . mysqli_error($conn));
     }
 
     // Verificar si la tabla users ya tiene la columna calendar_visible
@@ -79,7 +80,7 @@ if (mysqli_query($conn, $sql)) {
     )";
     
     if (!mysqli_query($conn, $sql)) {
-        echo "Error al crear tabla de citas: " . mysqli_error($conn);
+        error_log("Error al crear tabla de citas: " . mysqli_error($conn));
     }
     
     // Actualizar la tabla de citas existente si no tiene la columna calendar_type
@@ -123,7 +124,7 @@ if (mysqli_query($conn, $sql)) {
     )";
     
     if (!mysqli_query($conn, $sql)) {
-        echo "Error al crear tabla de configuraciones: " . mysqli_error($conn);
+        error_log("Error al crear tabla de configuraciones: " . mysqli_error($conn));
     }
     
     // Crear tabla de notas si no existe
@@ -140,7 +141,7 @@ if (mysqli_query($conn, $sql)) {
     )";
     
     if (!mysqli_query($conn, $sql)) {
-        echo "Error al crear tabla de notas: " . mysqli_error($conn);
+        error_log("Error al crear tabla de notas: " . mysqli_error($conn));
     }
     
     // Crear tabla de sesiones si no existe
@@ -164,7 +165,7 @@ if (mysqli_query($conn, $sql)) {
     )";
     
     if (!mysqli_query($conn, $sql)) {
-        echo "Error al crear tabla de sesiones: " . mysqli_error($conn);
+        error_log("Error al crear tabla de sesiones: " . mysqli_error($conn));
     }
     
     // Crear tabla de configuración de sesiones si no existe
@@ -176,7 +177,7 @@ if (mysqli_query($conn, $sql)) {
     )";
     
     if (!mysqli_query($conn, $sql)) {
-        echo "Error al crear tabla de configuración de sesiones: " . mysqli_error($conn);
+        error_log("Error al crear tabla de configuración de sesiones: " . mysqli_error($conn));
     }
     
     // Insertar configuración por defecto de sesiones si no existe
@@ -212,9 +213,9 @@ if (mysqli_query($conn, $sql)) {
         send BOOLEAN NOT NULL DEFAULT FALSE
     )";
     if (!mysqli_query($conn, $sql)) {
-        echo "Error al crear tabla de contactos: " . mysqli_error($conn);
+        error_log("Error al crear tabla de contactos: " . mysqli_error($conn));
     }
 } else {
-    echo "Error al crear base de datos: " . mysqli_error($conn);
+    error_log("Error al crear base de datos: " . mysqli_error($conn));
 }
 ?> 

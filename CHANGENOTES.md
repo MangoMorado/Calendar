@@ -41,6 +41,9 @@
 - Ahora la app permite importar contactos de WhatsApp y guardarlos en la base de datos
 - Permite enviar difusiones con texto plano o imagenes
 
+### Version 0.0.9.1 - 📒 Paginas Amarillas
+- Correción de bug de sesiones
+
 ## Version 0.0.8 - 💚 Evolution
 - Nueva integración con Evolution API
   - Permite ingresar la API Key de Evoluution API
