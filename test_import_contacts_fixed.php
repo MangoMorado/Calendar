@@ -2,7 +2,7 @@
 require_once 'config/database.php';
 require_once 'includes/auth.php';
 
-echo "<h2>Prueba de Importación de Contactos - Método Corregido</h2>";
+echo "<h2>Prueba de Importación de Contactos - Según Documentación Oficial</h2>";
 
 // Verificar autenticación
 if (session_status() == PHP_SESSION_NONE) {
@@ -40,8 +40,8 @@ if (empty($evolutionApiUrl) || empty($evolutionApiKey) || empty($evolutionInstan
     exit;
 }
 
-// Probar la importación con el método GET corregido
-echo "<h3>Probando importación con método GET:</h3>";
+// Probar la importación con el método POST según documentación oficial
+echo "<h3>Probando importación con método POST (documentación oficial):</h3>";
 
 $apiUrl = rtrim($evolutionApiUrl, '/') . '/chat/findContacts/' . $evolutionInstanceName;
 $headers = [
@@ -49,14 +49,24 @@ $headers = [
     'apikey: ' . $evolutionApiKey
 ];
 
+// Body según la documentación oficial de Evolution API
+$body = json_encode([
+    "where" => [
+        "id" => $evolutionInstanceName
+    ]
+]);
+
 echo "URL: " . htmlspecialchars($apiUrl) . "<br>";
-echo "Método: GET<br>";
-echo "Headers: " . htmlspecialchars(json_encode($headers)) . "<br><br>";
+echo "Método: POST (según documentación oficial)<br>";
+echo "Headers: " . htmlspecialchars(json_encode($headers)) . "<br>";
+echo "Body: " . htmlspecialchars($body) . "<br><br>";
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $apiUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
 curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
@@ -76,6 +86,16 @@ if ($curlError) {
 if ($httpCode !== 200) {
     echo "❌ Error HTTP $httpCode<br>";
     echo "Respuesta: " . htmlspecialchars(substr($response, 0, 500)) . "<br>";
+    echo "<br><strong>Posibles causas del error:</strong><br>";
+    echo "1. Instancia no conectada en Evolution API<br>";
+    echo "2. API Key incorrecta o expirada<br>";
+    echo "3. URL del servidor incorrecta<br>";
+    echo "4. La instancia no tiene contactos<br>";
+    echo "5. Problema de conectividad con el servidor<br>";
+    echo "<br><strong>Recomendaciones:</strong><br>";
+    echo "• Verifica el estado de la instancia en Evolution API<br>";
+    echo "• Confirma que la API Key sea válida<br>";
+    echo "• Revisa los logs del servidor Evolution API<br>";
     exit;
 }
 
@@ -160,4 +180,5 @@ $countRow = mysqli_fetch_assoc($countResult);
 echo "Total de contactos en la base de datos: " . $countRow['total'] . "<br>";
 
 echo "<br><strong>✅ Importación completada exitosamente</strong><br>";
+echo "<br><em>Nota: Este script usa el método POST según la <a href='https://doc.evolution-api.com/v1/api-reference/chat-controller/find-contacts' target='_blank'>documentación oficial de Evolution API</a></em><br>";
 ?> 

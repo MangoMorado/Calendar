@@ -5,6 +5,10 @@
             <button id="btnActualizarContactos" class="btn btn-primary">
                 <i class="bi bi-arrow-repeat"></i> Actualizar contactos
             </button>
+            <label for="inputImportarContactos" class="btn btn-secondary ms-2 mb-0">
+                <i class="bi bi-upload"></i> Importar
+                <input type="file" id="inputImportarContactos" accept="application/json" style="display:none;">
+            </label>
         </div>
         
         <!-- Buscador -->

@@ -392,4 +392,58 @@ document.addEventListener('DOMContentLoaded', function() {
     // Cargar contactos al iniciar
     obtenerContactos();
 });
+
+// Importar contactos desde JSON
+const inputImportarContactos = document.getElementById('inputImportarContactos');
+if (inputImportarContactos) {
+    inputImportarContactos.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                const data = JSON.parse(evt.target.result);
+                let contactos = Array.isArray(data) ? data : [data];
+                // Validar estructura mínima
+                if (!contactos.every(c => c.remoteJid && c.pushName)) {
+                    showNotification('El archivo no tiene la estructura esperada.', 'error');
+                    return;
+                }
+                // Mostrar modal de progreso
+                const modal = new bootstrap.Modal(document.getElementById('modalCargaContactos'));
+                document.getElementById('barraProgresoContactos').style.width = '0%';
+                document.getElementById('barraProgresoContactos').textContent = '0%';
+                document.getElementById('estadoImportacionContactos').textContent = 'Importando contactos...';
+                modal.show();
+                // Enviar al backend
+                fetch('api/import_contacts_json.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contactos })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('barraProgresoContactos').style.width = '100%';
+                    document.getElementById('barraProgresoContactos').textContent = '100%';
+                    if (data.success) {
+                        document.getElementById('estadoImportacionContactos').textContent = '¡Importación completada!';
+                        setTimeout(() => {
+                            modal.hide();
+                            showNotification('Contactos importados: ' + data.imported + ', actualizados: ' + data.updated, 'success');
+                            obtenerContactos();
+                        }, 800);
+                    } else {
+                        document.getElementById('estadoImportacionContactos').textContent = 'Error: ' + (data.message || 'No se pudo importar contactos');
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('estadoImportacionContactos').textContent = 'Error de red al importar contactos';
+                });
+            } catch (err) {
+                showNotification('El archivo no es un JSON válido.', 'error');
+            }
+        };
+        reader.readAsText(file);
+    });
+}
 </script> 

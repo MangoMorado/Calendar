@@ -63,14 +63,29 @@
 
 ### Version 0.0.9.4 - 📒 Paginas Amarillas
 - Corrección del error 400 en la importación de contactos de Evolution API:
-  - Identificado y corregido el problema principal: uso incorrecto del método HTTP
-  - Cambiado de POST a GET para obtener contactos de Evolution API
-  - Eliminado el body de la petición que causaba el error 400
-  - Actualizado el archivo `api/import_contacts.php` para usar el método correcto
-  - Mejorado el script de diagnóstico `debug_import_contacts_v2.php` con pruebas de múltiples métodos
-  - Creado nuevo script de prueba `test_import_contacts_fixed.php` para verificar la corrección
-  - La Evolution API ahora responde correctamente y permite importar contactos sin errores
-  - Documentación de la solución y scripts de verificación incluidos
+  - Revisión basada en la documentación oficial de Evolution API
+  - Confirmado que el endpoint requiere método POST (no GET como se había corregido inicialmente)
+  - Verificada la estructura correcta del body según documentación oficial
+  - Actualizado el archivo `api/import_contacts.php` para usar POST con body correcto
+  - Mejorado el script de diagnóstico `debug_import_contacts_v2.php` con información oficial
+  - Actualizado script de prueba `test_import_contacts_fixed.php` con referencias a documentación
+  - Identificadas posibles causas del error 400: instancia no conectada, API Key inválida, URL incorrecta
+  - Documentación de la solución con enlaces a la documentación oficial de Evolution API
+
+### Version 0.0.9.5 - 📒 Paginas Amarillas
+- **🔄 Mejoras en Importación de Contactos JSON**
+  - Actualizado `api/import_contacts_json.php` para compatibilidad con múltiples estructuras JSON
+  - Nuevo script `import_from_json_file.php` para importación directa desde archivos JSON locales
+  - Nuevo script `test_json_structure.php` para análisis y validación de archivos JSON
+  - **Compatibilidad mejorada**: Soporte para arrays directos, objetos con clave 'contactos', y objetos únicos
+  - **Validación robusta**: Verificación de estructura de contactos y campos requeridos
+  - **Creación automática de tabla**: La tabla `contacts` se crea automáticamente si no existe
+  - **Filtrado inteligente**: Ignora automáticamente grupos de WhatsApp (@g.us)
+  - **Manejo de errores mejorado**: Mensajes de error específicos y estadísticas detalladas
+  - **Interfaz web amigable**: Progreso en tiempo real y formularios integrados
+  - **Estadísticas completas**: Conteo de importados, actualizados, omitidos y errores
+  - **Limpieza de datos**: Validación de números de teléfono y campos requeridos
+  - **Campos soportados**: `remoteJid`, `pushName`, `id`, `profilePicUrl`, `createdAt`, `updatedAt`, `instanceId`
 
 ## Version 0.0.8 - 💚 Evolution
 - Nueva integración con Evolution API

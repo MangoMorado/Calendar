@@ -47,22 +47,32 @@ if (empty($evolutionApiUrl) || empty($evolutionApiKey) || empty($evolutionInstan
 // Probar la conexión a Evolution API
 echo "<h3>3. Prueba de conexión a Evolution API:</h3>";
 if (!empty($evolutionApiUrl) && !empty($evolutionApiKey) && !empty($evolutionInstanceName)) {
-    // Método 1: GET request sin body (método correcto para obtener contactos)
+    // Método correcto según documentación oficial: POST con body específico
     $apiUrl = rtrim($evolutionApiUrl, '/') . '/chat/findContacts/' . $evolutionInstanceName;
     $headers = [
         'Content-Type: application/json',
         'apikey: ' . $evolutionApiKey
     ];
+    
+    // Body según la documentación oficial de Evolution API
+    $body = json_encode([
+        "where" => [
+            "id" => $evolutionInstanceName
+        ]
+    ]);
 
-    echo "<h4>Método 1: GET Request (Recomendado)</h4>";
+    echo "<h4>Método según documentación oficial: POST</h4>";
     echo "URL de la API: " . htmlspecialchars($apiUrl) . "<br>";
     echo "Headers: " . htmlspecialchars(json_encode($headers)) . "<br>";
-    echo "Método: GET (sin body)<br>";
+    echo "Body: " . htmlspecialchars($body) . "<br>";
+    echo "Método: POST (según documentación oficial)<br>";
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $apiUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
@@ -81,6 +91,12 @@ if (!empty($evolutionApiUrl) && !empty($evolutionApiKey) && !empty($evolutionIns
         
         if ($httpCode !== 200) {
             echo "❌ La API devolvió un código de error: $httpCode<br>";
+            echo "<br><strong>Posibles causas del error 400:</strong><br>";
+            echo "1. Instancia no conectada o no válida<br>";
+            echo "2. API Key incorrecta o expirada<br>";
+            echo "3. URL del servidor incorrecta<br>";
+            echo "4. La instancia no tiene contactos<br>";
+            echo "5. Problema de conectividad con el servidor Evolution API<br>";
         } else {
             echo "✅ La API respondió correctamente<br>";
             $data = json_decode($response, true);
@@ -92,8 +108,8 @@ if (!empty($evolutionApiUrl) && !empty($evolutionApiKey) && !empty($evolutionIns
         }
     }
 
-    // Método 2: POST request con body vacío (método alternativo)
-    echo "<h4>Método 2: POST Request con body vacío</h4>";
+    // Método alternativo: POST con body vacío (para comparar)
+    echo "<h4>Método alternativo: POST con body vacío</h4>";
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $apiUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -123,40 +139,6 @@ if (!empty($evolutionApiUrl) && !empty($evolutionApiKey) && !empty($evolutionIns
         }
     }
 
-    // Método 3: POST request con estructura original (para comparar)
-    echo "<h4>Método 3: POST Request con estructura original (problemática)</h4>";
-    $body = json_encode(["where" => ["id" => $evolutionInstanceName]]);
-    echo "Body: " . htmlspecialchars($body) . "<br>";
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $apiUrl);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-
-    $response3 = curl_exec($ch);
-    $httpCode3 = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError3 = curl_error($ch);
-    curl_close($ch);
-
-    echo "Código de respuesta HTTP: $httpCode3<br>";
-    
-    if ($curlError3) {
-        echo "❌ Error de cURL: " . htmlspecialchars($curlError3) . "<br>";
-    } else {
-        echo "✅ Conexión exitosa<br>";
-        echo "Respuesta: " . htmlspecialchars(substr($response3, 0, 200)) . "...<br>";
-        
-        if ($httpCode3 !== 200) {
-            echo "❌ La API devolvió un código de error: $httpCode3<br>";
-        } else {
-            echo "✅ La API respondió correctamente<br>";
-        }
-    }
-
 } else {
     echo "❌ No se puede probar la conexión porque faltan configuraciones<br>";
 }
@@ -177,13 +159,34 @@ if (mysqli_num_rows($result) > 0) {
     echo "❌ La tabla 'contacts' NO existe<br>";
 }
 
-// Simular el flujo completo
-echo "<h3>5. Análisis del problema:</h3>";
-echo "El error 400 se debe a que la petición POST con body no es la forma correcta de obtener contactos.<br>";
-echo "La Evolution API espera una petición GET para obtener contactos, no POST.<br>";
+// Análisis del problema
+echo "<h3>5. Análisis del problema según documentación oficial:</h3>";
+echo "Según la <a href='https://doc.evolution-api.com/v1/api-reference/chat-controller/find-contacts' target='_blank'>documentación oficial de Evolution API</a>:<br>";
+echo "• El endpoint requiere método POST<br>";
+echo "• El body debe tener la estructura: {\"where\": {\"id\": \"nombre_instancia\"}}<br>";
+echo "• El error 400 puede deberse a:<br>";
+echo "  - Instancia no conectada<br>";
+echo "  - API Key inválida<br>";
+echo "  - URL del servidor incorrecta<br>";
+echo "  - Problemas de conectividad<br>";
 
 echo "<h3>6. Solución recomendada:</h3>";
-echo "1. Cambiar el método de POST a GET en el archivo import_contacts.php<br>";
-echo "2. Eliminar el body de la petición<br>";
-echo "3. Mantener solo los headers de autenticación<br>";
+echo "1. Verificar que la instancia esté conectada en Evolution API<br>";
+echo "2. Confirmar que la API Key sea válida<br>";
+echo "3. Verificar la URL del servidor Evolution API<br>";
+echo "4. Revisar los logs del servidor Evolution API<br>";
+echo "5. Probar la conexión desde Postman o similar<br>";
+
+echo "<h3>7. Configuración de la petición POST probada:</h3>";
+
+$config_json = [
+    'url' => $apiUrl ?? null,
+    'headers' => $headers ?? null,
+    'body' => $body ?? null
+];
+
+echo '<pre style="background:#222;color:#0f0;padding:10px;border-radius:5px;">';
+echo htmlspecialchars(json_encode($config_json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+echo '</pre>';
+
 ?> 
