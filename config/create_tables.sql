@@ -98,4 +98,12 @@ SELECT * FROM (SELECT 'require_login_on_visit', '1') AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM session_settings WHERE setting_key = 'require_login_on_visit')
 UNION ALL
 SELECT * FROM (SELECT 'session_cleanup_interval', '86400') AS tmp
-WHERE NOT EXISTS (SELECT 1 FROM session_settings WHERE setting_key = 'session_cleanup_interval'); 
+WHERE NOT EXISTS (SELECT 1 FROM session_settings WHERE setting_key = 'session_cleanup_interval');
+
+-- Tabla de contactos para difusiones Evolution API
+CREATE TABLE IF NOT EXISTS contacts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    number VARCHAR(50) NOT NULL UNIQUE,
+    pushName VARCHAR(255) DEFAULT NULL,
+    send BOOLEAN NOT NULL DEFAULT FALSE
+); 

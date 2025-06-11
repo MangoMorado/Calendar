@@ -203,6 +203,17 @@ if (mysqli_query($conn, $sql)) {
             mysqli_stmt_execute($insertStmt);
         }
     }
+
+    // Crear tabla de contactos para difusiones Evolution API
+    $sql = "CREATE TABLE IF NOT EXISTS contacts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        number VARCHAR(50) NOT NULL UNIQUE,
+        pushName VARCHAR(255) DEFAULT NULL,
+        send BOOLEAN NOT NULL DEFAULT FALSE
+    )";
+    if (!mysqli_query($conn, $sql)) {
+        echo "Error al crear tabla de contactos: " . mysqli_error($conn);
+    }
 } else {
     echo "Error al crear base de datos: " . mysqli_error($conn);
 }

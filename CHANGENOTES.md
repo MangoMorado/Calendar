@@ -37,13 +37,16 @@
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
 
+## Version 0.0.9 - 📒 Paginas Amarillas
+- Ahora la app permite importar contactos de WhatsApp y guardarlos en la base de datos
+- Permite enviar difusiones con texto plano o imagenes
+
 ## Version 0.0.8 - 💚 Evolution
 - Nueva integración con Evolution API
   - Permite ingresar la API Key de Evoluution API
   - Permite ingresar la URL server de Evolution API
   - Permite obtener el listado de instancias y seleccionar uno
   - Permite saber si la instancia esta conectada o no
-  - Trabajando en Conectar via QR, eliminar evolution paring.json
 
 ## Version 0.0.7 - 📣 Megáfono
 - Corrección del bug del modal de creación / actualización de citas
