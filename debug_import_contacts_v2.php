@@ -47,23 +47,22 @@ if (empty($evolutionApiUrl) || empty($evolutionApiKey) || empty($evolutionInstan
 // Probar la conexión a Evolution API
 echo "<h3>3. Prueba de conexión a Evolution API:</h3>";
 if (!empty($evolutionApiUrl) && !empty($evolutionApiKey) && !empty($evolutionInstanceName)) {
+    // Método 1: GET request sin body (método correcto para obtener contactos)
     $apiUrl = rtrim($evolutionApiUrl, '/') . '/chat/findContacts/' . $evolutionInstanceName;
     $headers = [
         'Content-Type: application/json',
         'apikey: ' . $evolutionApiKey
     ];
-    $body = json_encode(["where" => ["id" => $evolutionInstanceName]]);
 
+    echo "<h4>Método 1: GET Request (Recomendado)</h4>";
     echo "URL de la API: " . htmlspecialchars($apiUrl) . "<br>";
     echo "Headers: " . htmlspecialchars(json_encode($headers)) . "<br>";
-    echo "Body: " . htmlspecialchars($body) . "<br>";
+    echo "Método: GET (sin body)<br>";
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $apiUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
@@ -78,14 +77,86 @@ if (!empty($evolutionApiUrl) && !empty($evolutionApiKey) && !empty($evolutionIns
         echo "❌ Error de cURL: " . htmlspecialchars($curlError) . "<br>";
     } else {
         echo "✅ Conexión exitosa<br>";
-        echo "Respuesta: " . htmlspecialchars(substr($response, 0, 200)) . "...<br>";
+        echo "Respuesta: " . htmlspecialchars(substr($response, 0, 500)) . "...<br>";
         
         if ($httpCode !== 200) {
             echo "❌ La API devolvió un código de error: $httpCode<br>";
         } else {
             echo "✅ La API respondió correctamente<br>";
+            $data = json_decode($response, true);
+            if (is_array($data)) {
+                echo "✅ Respuesta válida JSON con " . count($data) . " elementos<br>";
+            } else {
+                echo "❌ Respuesta no es un JSON válido<br>";
+            }
         }
     }
+
+    // Método 2: POST request con body vacío (método alternativo)
+    echo "<h4>Método 2: POST Request con body vacío</h4>";
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $apiUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, '{}');
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+    $response2 = curl_exec($ch);
+    $httpCode2 = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError2 = curl_error($ch);
+    curl_close($ch);
+
+    echo "Código de respuesta HTTP: $httpCode2<br>";
+    
+    if ($curlError2) {
+        echo "❌ Error de cURL: " . htmlspecialchars($curlError2) . "<br>";
+    } else {
+        echo "✅ Conexión exitosa<br>";
+        echo "Respuesta: " . htmlspecialchars(substr($response2, 0, 200)) . "...<br>";
+        
+        if ($httpCode2 !== 200) {
+            echo "❌ La API devolvió un código de error: $httpCode2<br>";
+        } else {
+            echo "✅ La API respondió correctamente<br>";
+        }
+    }
+
+    // Método 3: POST request con estructura original (para comparar)
+    echo "<h4>Método 3: POST Request con estructura original (problemática)</h4>";
+    $body = json_encode(["where" => ["id" => $evolutionInstanceName]]);
+    echo "Body: " . htmlspecialchars($body) . "<br>";
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $apiUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+    $response3 = curl_exec($ch);
+    $httpCode3 = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError3 = curl_error($ch);
+    curl_close($ch);
+
+    echo "Código de respuesta HTTP: $httpCode3<br>";
+    
+    if ($curlError3) {
+        echo "❌ Error de cURL: " . htmlspecialchars($curlError3) . "<br>";
+    } else {
+        echo "✅ Conexión exitosa<br>";
+        echo "Respuesta: " . htmlspecialchars(substr($response3, 0, 200)) . "...<br>";
+        
+        if ($httpCode3 !== 200) {
+            echo "❌ La API devolvió un código de error: $httpCode3<br>";
+        } else {
+            echo "✅ La API respondió correctamente<br>";
+        }
+    }
+
 } else {
     echo "❌ No se puede probar la conexión porque faltan configuraciones<br>";
 }
@@ -107,15 +178,12 @@ if (mysqli_num_rows($result) > 0) {
 }
 
 // Simular el flujo completo
-echo "<h3>5. Simulación del flujo completo:</h3>";
-echo "Si todo está configurado correctamente, el endpoint debería funcionar.<br>";
-echo "El error 400 probablemente se debe a:<br>";
-echo "1. Usuario no autenticado<br>";
-echo "2. Configuración de Evolution API incompleta<br>";
-echo "3. Error en la respuesta de Evolution API<br>";
+echo "<h3>5. Análisis del problema:</h3>";
+echo "El error 400 se debe a que la petición POST con body no es la forma correcta de obtener contactos.<br>";
+echo "La Evolution API espera una petición GET para obtener contactos, no POST.<br>";
 
 echo "<h3>6. Solución recomendada:</h3>";
-echo "1. Asegúrate de estar logueado en el navegador<br>";
-echo "2. Verifica que las configuraciones de Evolution API estén correctas<br>";
-echo "3. Si el problema persiste, revisa los logs del servidor<br>";
+echo "1. Cambiar el método de POST a GET en el archivo import_contacts.php<br>";
+echo "2. Eliminar el body de la petición<br>";
+echo "3. Mantener solo los headers de autenticación<br>";
 ?> 

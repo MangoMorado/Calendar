@@ -61,6 +61,17 @@
 - Corrección de bug en la configuración de sesiones desde el panel de administración.
 - Documentación y scripts de test para asegurar la correcta migración y funcionamiento del sistema simplificado.
 
+### Version 0.0.9.4 - 📒 Paginas Amarillas
+- Corrección del error 400 en la importación de contactos de Evolution API:
+  - Identificado y corregido el problema principal: uso incorrecto del método HTTP
+  - Cambiado de POST a GET para obtener contactos de Evolution API
+  - Eliminado el body de la petición que causaba el error 400
+  - Actualizado el archivo `api/import_contacts.php` para usar el método correcto
+  - Mejorado el script de diagnóstico `debug_import_contacts_v2.php` con pruebas de múltiples métodos
+  - Creado nuevo script de prueba `test_import_contacts_fixed.php` para verificar la corrección
+  - La Evolution API ahora responde correctamente y permite importar contactos sin errores
+  - Documentación de la solución y scripts de verificación incluidos
+
 ## Version 0.0.8 - 💚 Evolution
 - Nueva integración con Evolution API
   - Permite ingresar la API Key de Evoluution API

@@ -29,20 +29,17 @@ if (empty($evolutionApiUrl) || empty($evolutionApiKey) || empty($evolutionInstan
     exit;
 }
 
-// Preparar cURL para obtener contactos
+// Preparar cURL para obtener contactos - USAR MÉTODO GET
 $apiUrl = rtrim($evolutionApiUrl, '/') . '/chat/findContacts/' . $evolutionInstanceName;
 $headers = [
     'Content-Type: application/json',
     'apikey: ' . $evolutionApiKey
 ];
-$body = json_encode(["where" => ["id" => $evolutionInstanceName]]);
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $apiUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
 curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
