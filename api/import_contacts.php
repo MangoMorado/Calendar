@@ -2,8 +2,12 @@
 require_once '../config/database.php';
 require_once '../includes/auth.php';
 
-// Solo usuarios autenticados
-requireAuth();
+// Verificar autenticación y devolver JSON en lugar de redirigir
+if (!isAuthenticated()) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Usuario no autenticado']);
+    exit;
+}
 
 header('Content-Type: application/json; charset=utf-8');
 

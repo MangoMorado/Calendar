@@ -140,6 +140,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $messageType = 'error';
             }
         }
+        
+        // Crear nueva sesión de 1 hora
+        elseif ($action === 'create_session') {
+            $sessionResult = createTemporarySession($userId, 3600); // 1 hora = 3600 segundos
+            
+            if ($sessionResult['success']) {
+                $message = 'Nueva sesión creada exitosamente. Cookie establecida por 1 hora.';
+                $messageType = 'success';
+            } else {
+                $message = 'Error al crear la sesión: ' . $sessionResult['message'];
+                $messageType = 'error';
+            }
+        }
     }
 }
 
@@ -271,6 +284,19 @@ include 'includes/header.php';
             <div class="tab-pane fade" id="sessions-tab" role="tabpanel">
                 <h5 class="mb-3"><i class="bi bi-device-hdd"></i> Mis Sesiones Activas</h5>
                 <p class="text-muted mb-4">Gestiona las sesiones activas en tus equipos</p>
+                
+                <!-- Botón para crear nueva sesión -->
+                <div class="mb-4 p-3" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px;">
+                    <h6 class="mb-3"><i class="bi bi-plus-circle"></i> Crear Nueva Sesión</h6>
+                    <p class="text-muted small mb-3">Crea una nueva sesión válida por 1 hora. Esto generará una nueva cookie de sesión que puedes usar para probar endpoints de la API.</p>
+                    <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" novalidate style="display: inline;">
+                        <input type="hidden" name="action" value="create_session">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Crear Sesión de 1 Hora
+                        </button>
+                    </form>
+                </div>
+                
                 <?php if (empty($activeSessions)) : ?>
                     <div class="text-center py-5">
                         <i class="bi bi-info-circle fs-1 text-muted"></i>
@@ -417,6 +443,70 @@ function formatExpiration($expiresAt) {
     } else {
         $days = floor($diff / 86400);
         return "En $days día" . ($days > 1 ? 's' : '');
+    }
+}
+
+/**
+ * Crear sesión temporal de duración específica
+ */
+function createTemporarySession($userId, $durationSeconds) {
+    global $conn;
+    
+    try {
+        // Generar ID de sesión único
+        $sessionId = bin2hex(random_bytes(32));
+        
+        // Calcular tiempo de expiración
+        $expiresAt = date('Y-m-d H:i:s', time() + $durationSeconds);
+        
+        // Obtener información del dispositivo
+        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        
+        // Determinar tipo de dispositivo
+        $deviceInfo = 'Desconocido';
+        if (preg_match('/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i', $userAgent)) {
+            $deviceInfo = 'Móvil';
+        } elseif (preg_match('/Windows/i', $userAgent)) {
+            $deviceInfo = 'Windows';
+        } elseif (preg_match('/Mac/i', $userAgent)) {
+            $deviceInfo = 'Mac';
+        } elseif (preg_match('/Linux/i', $userAgent)) {
+            $deviceInfo = 'Linux';
+        }
+        
+        // Insertar nueva sesión
+        $sql = "INSERT INTO user_sessions (user_id, session_id, ip_address, user_agent, device_info, remember_me, expires_at, is_active) 
+                VALUES (?, ?, ?, ?, ?, 0, ?, 1)";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "isssss", $userId, $sessionId, $ipAddress, $userAgent, $deviceInfo, $expiresAt);
+        
+        if (mysqli_stmt_execute($stmt)) {
+            // Establecer cookie de sesión
+            $cookieExpires = time() + $durationSeconds;
+            setcookie('session_id', $sessionId, $cookieExpires, '/', '', isset($_SERVER['HTTPS']), true);
+            
+            // Actualizar historial del usuario
+            updateUserHistory($userId, "Creó sesión temporal de " . gmdate("H:i:s", $durationSeconds));
+            
+            return [
+                'success' => true,
+                'session_id' => $sessionId,
+                'expires_at' => $expiresAt,
+                'duration' => $durationSeconds
+            ];
+        } else {
+            return [
+                'success' => false,
+                'message' => 'Error al insertar sesión en la base de datos: ' . mysqli_error($conn)
+            ];
+        }
+        
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'message' => 'Error inesperado: ' . $e->getMessage()
+        ];
     }
 }
 

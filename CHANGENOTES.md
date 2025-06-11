@@ -44,6 +44,9 @@
 ### Version 0.0.9.1 - 📒 Paginas Amarillas
 - Correción de bug de sesiones
 
+### Version 0.0.9.2 - 📒 Paginas Amarillas
+- Creacion de debugs y test para sesiones
+
 ## Version 0.0.8 - 💚 Evolution
 - Nueva integración con Evolution API
   - Permite ingresar la API Key de Evoluution API
