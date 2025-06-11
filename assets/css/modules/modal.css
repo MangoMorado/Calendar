@@ -54,10 +54,25 @@
     color: var(--text-muted);
     cursor: pointer;
     transition: var(--transition);
+    z-index: 1001;
+    padding: 0.5rem;
+    border: none;
+    background: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    min-height: 2rem;
 }
 
 .close:hover {
     color: var(--danger-color);
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 50%;
+}
+
+.close:active {
+    transform: scale(0.95);
 }
 
 .form-actions {

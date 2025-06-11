@@ -62,10 +62,32 @@ export function initEventListeners(elements, config, state, calendar) {
     
     // Cerrar modal
     if (closeModalBtn) {
+        console.log('Botón de cerrar modal encontrado:', closeModalBtn);
         closeModalBtn.addEventListener('click', function() {
+            console.log('Botón de cerrar modal clickeado');
             closeModal(appointmentModal);
         });
+    } else {
+        console.warn('⚠️ Botón de cerrar modal no encontrado. Buscando elemento con clase .close');
+        const closeBtn = document.querySelector('.close');
+        if (closeBtn) {
+            console.log('Botón de cerrar encontrado con selector alternativo:', closeBtn);
+            closeBtn.addEventListener('click', function() {
+                console.log('Botón de cerrar modal clickeado (selector alternativo)');
+                closeModal(appointmentModal);
+            });
+        } else {
+            console.error('❌ No se pudo encontrar el botón de cerrar modal');
+        }
     }
+    
+    // Respaldo adicional: agregar evento click a cualquier elemento con clase .close
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.close')) {
+            console.log('Botón de cerrar clickeado (evento delegado)');
+            closeModal(appointmentModal);
+        }
+    });
     
     // Cerrar modal al hacer clic fuera del contenido
     window.addEventListener('click', function(e) {

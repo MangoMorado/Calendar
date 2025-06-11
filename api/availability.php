@@ -20,6 +20,15 @@ require_once '../includes/functions.php';
 require_once '../includes/auth.php';
 require_once '../includes/api/jwt.php';
 
+// Establecer timezone global desde settings
+$timezone = 'America/Bogota';
+$sql = "SELECT setting_value FROM settings WHERE setting_key = 'timezone' LIMIT 1";
+$result = mysqli_query($conn, $sql);
+if ($result && $row = mysqli_fetch_assoc($result)) {
+    $timezone = $row['setting_value'];
+}
+date_default_timezone_set($timezone);
+
 // Verificar conexión a la base de datos
 if (!isset($conn) || mysqli_connect_errno()) {
     header('Content-Type: application/json; charset=utf-8');

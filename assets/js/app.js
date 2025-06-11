@@ -109,7 +109,7 @@ function initializeApp() {
         upcomingList: document.getElementById('upcomingAppointmentsList'),
         calendarTypeSelector: document.getElementById('calendarTypeSelector'),
         appointmentModal: document.getElementById('appointmentModal'),
-        closeModalBtn: document.querySelector('.btn-close'),
+        closeModalBtn: document.querySelector('.close'),
         createAppointmentBtn: document.getElementById('createAppointment'),
         deleteAppointmentBtn: document.getElementById('deleteAppointment'),
         appointmentForm: document.getElementById('appointmentForm'),

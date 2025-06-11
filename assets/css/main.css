@@ -40,4 +40,5 @@
 @import 'modules/users.css';
 
 /* Estilos para la sección de notas */
-@import 'modules/notes.css'; 
+@import 'modules/notes.css';
+@import 'modules/profile.css'; 

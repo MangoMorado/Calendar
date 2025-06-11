@@ -16,8 +16,14 @@ export function openModal(modal) {
  * Cierra el modal
  */
 export function closeModal(modal) {
-    modal.style.display = 'none';
-    document.body.style.overflow = '';
+    console.log('Ejecutando closeModal con:', modal);
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        console.log('Modal cerrado correctamente');
+    } else {
+        console.error('❌ Modal no encontrado en closeModal');
+    }
 }
 
 /**

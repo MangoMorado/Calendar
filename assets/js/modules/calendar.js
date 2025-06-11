@@ -88,6 +88,11 @@ export function initCalendar(elements, config, state) {
                 meridiem: settings.timeFormat === '12h',
                 hour12: settings.timeFormat === '12h'
             },
+            slotLabelFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: settings.timeFormat === '12h'
+            },
             
             // Permitir interacción con eventos
             selectable: true,

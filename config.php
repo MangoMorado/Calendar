@@ -17,11 +17,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $success = false;
     $message = '';
     
-    // Obtener los valores del formulario
+    // Obtener los valores del formulario de calendario
     $slotMinTime = $_POST['slotMinTime'] ?? '00:00:00';
     $slotMaxTime = $_POST['slotMaxTime'] ?? '24:00:00';
     $slotDuration = $_POST['slotDuration'] ?? '00:30:00';
     $timeFormat = $_POST['timeFormat'] ?? '12h';
+    $timezone = $_POST['timezone'] ?? 'America/Bogota';
+    $n8nApiKey = $_POST['n8n_api_key'] ?? '';
+    $n8nUrl = $_POST['n8n_url'] ?? '';
+    $selectedWorkflow = $_POST['selected_workflow'] ?? '';
     
     // Procesar días hábiles seleccionados
     $businessDays = [];
@@ -32,33 +36,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $businessDaysJson = json_encode($businessDays);
     
-    // Validar los valores
+    // Obtener valores de configuración de sesiones
+    $sessionTimeout = $_POST['session_timeout'] ?? '3600';
+    $rememberMeTimeout = $_POST['remember_me_timeout'] ?? '604800';
+    $maxSessionsPerUser = $_POST['max_sessions_per_user'] ?? '5';
+    $requireLoginOnVisit = isset($_POST['require_login_on_visit']) ? 1 : 0;
+    $sessionCleanupInterval = $_POST['session_cleanup_interval'] ?? '86400';
+    
+    // Validar los valores del calendario
     if (strtotime($slotMaxTime) <= strtotime($slotMinTime)) {
         $message = 'La hora máxima debe ser posterior a la hora mínima';
     } else {
-        // Guardar la configuración en la base de datos
+        // Guardar la configuración del calendario en la base de datos
         $sql = "INSERT INTO settings (setting_key, setting_value) 
                 VALUES 
                 ('slotMinTime', ?),
                 ('slotMaxTime', ?),
                 ('slotDuration', ?),
                 ('timeFormat', ?),
-                ('businessDays', ?)
+                ('businessDays', ?),
+                ('timezone', ?),
+                ('n8n_api_key', ?),
+                ('n8n_url', ?),
+                ('selected_workflow', ?)
                 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)";
         
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sssss", $slotMinTime, $slotMaxTime, $slotDuration, $timeFormat, $businessDaysJson);
+        mysqli_stmt_bind_param($stmt, "sssssssss", $slotMinTime, $slotMaxTime, $slotDuration, $timeFormat, $businessDaysJson, $timezone, $n8nApiKey, $n8nUrl, $selectedWorkflow);
         
         if (mysqli_stmt_execute($stmt)) {
-            $success = true;
-            $message = 'Configuración actualizada correctamente';
+            // Guardar la configuración de sesiones
+            global $sessionManager;
+            $sessionSettings = [
+                'session_timeout' => $sessionTimeout,
+                'remember_me_timeout' => $rememberMeTimeout,
+                'max_sessions_per_user' => $maxSessionsPerUser,
+                'require_login_on_visit' => $requireLoginOnVisit,
+                'session_cleanup_interval' => $sessionCleanupInterval
+            ];
+            
+            $allSuccess = true;
+            foreach ($sessionSettings as $key => $value) {
+                if (!$sessionManager->updateSetting($key, $value)) {
+                    $allSuccess = false;
+                    break;
+                }
+            }
+            
+            if ($allSuccess) {
+                $success = true;
+                $message = 'Configuración actualizada correctamente';
+            } else {
+                $message = 'Error al guardar la configuración de sesiones';
+            }
         } else {
-            $message = 'Error al guardar la configuración';
+            $message = 'Error al guardar la configuración del calendario';
         }
     }
 }
 
-// Obtener la configuración actual
+// Obtener la configuración actual del calendario
 $settings = [];
 $sql = "SELECT setting_key, setting_value FROM settings";
 $result = mysqli_query($conn, $sql);
@@ -66,16 +103,53 @@ while ($row = mysqli_fetch_assoc($result)) {
     $settings[$row['setting_key']] = $row['setting_value'];
 }
 
-// Valores por defecto si no existen en la base de datos
+// Valores por defecto del calendario si no existen en la base de datos
 $slotMinTime = $settings['slotMinTime'] ?? '00:00:00';
 $slotMaxTime = $settings['slotMaxTime'] ?? '24:00:00';
 $slotDuration = $settings['slotDuration'] ?? '00:30:00';
 $timeFormat = $settings['timeFormat'] ?? '12h';
+$timezone = $settings['timezone'] ?? 'America/Bogota';
+$n8nApiKey = $settings['n8n_api_key'] ?? '';
+$n8nUrl = $settings['n8n_url'] ?? '';
+$selectedWorkflow = $settings['selected_workflow'] ?? '';
 
 // Obtener días hábiles o establecer por defecto (lunes a viernes)
 $businessDays = isset($settings['businessDays']) ? json_decode($settings['businessDays'], true) : [1, 2, 3, 4, 5];
 if (!is_array($businessDays)) {
     $businessDays = [1, 2, 3, 4, 5]; // Lunes a viernes por defecto
+}
+
+// Obtener configuración actual de sesiones
+global $sessionManager;
+$sessionTimeout = (int)$sessionManager->getSetting('session_timeout', 3600);
+$rememberMeTimeout = (int)$sessionManager->getSetting('remember_me_timeout', 604800);
+$maxSessionsPerUser = (int)$sessionManager->getSetting('max_sessions_per_user', 5);
+$requireLoginOnVisit = (bool)$sessionManager->getSetting('require_login_on_visit', 1);
+$sessionCleanupInterval = (int)$sessionManager->getSetting('session_cleanup_interval', 86400);
+
+// Obtener workflows de n8n si tenemos URL y API KEY
+$workflows = [];
+if (!empty($n8nUrl) && !empty($n8nApiKey)) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, rtrim($n8nUrl, '/') . '/api/v1/workflows');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'accept: application/json',
+        'X-N8N-API-KEY: ' . $n8nApiKey
+    ]);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode === 200 && $response) {
+        $workflowsData = json_decode($response, true);
+        if (is_array($workflowsData) && isset($workflowsData['data'])) {
+            $workflows = $workflowsData['data'];
+        }
+    }
 }
 
 // Definir título de la página
@@ -88,7 +162,7 @@ include 'includes/header.php';
 <div class="container">
     <div class="config-header">
         <h1><i class="bi bi-gear"></i> Configuración del Sistema</h1>
-        <p class="text-muted">Ajusta los parámetros del calendario y otras configuraciones del sistema.</p>
+        <p class="text-muted">Ajusta los parámetros del calendario y del sistema de sesiones.</p>
     </div>
 
     <?php if (isset($message)): ?>
@@ -99,6 +173,7 @@ include 'includes/header.php';
 
     <div class="config-card">
         <form method="post" class="config-form">
+            <!-- Configuración de Calendario -->
             <div class="form-section">
                 <h2><i class="bi bi-clock"></i> Configuración de Horarios</h2>
                 
@@ -136,6 +211,21 @@ include 'includes/header.php';
                 </div>
                 
                 <div class="form-group">
+                    <label for="timezone">Zona Horaria:</label>
+                    <select id="timezone" name="timezone" class="form-control" required>
+                        <option value="America/Bogota" <?php echo $timezone === 'America/Bogota' ? 'selected' : ''; ?>>America/Bogota (Colombia)</option>
+                        <option value="America/Mexico_City" <?php echo $timezone === 'America/Mexico_City' ? 'selected' : ''; ?>>America/Mexico_City (CDMX)</option>
+                        <option value="America/Caracas" <?php echo $timezone === 'America/Caracas' ? 'selected' : ''; ?>>America/Caracas (Venezuela)</option>
+                        <option value="America/Argentina/Buenos_Aires" <?php echo $timezone === 'America/Argentina/Buenos_Aires' ? 'selected' : ''; ?>>America/Argentina/Buenos_Aires</option>
+                        <option value="America/Lima" <?php echo $timezone === 'America/Lima' ? 'selected' : ''; ?>>America/Lima (Perú)</option>
+                        <option value="America/Santiago" <?php echo $timezone === 'America/Santiago' ? 'selected' : ''; ?>>America/Santiago (Chile)</option>
+                        <option value="UTC" <?php echo $timezone === 'UTC' ? 'selected' : ''; ?>>UTC</option>
+                        <!-- Puedes agregar más zonas horarias si lo deseas -->
+                    </select>
+                    <small class="form-text text-muted">Selecciona la zona horaria principal del sistema</small>
+                </div>
+                
+                <div class="form-group">
                     <label>Días hábiles:</label>
                     <div class="business-days-container">
                         <table class="table table-borderless business-days-table">
@@ -165,6 +255,121 @@ include 'includes/header.php';
                     </div>
                     <small class="form-text text-muted">Selecciona los días que se mostrarán en el calendario</small>
                 </div>
+            </div>
+
+            <!-- Configuración de Sesiones -->
+            <div class="form-section">
+                <h2><i class="bi bi-shield-lock"></i> Configuración de Sesiones</h2>
+                
+                <div class="form-group">
+                    <label for="session_timeout">Tiempo de Sesión Normal:</label>
+                    <select id="session_timeout" name="session_timeout" class="form-control" required>
+                        <option value="300" <?php echo $sessionTimeout === 300 ? 'selected' : ''; ?>>5 minutos</option>
+                        <option value="900" <?php echo $sessionTimeout === 900 ? 'selected' : ''; ?>>15 minutos</option>
+                        <option value="1800" <?php echo $sessionTimeout === 1800 ? 'selected' : ''; ?>>30 minutos</option>
+                        <option value="3600" <?php echo $sessionTimeout === 3600 ? 'selected' : ''; ?>>1 hora</option>
+                        <option value="7200" <?php echo $sessionTimeout === 7200 ? 'selected' : ''; ?>>2 horas</option>
+                        <option value="14400" <?php echo $sessionTimeout === 14400 ? 'selected' : ''; ?>>4 horas</option>
+                        <option value="28800" <?php echo $sessionTimeout === 28800 ? 'selected' : ''; ?>>8 horas</option>
+                        <option value="86400" <?php echo $sessionTimeout === 86400 ? 'selected' : ''; ?>>24 horas</option>
+                        <option value="0" <?php echo $sessionTimeout === 0 ? 'selected' : ''; ?>>Sin restricciones</option>
+                    </select>
+                    <small class="form-text text-muted">Tiempo que dura una sesión normal sin "recordar equipo"</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="remember_me_timeout">Tiempo de "Recordar Equipo":</label>
+                    <select id="remember_me_timeout" name="remember_me_timeout" class="form-control" required>
+                        <option value="3600" <?php echo $rememberMeTimeout === 3600 ? 'selected' : ''; ?>>1 hora</option>
+                        <option value="7200" <?php echo $rememberMeTimeout === 7200 ? 'selected' : ''; ?>>2 horas</option>
+                        <option value="14400" <?php echo $rememberMeTimeout === 14400 ? 'selected' : ''; ?>>4 horas</option>
+                        <option value="28800" <?php echo $rememberMeTimeout === 28800 ? 'selected' : ''; ?>>8 horas</option>
+                        <option value="86400" <?php echo $rememberMeTimeout === 86400 ? 'selected' : ''; ?>>1 día</option>
+                        <option value="172800" <?php echo $rememberMeTimeout === 172800 ? 'selected' : ''; ?>>2 días</option>
+                        <option value="604800" <?php echo $rememberMeTimeout === 604800 ? 'selected' : ''; ?>>1 semana</option>
+                        <option value="1209600" <?php echo $rememberMeTimeout === 1209600 ? 'selected' : ''; ?>>2 semanas</option>
+                        <option value="2592000" <?php echo $rememberMeTimeout === 2592000 ? 'selected' : ''; ?>>1 mes</option>
+                        <option value="-1" <?php echo $rememberMeTimeout === -1 ? 'selected' : ''; ?>>Siempre</option>
+                    </select>
+                    <small class="form-text text-muted">Tiempo que dura una sesión con "recordar equipo" activado</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="max_sessions_per_user">Máximo de Sesiones por Usuario:</label>
+                    <select id="max_sessions_per_user" name="max_sessions_per_user" class="form-control" required>
+                        <?php for ($i = 1; $i <= 20; $i++): ?>
+                            <option value="<?php echo $i; ?>" <?php echo $maxSessionsPerUser === $i ? 'selected' : ''; ?>>
+                                <?php echo $i; ?> sesión<?php echo $i > 1 ? 'es' : ''; ?>
+                            </option>
+                        <?php endfor; ?>
+                        <option value="0" <?php echo $maxSessionsPerUser === 0 ? 'selected' : ''; ?>>Sin límites</option>
+                    </select>
+                    <small class="form-text text-muted">Número máximo de sesiones activas que puede tener un usuario simultáneamente</small>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-check">
+                        <input type="checkbox" id="require_login_on_visit" name="require_login_on_visit" 
+                               class="form-check-input" <?php echo $requireLoginOnVisit ? 'checked' : ''; ?>>
+                        <label for="require_login_on_visit" class="form-check-label">
+                            Requerir inicio de sesión en cada visita
+                        </label>
+                    </div>
+                    <small class="form-text text-muted">Si está activado, los usuarios deberán iniciar sesión cada vez que visiten la página</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="session_cleanup_interval">Intervalo de Limpieza:</label>
+                    <select id="session_cleanup_interval" name="session_cleanup_interval" class="form-control" required>
+                        <option value="3600" <?php echo $sessionCleanupInterval === 3600 ? 'selected' : ''; ?>>1 hora</option>
+                        <option value="7200" <?php echo $sessionCleanupInterval === 7200 ? 'selected' : ''; ?>>2 horas</option>
+                        <option value="14400" <?php echo $sessionCleanupInterval === 14400 ? 'selected' : ''; ?>>4 horas</option>
+                        <option value="28800" <?php echo $sessionCleanupInterval === 28800 ? 'selected' : ''; ?>>8 horas</option>
+                        <option value="86400" <?php echo $sessionCleanupInterval === 86400 ? 'selected' : ''; ?>>1 día</option>
+                        <option value="172800" <?php echo $sessionCleanupInterval === 172800 ? 'selected' : ''; ?>>2 días</option>
+                    </select>
+                    <small class="form-text text-muted">Con qué frecuencia se limpian automáticamente las sesiones expiradas</small>
+                </div>
+            </div>
+
+            <!-- Configuración de n8n -->
+            <div class="form-section">
+                <h2><i class="bi bi-robot"></i> Integración n8n</h2>
+                <div class="form-group">
+                    <label for="n8n_url">URL de n8n:</label>
+                    <input type="url" id="n8n_url" name="n8n_url" class="form-control" 
+                           value="<?php echo htmlspecialchars($n8nUrl); ?>" 
+                           placeholder="https://tu-instancia-n8n.com" required>
+                    <small class="form-text text-muted">URL base de tu instancia de n8n (ej: https://n8n.tudominio.com)</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="n8n_api_key">n8n API KEY:</label>
+                    <input type="password" id="n8n_api_key" name="n8n_api_key" class="form-control" 
+                           value="<?php echo htmlspecialchars($n8nApiKey); ?>" autocomplete="off" required>
+                    <small class="form-text text-muted">Clave de API para autenticar peticiones a n8n. Se guarda de forma segura.</small>
+                </div>
+                
+                <?php if (!empty($workflows)): ?>
+                <div class="form-group">
+                    <label for="selected_workflow">Workflow Activo:</label>
+                    <select id="selected_workflow" name="selected_workflow" class="form-control">
+                        <option value="">Selecciona un workflow</option>
+                        <?php foreach ($workflows as $workflow): ?>
+                            <option value="<?php echo htmlspecialchars($workflow['id'] . '|' . $workflow['name']); ?>" 
+                                    <?php echo $selectedWorkflow === ($workflow['id'] . '|' . $workflow['name']) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($workflow['name']); ?> (ID: <?php echo $workflow['id']; ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small class="form-text text-muted">Workflow de n8n que se utilizará para el chatbot</small>
+                </div>
+                <?php elseif (!empty($n8nUrl) && !empty($n8nApiKey)): ?>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    No se pudieron obtener los workflows. Verifica la URL y la API KEY.
+                </div>
+                <?php endif; ?>
             </div>
 
             <div class="form-actions">
@@ -262,6 +467,99 @@ include 'includes/header.php';
     background-color: #007bff;
     color: white;
     border-color: #007bff;
+}
+
+/* Estilos para la configuración de sesiones */
+.form-section {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.form-section h2 {
+    color: #495057;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-section h2 i {
+    color: #007bff;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.form-control {
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 14px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: 0;
+}
+
+.form-text {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-check-input {
+    margin: 0;
+}
+
+.form-check-label {
+    margin: 0;
+    font-weight: 500;
+}
+
+.form-actions {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+    margin-top: 30px;
+}
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+    padding: 12px 30px;
+    font-weight: 600;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 </style>
 

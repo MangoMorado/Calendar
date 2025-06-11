@@ -115,8 +115,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
+        
+        // Procesar acciones de sesiones
+        elseif ($action === 'logout_session' && isset($_POST['session_id'])) {
+            $sessionId = $_POST['session_id'];
+            if (logoutSpecificSession($sessionId)) {
+                $message = 'Sesión cerrada exitosamente';
+                $messageType = 'success';
+            } else {
+                $message = 'Error al cerrar la sesión';
+                $messageType = 'error';
+            }
+        }
+        
+        elseif ($action === 'logout_all') {
+            if (logoutAllSessions()) {
+                $message = 'Todas las sesiones han sido cerradas';
+                $messageType = 'success';
+                // Redirigir al login después de cerrar todas las sesiones
+                header('Location: login.php');
+                exit();
+            } else {
+                $message = 'Error al cerrar todas las sesiones';
+                $messageType = 'error';
+            }
+        }
     }
 }
+
+// Obtener sesiones activas
+$activeSessions = getUserActiveSessions();
+$currentSessionId = $_COOKIE['session_id'] ?? null;
 
 // Formatear historial para mostrar
 $historyLines = $userDetails['history'] ? explode("\n", $userDetails['history']) : [];
@@ -125,447 +154,308 @@ $recentHistory = array_slice($historyLines, -5); // Mostrar solo las últimas 5 
 // Definir título de la página
 $pageTitle = 'Mi Perfil | Mundo Animal';
 
-// Estilos adicionales específicos para esta página
-$extraStyles = '
-<style>
-    .profile-container {
-        max-width: 800px;
-        margin: 40px auto;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-        background-color: #fff;
-    }
-    
-    .profile-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 30px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid #e9eaf3;
-    }
-    
-    .profile-icon {
-        font-size: 2.5rem;
-        color: #5D69F7;
-        margin-right: 20px;
-        background: #f0f4ff;
-        width: 70px;
-        height: 70px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-    }
-    
-    .profile-info h1 {
-        margin-bottom: 5px;
-        color: #2d3748;
-    }
-    
-    .profile-info p {
-        color: #718096;
-    }
-    
-    .tabs {
-        display: flex;
-        border-bottom: 1px solid #e9eaf3;
-        margin-bottom: 25px;
-    }
-    
-    .tab {
-        padding: 10px 20px;
-        cursor: pointer;
-        font-weight: 500;
-        color: #718096;
-        position: relative;
-    }
-    
-    .tab.active {
-        color: #5D69F7;
-    }
-    
-    .tab.active:after {
-        content: "";
-        position: absolute;
-        bottom: -1px;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background-color: #5D69F7;
-    }
-    
-    .tab-content {
-        display: none;
-    }
-    
-    .tab-content.active {
-        display: block;
-    }
-    
-    .history-list {
-        list-style: none;
-        padding: 0;
-    }
-    
-    .history-item {
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 15px;
-        display: flex;
-        background-color: #f8f9fa;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        transition: all 0.2s ease;
-    }
-    
-    .history-item:hover {
-        transform: translateX(5px);
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    
-    .history-icon {
-        margin-right: 15px;
-        display: flex;
-        align-items: flex-start;
-        padding-top: 3px;
-    }
-    
-    .history-icon i {
-        font-size: 1.2rem;
-    }
-    
-    .history-content {
-        flex: 1;
-    }
-    
-    .history-main {
-        font-weight: 500;
-        margin-bottom: 8px;
-        color: #333;
-    }
-    
-    .history-details {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        font-size: 0.85rem;
-        color: #666;
-    }
-    
-    .history-time, .history-date, .history-extra, .history-id {
-        display: flex;
-        align-items: center;
-    }
-    
-    .history-details i {
-        font-size: 0.8rem;
-        margin-right: 5px;
-        opacity: 0.7;
-    }
-    
-    .action-create {
-        border-left: 3px solid #10B981;
-    }
-    
-    .action-create .history-icon i {
-        color: #10B981;
-    }
-    
-    .action-update {
-        border-left: 3px solid #6366F1;
-    }
-    
-    .action-update .history-icon i {
-        color: #6366F1;
-    }
-    
-    .action-delete {
-        border-left: 3px solid #EF4444;
-    }
-    
-    .action-delete .history-icon i {
-        color: #EF4444;
-    }
-    
-    .action-login, .action-logout {
-        border-left: 3px solid #F59E0B;
-    }
-    
-    .action-login .history-icon i, .action-logout .history-icon i {
-        color: #F59E0B;
-    }
-    
-    .action-profile, .action-password {
-        border-left: 3px solid #5D69F7;
-    }
-    
-    .action-profile .history-icon i, .action-password .history-icon i {
-        color: #5D69F7;
-    }
-    
-    .message {
-        padding: 10px 15px;
-        margin-bottom: 20px;
-        border-radius: 6px;
-    }
-    
-    .message.error {
-        background-color: #FEEFEF;
-        color: #EF4444;
-        border: 1px solid #FCDEDE;
-    }
-    
-    .message.success {
-        background-color: #EFF8F6;
-        color: #10B981;
-        border: 1px solid #D1ECEA;
-    }
-    
-    .history-more {
-        margin-top: 20px;
-        text-align: center;
-    }
-    
-    .history-more .btn {
-        padding: 8px 15px;
-        background-color: transparent;
-        border: 1px solid var(--secondary-color);
-        color: var(--secondary-color);
-        transition: all 0.2s ease;
-        border-radius: var(--radius);
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .history-more .btn:hover {
-        background-color: var(--secondary-color);
-        color: white;
-    }
-    
-    .history-more .btn i {
-        font-size: 1rem;
-    }
-</style>
-';
-
-// Script para manejo de pestañas
-$extraScripts = '
-<script>
-    // Cambiar entre pestañas
-    document.addEventListener("DOMContentLoaded", function() {
-        const tabs = document.querySelectorAll(".tab");
-        
-        tabs.forEach(tab => {
-            tab.addEventListener("click", function() {
-                // Desactivar todas las pestañas y contenidos
-                document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-                document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-                
-                // Activar la pestaña actual y su contenido
-                this.classList.add("active");
-                const tabId = this.getAttribute("data-tab");
-                document.getElementById(`${tabId}-tab`).classList.add("active");
-            });
-        });
-    });
-</script>
-';
-
 // Incluir el header
 include 'includes/header.php';
 ?>
-    
-<main class="container profile-container">
-    <div class="profile-header">
-        <div class="profile-icon">
-            <i class="bi bi-person"></i>
-        </div>
-        <div class="profile-info">
-            <h1><?php echo htmlspecialchars($userDetails['name']); ?></h1>
-            <p><i class="bi bi-envelope"></i> <?php echo htmlspecialchars($userDetails['email']); ?></p>
-            <p><i class="bi bi-person-badge"></i> <?php echo $userDetails['role'] === 'admin' ? 'Administrador' : 'Usuario'; ?></p>
-            <p><i class="bi bi-calendar-check"></i> Miembro desde <?php echo date('d/m/Y', strtotime($userDetails['created_at'])); ?></p>
-        </div>
-    </div>
-    
-    <?php if (!empty($message)) : ?>
-        <div class="message <?php echo $messageType; ?>">
-            <?php echo $message; ?>
-        </div>
-    <?php endif; ?>
-    
-    <div class="tabs">
-        <div class="tab active" data-tab="profile">Información Personal</div>
-        <div class="tab" data-tab="password">Cambiar Contraseña</div>
-        <div class="tab" data-tab="history">Historial de Actividad</div>
-    </div>
-    
-    <div class="tab-content active" id="profile-tab">
-        <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" novalidate>
-            <input type="hidden" name="action" value="update_profile">
-            
-            <div class="form-group">
-                <label for="name"><i class="bi bi-person"></i> Nombre Completo</label>
-                <input type="text" id="name" name="name" class="form-control" required 
-                       value="<?php echo htmlspecialchars($userDetails['name']); ?>">
+
+<main class="container">
+    <div class="profile-panel" style="display: flex; gap: 2.5rem; align-items: flex-start;">
+        <!-- Columna Izquierda: Contenido dinámico de tabs -->
+        <div class="profile-content-panel tab-content" id="profileTabsContent" style="flex: 0 0 80%; max-width: 80%; min-width: 320px;">
+            <!-- Tab Información Personal -->
+            <div class="tab-pane fade show active" id="profile-tab" role="tabpanel">
+                <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" novalidate>
+                    <input type="hidden" name="action" value="update_profile">
+                    <div class="form-group">
+                        <label for="name"><i class="bi bi-person"></i> Nombre Completo</label>
+                        <input type="text" id="name" name="name" class="form-control" required value="<?php echo htmlspecialchars($userDetails['name']); ?>">
+                    </div>
+                    <div class="form-group">
+                        <label for="email"><i class="bi bi-envelope"></i> Correo Electrónico</label>
+                        <input type="email" id="email" name="email" class="form-control" required value="<?php echo htmlspecialchars($userDetails['email']); ?>">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
             </div>
-            
-            <div class="form-group">
-                <label for="email"><i class="bi bi-envelope"></i> Correo Electrónico</label>
-                <input type="email" id="email" name="email" class="form-control" required 
-                       value="<?php echo htmlspecialchars($userDetails['email']); ?>">
+            <!-- Tab Cambiar Contraseña -->
+            <div class="tab-pane fade" id="password-tab" role="tabpanel">
+                <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" novalidate>
+                    <input type="hidden" name="action" value="change_password">
+                    <div class="form-group">
+                        <label for="current_password"><i class="bi bi-key"></i> Contraseña Actual</label>
+                        <input type="password" id="current_password" name="current_password" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_password"><i class="bi bi-lock"></i> Nueva Contraseña</label>
+                        <input type="password" id="new_password" name="new_password" class="form-control" required placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm_password"><i class="bi bi-shield-lock"></i> Confirmar Nueva Contraseña</label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg"></i> Cambiar Contraseña
+                        </button>
+                    </div>
+                </form>
             </div>
-            
-            <div class="form-actions">
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-lg"></i> Guardar Cambios
-                </button>
-            </div>
-        </form>
-    </div>
-    
-    <div class="tab-content" id="password-tab">
-        <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" novalidate>
-            <input type="hidden" name="action" value="change_password">
-            
-            <div class="form-group">
-                <label for="current_password"><i class="bi bi-key"></i> Contraseña Actual</label>
-                <input type="password" id="current_password" name="current_password" class="form-control" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="new_password"><i class="bi bi-lock"></i> Nueva Contraseña</label>
-                <input type="password" id="new_password" name="new_password" class="form-control" required 
-                       placeholder="Mínimo 6 caracteres">
-            </div>
-            
-            <div class="form-group">
-                <label for="confirm_password"><i class="bi bi-shield-lock"></i> Confirmar Nueva Contraseña</label>
-                <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
-            </div>
-            
-            <div class="form-actions">
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-lg"></i> Cambiar Contraseña
-                </button>
-            </div>
-        </form>
-    </div>
-    
-    <div class="tab-content" id="history-tab">
-        <h3><i class="bi bi-clock-history"></i> Mi Actividad Reciente</h3>
-        
-        <?php if (empty($recentHistory)) : ?>
-            <p>No hay actividad reciente registrada.</p>
-        <?php else : ?>
-            <ul class="history-list">
-                <?php foreach ($recentHistory as $entry) : 
-                    // Determinar el icono basado en el tipo de actividad
-                    $icon = 'bi-activity';
-                    $actionClass = '';
-                    
-                    if (strpos($entry, 'Creó una cita') !== false) {
-                        $icon = 'bi-calendar-plus';
-                        $actionClass = 'action-create';
-                    } elseif (strpos($entry, 'Actualizó una cita') !== false) {
-                        $icon = 'bi-calendar-check';
-                        $actionClass = 'action-update';
-                    } elseif (strpos($entry, 'Eliminó una cita') !== false) {
-                        $icon = 'bi-calendar-x';
-                        $actionClass = 'action-delete';
-                    } elseif (strpos($entry, 'Inicio de sesión') !== false) {
-                        $icon = 'bi-box-arrow-in-right';
-                        $actionClass = 'action-login';
-                    } elseif (strpos($entry, 'Cierre de sesión') !== false) {
-                        $icon = 'bi-box-arrow-right';
-                        $actionClass = 'action-logout';
-                    } elseif (strpos($entry, 'Actualización de perfil') !== false) {
-                        $icon = 'bi-person-gear';
-                        $actionClass = 'action-profile';
-                    } elseif (strpos($entry, 'Cambio de contraseña') !== false) {
-                        $icon = 'bi-key';
-                        $actionClass = 'action-password';
-                    }
-                    
-                    // Extraer y formatear timestamp
-                    $timestamp = '';
-                    if (preg_match('/\[(.*?)\]/', $entry, $matches)) {
-                        $timestamp = $matches[1];
-                        $formattedTimestamp = date('d/m/Y H:i', strtotime($timestamp));
-                    }
-                    
-                    // Extraer la acción principal sin el timestamp
-                    $mainAction = preg_replace('/\[.*?\]\s*/', '', $entry);
-                    
-                    // Extraer ID si existe
-                    $idInfo = '';
-                    if (preg_match('/\(ID: (\d+)\)/', $mainAction, $matches)) {
-                        $idInfo = $matches[0];
-                        $mainAction = str_replace($idInfo, '', $mainAction);
-                    }
-                    
-                    // Extraer información de fecha si existe
-                    $dateInfo = '';
-                    if (preg_match('/Fecha: (\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2})/', $entry, $matches)) {
-                        $dateInfo = $matches[0];
-                    }
-                    
-                    // Extraer información extra si existe
-                    $extraInfo = '';
-                    if (preg_match('/- (.+?)(?=$|\s-\s)/', $entry, $matches)) {
-                        // Verificar que no sea la fecha (que ya extrajimos)
-                        if (strpos($matches[0], 'Fecha:') === false) {
-                            $extraInfo = $matches[1];
-                        }
-                    }
-                ?>
-                    <li class="history-item <?php echo $actionClass; ?>">
-                        <div class="history-icon">
-                            <i class="bi <?php echo $icon; ?>"></i>
-                        </div>
-                        <div class="history-content">
-                            <div class="history-main">
-                                <?php echo htmlspecialchars(trim($mainAction)); ?>
+            <!-- Tab Historial de Actividad -->
+            <div class="tab-pane fade" id="history-tab" role="tabpanel">
+                <h5 class="mb-3"><i class="bi bi-clock-history"></i> Mi Actividad Reciente</h5>
+                <?php if (empty($recentHistory)) : ?>
+                    <div class="text-center py-5">
+                        <i class="bi bi-info-circle fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">No hay actividad reciente registrada.</p>
+                    </div>
+                <?php else : ?>
+                    <div class="activity-list">
+                        <?php foreach ($recentHistory as $entry) : 
+                            $icon = 'bi-activity';
+                            $actionType = 'action-update';
+                            if (strpos($entry, 'Creó una cita') !== false) {
+                                $icon = 'bi-calendar-plus';
+                                $actionType = 'action-create';
+                            } elseif (strpos($entry, 'Actualizó una cita') !== false) {
+                                $icon = 'bi-calendar-check';
+                                $actionType = 'action-update';
+                            } elseif (strpos($entry, 'Eliminó una cita') !== false) {
+                                $icon = 'bi-calendar-x';
+                                $actionType = 'action-delete';
+                            } elseif (strpos($entry, 'Inicio de sesión') !== false) {
+                                $icon = 'bi-box-arrow-in-right';
+                                $actionType = 'action-create';
+                            } elseif (strpos($entry, 'Cierre de sesión') !== false) {
+                                $icon = 'bi-box-arrow-right';
+                                $actionType = 'action-delete';
+                            } elseif (strpos($entry, 'Actualización de perfil') !== false) {
+                                $icon = 'bi-person-gear';
+                                $actionType = 'action-update';
+                            } elseif (strpos($entry, 'Cambio de contraseña') !== false) {
+                                $icon = 'bi-key';
+                                $actionType = 'action-update';
+                            }
+                            $timestamp = '';
+                            if (preg_match('/\[(.*?)\]/', $entry, $matches)) {
+                                if (isset($matches[1])) {
+                                    $timestamp = $matches[1];
+                                    $formattedTimestamp = date('d/m/Y H:i', strtotime($timestamp));
+                                } else {
+                                    $formattedTimestamp = '';
+                                }
+                            } else {
+                                $formattedTimestamp = '';
+                            }
+                            $mainAction = preg_replace('/\[.*?\]\s*/', '', $entry);
+                        ?>
+                        <div class="activity-item <?php echo $actionType; ?>">
+                            <div class="activity-icon">
+                                <i class="bi <?php echo $icon; ?>"></i>
                             </div>
-                            <div class="history-details">
-                                <span class="history-time">
-                                    <i class="bi bi-clock"></i> <?php echo htmlspecialchars($formattedTimestamp ?? ''); ?>
-                                </span>
-                                <?php if (!empty($dateInfo)) : ?>
-                                    <span class="history-date">
-                                        <i class="bi bi-calendar-event"></i> <?php echo htmlspecialchars($dateInfo); ?>
-                                    </span>
-                                <?php endif; ?>
-                                <?php if (!empty($extraInfo)) : ?>
-                                    <span class="history-extra">
-                                        <i class="bi bi-info-circle"></i> <?php echo htmlspecialchars($extraInfo); ?>
-                                    </span>
-                                <?php endif; ?>
-                                <?php if (!empty($idInfo)) : ?>
-                                    <span class="history-id">
-                                        <i class="bi bi-hash"></i> <?php echo htmlspecialchars($idInfo); ?>
-                                    </span>
+                            <div class="activity-content">
+                                <div class="activity-main"><?php echo htmlspecialchars(trim($mainAction)); ?></div>
+                                <?php if (!empty($formattedTimestamp)) : ?>
+                                    <div class="activity-time"><i class="bi bi-clock"></i> <?php echo htmlspecialchars($formattedTimestamp); ?></div>
                                 <?php endif; ?>
                             </div>
                         </div>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-            
-            <?php if ($currentUser['role'] === 'admin') : ?>
-                <div class="history-more">
-                    <a href="historial.php" class="btn btn-outline">
-                        <i class="bi bi-clock-history"></i> Ver Historial Completo
-                    </a>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+            <!-- Tab Sesiones Activas -->
+            <div class="tab-pane fade" id="sessions-tab" role="tabpanel">
+                <h5 class="mb-3"><i class="bi bi-device-hdd"></i> Mis Sesiones Activas</h5>
+                <p class="text-muted mb-4">Gestiona las sesiones activas en tus equipos</p>
+                <?php if (empty($activeSessions)) : ?>
+                    <div class="text-center py-5">
+                        <i class="bi bi-info-circle fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">No hay sesiones activas</p>
+                    </div>
+                <?php else : ?>
+                    <div class="activity-list">
+                        <?php foreach ($activeSessions as $session) : 
+                            $isCurrentSession = ($session['session_id'] === $currentSessionId);
+                            $deviceIcon = getDeviceIcon($session['device_info']);
+                        ?>
+                        <div class="activity-item <?php echo $isCurrentSession ? 'action-create' : 'action-update'; ?>">
+                            <div class="activity-icon">
+                                <i class="bi bi-<?php echo $deviceIcon; ?>"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-main">
+                                    <?php echo htmlspecialchars($session['device_info']); ?>
+                                    <?php if ($isCurrentSession) : ?>
+                                        <span class="role-badge admin ms-2">Sesión actual</span>
+                                    <?php endif; ?>
+                                    <?php if ($session['remember_me']) : ?>
+                                        <span class="role-badge user ms-2">Recordar equipo</span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="activity-time">
+                                    <i class="bi bi-geo-alt"></i> IP: <?php echo htmlspecialchars($session['ip_address']); ?> | 
+                                    <i class="bi bi-clock"></i> Última actividad: <?php echo formatLastActivity($session['last_activity']); ?> | 
+                                    <i class="bi bi-calendar"></i> Expira: <?php echo formatExpiration($session['expires_at']); ?>
+                                </div>
+                                <?php if (!$isCurrentSession) : ?>
+                                    <div class="mt-2">
+                                        <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" novalidate style="display: inline;">
+                                            <input type="hidden" name="action" value="logout_session">
+                                            <input type="hidden" name="session_id" value="<?php echo htmlspecialchars($session['session_id']); ?>">
+                                            <button type="submit" class="btn btn-outline btn-sm" onclick="return confirm('¿Estás seguro de que deseas cerrar esta sesión?')">
+                                                <i class="bi bi-x-circle"></i> Cerrar Sesión
+                                            </button>
+                                        </form>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="text-center mt-4">
+                        <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" novalidate>
+                            <input type="hidden" name="action" value="logout_all">
+                            <button type="submit" class="btn btn-outline" onclick="return confirm('¿Estás seguro de que deseas cerrar TODAS las sesiones? Esto te cerrará sesión en todos los equipos.')">
+                                <i class="bi bi-power"></i> Cerrar Todas las Sesiones
+                            </button>
+                        </form>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <!-- Columna Derecha: Header, Tabs y Profile Card -->
+        <div style="flex: 1 1 0; min-width: 220px; max-width: 260px; display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Header de usuario -->
+            <div class="users-header">
+                <h1><i class="bi bi-person-circle"></i> Mi Perfil</h1>
+            </div>
+            <!-- Tabs -->
+            <nav class="profile-tabs-vertical nav flex-column nav-pills me-3" id="profileTabs" role="tablist" aria-orientation="vertical">
+                <button class="nav-link active" id="profile-tab-btn" data-bs-toggle="pill" data-bs-target="#profile-tab" type="button" role="tab">
+                    <i class="bi bi-person"></i> Información Personal
+                </button>
+                <button class="nav-link" id="password-tab-btn" data-bs-toggle="pill" data-bs-target="#password-tab" type="button" role="tab">
+                    <i class="bi bi-key"></i> Cambiar Contraseña
+                </button>
+                <button class="nav-link" id="history-tab-btn" data-bs-toggle="pill" data-bs-target="#history-tab" type="button" role="tab">
+                    <i class="bi bi-clock-history"></i> Historial de Actividad
+                </button>
+                <button class="nav-link" id="sessions-tab-btn" data-bs-toggle="pill" data-bs-target="#sessions-tab" type="button" role="tab">
+                    <i class="bi bi-device-hdd"></i> Sesiones Activas
+                </button>
+            </nav>
+            <!-- Profile Card -->
+            <div class="profile-user-card">
+                <div class="btn-icon mb-3 mx-auto">
+                    <i class="bi bi-person fs-1"></i>
                 </div>
-            <?php endif; ?>
-        <?php endif; ?>
+                <h4 class="font-bold mb-1"><?php echo htmlspecialchars($userDetails['name']); ?></h4>
+                <div class="text-muted mb-1"><i class="bi bi-envelope"></i> <?php echo htmlspecialchars($userDetails['email']); ?></div>
+                <div class="mb-2">
+                    <span class="role-badge <?php echo $userDetails['role'] === 'admin' ? 'admin' : 'user'; ?>">
+                        <?php echo $userDetails['role'] === 'admin' ? 'ADMINISTRADOR' : 'USUARIO'; ?>
+                    </span>
+                </div>
+                <div class="text-muted small"><i class="bi bi-calendar-check"></i> Miembro desde<br><?php echo date('d/m/Y', strtotime($userDetails['created_at'])); ?></div>
+            </div>
+        </div>
     </div>
 </main>
 
 <?php
+// Funciones auxiliares para sesiones
+function getDeviceIcon($deviceInfo) {
+    switch (strtolower($deviceInfo)) {
+        case 'móvil':
+        case 'mobile':
+            return 'phone';
+        case 'windows':
+            return 'laptop';
+        case 'mac':
+            return 'laptop';
+        case 'linux':
+            return 'laptop';
+        default:
+            return 'device-hdd';
+    }
+}
+
+function formatLastActivity($lastActivity) {
+    $timestamp = strtotime($lastActivity);
+    $now = time();
+    $diff = $now - $timestamp;
+    if ($diff < 60) {
+        return 'Hace un momento';
+    } elseif ($diff < 3600) {
+        $minutes = floor($diff / 60);
+        return "Hace $minutes minuto" . ($minutes > 1 ? 's' : '');
+    } elseif ($diff < 86400) {
+        $hours = floor($diff / 3600);
+        return "Hace $hours hora" . ($hours > 1 ? 's' : '');
+    } else {
+        $days = floor($diff / 86400);
+        return "Hace $days día" . ($days > 1 ? 's' : '');
+    }
+}
+
+function formatExpiration($expiresAt) {
+    $timestamp = strtotime($expiresAt);
+    $now = time();
+    $diff = $timestamp - $now;
+    if ($diff < 0) {
+        return 'Expirada';
+    } elseif ($diff < 3600) {
+        $minutes = floor($diff / 60);
+        return "En $minutes minuto" . ($minutes > 1 ? 's' : '');
+    } elseif ($diff < 86400) {
+        $hours = floor($diff / 3600);
+        return "En $hours hora" . ($hours > 1 ? 's' : '');
+    } else {
+        $days = floor($diff / 86400);
+        return "En $days día" . ($days > 1 ? 's' : '');
+    }
+}
+
 // Incluir el footer
 include 'includes/footer.php';
-?> 
+?>
+
+<!-- Script para tabs de perfil -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabButtons = document.querySelectorAll('.profile-tabs-vertical .nav-link');
+    const tabPanes = document.querySelectorAll('.profile-content-panel .tab-pane');
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Quitar clase activa de todos los botones
+            tabButtons.forEach(b => b.classList.remove('active'));
+            // Ocultar todos los paneles
+            tabPanes.forEach(pane => pane.style.display = 'none');
+            // Activar el botón actual
+            this.classList.add('active');
+            // Mostrar el panel correspondiente
+            const target = this.getAttribute('data-bs-target');
+            const pane = document.querySelector(target);
+            if (pane) {
+                pane.style.display = 'block';
+            }
+        });
+    });
+    // Inicializar: mostrar solo el tab activo
+    tabPanes.forEach(pane => pane.style.display = 'none');
+    const activeBtn = document.querySelector('.profile-tabs-vertical .nav-link.active');
+    if (activeBtn) {
+        const target = activeBtn.getAttribute('data-bs-target');
+        const pane = document.querySelector(target);
+        if (pane) {
+            pane.style.display = 'block';
+        }
+    }
+});
+</script> 

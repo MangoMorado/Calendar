@@ -1,7 +1,7 @@
 # CHANGENOTES - Calendario MundoAnimal
 
 ## Lista de Cambios por implementar:
-- Sesiones permanentes
+- Sistema de difusiones usando evolutionAPI
 - Estado de las citas según código de color (Verde, Amarillo: reprogramar, Rojo)
 - Sistema de cola de citas, que el sistema reciba citas del chatbot y que un humano las programe
 - Mejoras de seguridad: Mover la JWT_SECRET fuera del código fuente. Restringir Access-Control-Allow-Origin en producción. Revisar posibles vulnerabilidades (inyección SQL, XSS - aunque el uso de consultas preparadas y htmlspecialchars ayuda).
@@ -25,6 +25,22 @@
 - Reparar consistencia: Hay dos formas de manejar las citas (API REST en api/ y el script process_appointment.php). Sería ideal consolidar en una sola (probablemente la API). La eliminación de citas en assets/js/app.js usa el endpoint antiguo y recarga la página, podría mejorarse usando la API y actualizando dinámicamente.
 - Mejorar eficiencia: La obtención y paginación del historial en historial.php podría optimizarse. El sistema de migración automática en config/database.php podría reemplazarse por uno más robusto si la aplicación crece.
 - Bug con el token en la libreta de notas
+
+## Version 0.0.7 - 📣 Megáfono
+- Corrección del bug del modal de creación / actualización de citas
+- Nuevo sistema de sesiones
+  - Se definen tiempos de sesión
+  - Se permite recordar el equipo
+  - Ahora se puede configurar un limite de sesiones
+  - Ahora se puede configurar si desea recordar o no un equipo
+  - Ahora se pueden establecer sesiones de limpieza de sesiones
+- Actualizacion de los flujos de n8n y prompts
+- Se agrego Timezones
+- Se agrego integraciones con N8N
+  - Permite ignresar una API KEY de n8n
+  - Permite obtener el listado de workflows y seleccionar uno
+  - Permite saber si el workflow esta activo o no
+  - Permite prender o apagar el workflow
 
 ## Versión 0.0.6.6.1 - ⚙️ Settings Update
 - Actualización de los flujos de N8N y prompts

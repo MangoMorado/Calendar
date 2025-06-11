@@ -1,0 +1,107 @@
+/* ===============================
+   Estilos para la página de Perfil (Panel Moderno)
+   =============================== */
+
+.profile-panel {
+    display: flex;
+    gap: 2.5rem;
+    align-items: flex-start;
+    margin-top: 2rem;
+}
+
+.profile-tabs-vertical {
+    min-width: 220px;
+    max-width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    padding: 2rem 1.5rem 1.5rem 1.5rem;
+}
+
+.profile-tabs-vertical .nav-link {
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 1.08rem;
+    padding: 0.85rem 1rem;
+    border-radius: 8px;
+    text-align: left;
+    transition: background 0.2s, color 0.2s;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+
+.profile-tabs-vertical .nav-link.active {
+    color: var(--primary-color);
+    background: #f3f6ff;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(93,105,247,0.04);
+}
+
+.profile-content-panel {
+    flex: 1 1 400px;
+    min-width: 320px;
+    max-width: 800px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    padding: 2.5rem 2.5rem 2rem 2.5rem;
+}
+
+.profile-user-card {
+    background: #fafbfc;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    padding: 2rem 1.5rem 1.5rem 1.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.profile-user-card .btn-icon {
+    width: 90px;
+    height: 90px;
+    font-size: 2.8rem;
+    margin: 0 auto 1rem auto;
+    background: #f3f6ff;
+    color: var(--primary-color);
+}
+
+.profile-user-card h4 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.profile-user-card .role-badge {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 992px) {
+    .profile-panel {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    .profile-tabs-vertical {
+        flex-direction: row;
+        min-width: 0;
+        max-width: 100%;
+        padding: 1rem 0.5rem;
+        margin-bottom: 1rem;
+        box-shadow: none;
+        border-radius: 10px;
+        justify-content: center;
+    }
+    .profile-content-panel {
+        padding: 1.5rem 0.5rem;
+    }
+    .profile-user-card {
+        margin-bottom: 1.5rem;
+        padding: 1.5rem 0.5rem;
+    }
+} 

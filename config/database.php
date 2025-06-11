@@ -142,6 +142,67 @@ if (mysqli_query($conn, $sql)) {
     if (!mysqli_query($conn, $sql)) {
         echo "Error al crear tabla de notas: " . mysqli_error($conn);
     }
+    
+    // Crear tabla de sesiones si no existe
+    $sql = "CREATE TABLE IF NOT EXISTS user_sessions (
+        id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        user_id INT(11) NOT NULL,
+        session_id VARCHAR(255) NOT NULL UNIQUE,
+        ip_address VARCHAR(45) NOT NULL,
+        user_agent TEXT,
+        device_info VARCHAR(255),
+        remember_me TINYINT(1) NOT NULL DEFAULT 0,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        last_activity TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_session_id (session_id),
+        INDEX idx_user_id (user_id),
+        INDEX idx_expires_at (expires_at),
+        INDEX idx_is_active (is_active)
+    )";
+    
+    if (!mysqli_query($conn, $sql)) {
+        echo "Error al crear tabla de sesiones: " . mysqli_error($conn);
+    }
+    
+    // Crear tabla de configuración de sesiones si no existe
+    $sql = "CREATE TABLE IF NOT EXISTS session_settings (
+        setting_key VARCHAR(255) NOT NULL PRIMARY KEY,
+        setting_value TEXT NOT NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )";
+    
+    if (!mysqli_query($conn, $sql)) {
+        echo "Error al crear tabla de configuración de sesiones: " . mysqli_error($conn);
+    }
+    
+    // Insertar configuración por defecto de sesiones si no existe
+    $defaultSettings = [
+        'session_timeout' => '3600', // 1 hora en segundos
+        'remember_me_timeout' => '604800', // 7 días en segundos
+        'max_sessions_per_user' => '5',
+        'require_login_on_visit' => '1', // 1 = sí, 0 = no
+        'session_cleanup_interval' => '86400' // 24 horas en segundos
+    ];
+    
+    foreach ($defaultSettings as $key => $value) {
+        $checkSql = "SELECT COUNT(*) as count FROM session_settings WHERE setting_key = ?";
+        $checkStmt = mysqli_prepare($conn, $checkSql);
+        mysqli_stmt_bind_param($checkStmt, "s", $key);
+        mysqli_stmt_execute($checkStmt);
+        $result = mysqli_stmt_get_result($checkStmt);
+        $row = mysqli_fetch_assoc($result);
+        
+        if ($row['count'] == 0) {
+            $insertSql = "INSERT INTO session_settings (setting_key, setting_value) VALUES (?, ?)";
+            $insertStmt = mysqli_prepare($conn, $insertSql);
+            mysqli_stmt_bind_param($insertStmt, "ss", $key, $value);
+            mysqli_stmt_execute($insertStmt);
+        }
+    }
 } else {
     echo "Error al crear base de datos: " . mysqli_error($conn);
 }
