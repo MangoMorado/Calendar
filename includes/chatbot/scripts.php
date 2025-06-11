@@ -351,12 +351,26 @@ function enviarDifusion(formData, contactos) {
     let total = contactos.length;
     let enviados = 0;
     let errores = 0;
+    let erroresDetallados = [];
     
     function enviarSiguiente(idx) {
         if (idx >= total) {
             document.getElementById('estadoEnvioDifusion').textContent = '¡Envío completado! Enviados: ' + enviados + ', Errores: ' + errores;
             setTimeout(() => modal.hide(), 1200);
-            showNotification('Difusión finalizada. Enviados: ' + enviados + ', Errores: ' + errores, errores === 0 ? 'success' : 'error');
+            
+            // Mostrar resumen detallado si hay errores
+            if (errores > 0) {
+                let mensajeError = `Difusión finalizada. Enviados: ${enviados}, Errores: ${errores}`;
+                if (erroresDetallados.length > 0) {
+                    mensajeError += '\n\nErrores principales:\n' + erroresDetallados.slice(0, 3).join('\n');
+                    if (erroresDetallados.length > 3) {
+                        mensajeError += `\n... y ${erroresDetallados.length - 3} errores más`;
+                    }
+                }
+                showNotification(mensajeError, 'error');
+            } else {
+                showNotification('Difusión finalizada. Enviados: ' + enviados + ', Errores: ' + errores, 'success');
+            }
             return;
         }
         
@@ -380,15 +394,44 @@ function enviarDifusion(formData, contactos) {
         .then(data => {
             if (data.success || (data.data && data.data.status === 'PENDING')) {
                 enviados++;
-                console.log('Mensaje enviado exitosamente a:', numero);
+                console.log('✅ Mensaje enviado exitosamente a:', numero);
             } else {
                 errores++;
-                console.error('Error enviando a', numero, ':', data.message);
+                let errorMsg = data.message || 'Error desconocido';
+                
+                // Log detallado del error
+                console.error('❌ Error enviando a', numero, ':', errorMsg);
+                if (data.debug_info) {
+                    console.error('🔍 Información de debugging:', data.debug_info);
+                }
+                
+                // Agregar error detallado para el resumen
+                let errorDetallado = `${numero}: ${errorMsg}`;
+                if (data.debug_info && data.debug_info.instance_state) {
+                    errorDetallado += ` (Estado instancia: ${data.debug_info.instance_state})`;
+                }
+                erroresDetallados.push(errorDetallado);
+                
+                // Mostrar error específico para HTTP 400
+                if (data.debug_info && data.debug_info.http_code === 400) {
+                    if (data.debug_info.instance_state !== 'open') {
+                        console.error('🚨 PROBLEMA CRÍTICO: La instancia no está conectada');
+                        document.getElementById('estadoEnvioDifusion').textContent = '🚨 ERROR: Instancia no conectada - Deteniendo envío';
+                        setTimeout(() => {
+                            modal.hide();
+                            showNotification('🚨 ERROR CRÍTICO: La instancia de Evolution API no está conectada. Verifica la conexión antes de continuar.', 'error');
+                        }, 2000);
+                        return;
+                    } else {
+                        console.error('⚠️ El número puede no estar registrado en WhatsApp:', numero);
+                    }
+                }
             }
         })
         .catch(error => {
             errores++;
-            console.error('Error de red enviando a', numero, ':', error);
+            console.error('❌ Error de red enviando a', numero, ':', error);
+            erroresDetallados.push(`${numero}: Error de red - ${error.message}`);
         })
         .finally(() => {
             // Actualizar progreso

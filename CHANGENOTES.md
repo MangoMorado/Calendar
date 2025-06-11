@@ -87,6 +87,26 @@
   - **Limpieza de datos**: Validación de números de teléfono y campos requeridos
   - **Campos soportados**: `remoteJid`, `pushName`, `id`, `profilePicUrl`, `createdAt`, `updatedAt`, `instanceId`
 
+### Version 0.0.9.6 - 📒 Paginas Amarillas
+- **🚨 Mejoras en Manejo de Errores de Difusiones**
+  - Nuevo script `debug_broadcast_400.php` para diagnóstico específico de errores HTTP 400
+  - **Mejorado `api/send_broadcast.php`** con verificación previa del estado de la instancia
+  - **Logging detallado**: Información completa de debugging para errores de envío
+  - **Mensajes de error específicos**: Diferenciación entre errores de conexión, instancia y números
+  - **Verificación de estado**: Comprobación automática del estado de la instancia antes del envío
+  - **Frontend mejorado**: Detección automática de problemas críticos y detención del envío
+  - **Información de debugging**: Detalles completos en consola para facilitar resolución de problemas
+  - **Manejo inteligente de errores**: Detección de instancia desconectada y números inválidos
+  - **Resumen detallado**: Información específica de errores al finalizar difusiones
+- **🔗 Corrección de Codificación URL - Espacios en Instancia**
+  - **Nuevo script `debug_url_encoding.php`** para diagnosticar problemas de codificación URL
+  - **Corregido `api/send_broadcast.php`** para usar `rawurlencode()` en el nombre de la instancia
+  - **Corregido `api/import_contacts.php`** para usar `rawurlencode()` en las URLs de Evolution API
+  - **Corregido `chatbot_actions.php`** para usar `rawurlencode()` en todas las URLs de Evolution API
+  - **Corregido `debug_broadcast_400.php`** para usar `rawurlencode()` en las URLs de prueba
+  - **Solución para espacios**: Los espacios en nombres de instancia ahora se codifican correctamente como `%20`
+  - **Compatibilidad mejorada**: Todas las URLs de Evolution API ahora manejan correctamente caracteres especiales
+
 ## Version 0.0.8 - 💚 Evolution
 - Nueva integración con Evolution API
   - Permite ingresar la API Key de Evoluution API

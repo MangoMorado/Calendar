@@ -30,7 +30,7 @@ if (empty($evolutionApiUrl) || empty($evolutionApiKey) || empty($evolutionInstan
 }
 
 // Preparar cURL para obtener contactos - USAR POST como indica la documentación oficial
-$apiUrl = rtrim($evolutionApiUrl, '/') . '/chat/findContacts/' . $evolutionInstanceName;
+$apiUrl = rtrim($evolutionApiUrl, '/') . '/chat/findContacts/' . rawurlencode($evolutionInstanceName);
 $headers = [
     'Content-Type: application/json',
     'apikey: ' . $evolutionApiKey

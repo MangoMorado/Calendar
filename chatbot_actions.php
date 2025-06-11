@@ -113,17 +113,18 @@ elseif ($action === 'toggle_evolution_instance') {
     
     // Para Evolution API, solo podemos desconectar (no reconectar desde aquí)
     if ($newStatus === 'inactive') {
-        $apiUrl = rtrim($evolutionApiUrl, '/') . '/instance/logout/' . $evolutionInstanceName;
+        $apiUrl = rtrim($evolutionApiUrl, '/') . '/instance/logout/' . rawurlencode($evolutionInstanceName);
+        $headers = [
+            'accept: application/json',
+            'apikey: ' . $evolutionApiKey
+        ];
         
         // Configurar cURL
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $apiUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'accept: application/json',
-            'apikey: ' . $evolutionApiKey
-        ]);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         
@@ -187,7 +188,7 @@ elseif ($action === 'connect_evolution_instance') {
         exit;
     }
     
-    $apiUrl = rtrim($evolutionApiUrl, '/') . '/instance/connect/' . $evolutionInstanceName;
+    $apiUrl = rtrim($evolutionApiUrl, '/') . '/instance/connect/' . rawurlencode($evolutionInstanceName);
     $headers = [
         'accept: application/json',
         'apikey: ' . $evolutionApiKey

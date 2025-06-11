@@ -39,6 +39,33 @@ if (empty($evolutionApiUrl) || empty($evolutionApiKey) || empty($evolutionInstan
     exit;
 }
 
+// Verificar estado de la instancia antes de enviar
+$checkApiUrl = rtrim($evolutionApiUrl, '/') . '/instance/connectionState/' . rawurlencode($evolutionInstanceName);
+$checkHeaders = ['apikey: ' . $evolutionApiKey];
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $checkApiUrl);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, $checkHeaders);
+curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+$checkResponse = curl_exec($ch);
+$checkHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+$instanceState = 'unknown';
+if ($checkHttpCode === 200) {
+    $checkData = json_decode($checkResponse, true);
+    $instanceState = $checkData['state'] ?? 'unknown';
+}
+
+// Log detallado para debugging
+error_log("[EVOLUTION BROADCAST] Number: $number");
+error_log("[EVOLUTION BROADCAST] Instance State: $instanceState");
+error_log("[EVOLUTION BROADCAST] Instance Name: $evolutionInstanceName");
+error_log("[EVOLUTION BROADCAST] Encoded Instance Name: " . rawurlencode($evolutionInstanceName));
+
 // Si hay imagen, procesar el envío de imagen
 if ($imagen && $imagen['tmp_name']) {
     // Crear carpeta uploads si no existe
@@ -55,7 +82,7 @@ if ($imagen && $imagen['tmp_name']) {
         exit;
     }
     // Enviar la imagen a Evolution API
-    $apiUrl = rtrim($evolutionApiUrl, '/') . '/message/sendMedia/' . $evolutionInstanceName;
+    $apiUrl = rtrim($evolutionApiUrl, '/') . '/message/sendMedia/' . rawurlencode($evolutionInstanceName);
     $headers = [
         'apikey: ' . $evolutionApiKey
     ];
@@ -103,19 +130,34 @@ if ($imagen && $imagen['tmp_name']) {
         ]);
     } else {
         $errorMessage = 'Error HTTP ' . $httpCode;
+        $errorDetails = [];
+        
         if ($response) {
             $errorData = json_decode($response, true);
-            if (is_array($errorData) && isset($errorData['message'])) {
-                $errorMessage = $errorData['message'];
+            if (is_array($errorData)) {
+                if (isset($errorData['message'])) {
+                    $errorMessage = $errorData['message'];
+                }
+                $errorDetails = $errorData;
             }
         }
-        echo json_encode(['success' => false, 'message' => $errorMessage]);
+        
+        // Agregar información adicional para debugging
+        $errorDetails['instance_state'] = $instanceState;
+        $errorDetails['number'] = $number;
+        $errorDetails['http_code'] = $httpCode;
+        
+        echo json_encode([
+            'success' => false, 
+            'message' => $errorMessage,
+            'debug_info' => $errorDetails
+        ]);
     }
     exit;
 }
 
 // Si no hay imagen, enviar mensaje de texto
-$apiUrl = rtrim($evolutionApiUrl, '/') . '/message/sendText/' . $evolutionInstanceName;
+$apiUrl = rtrim($evolutionApiUrl, '/') . '/message/sendText/' . rawurlencode($evolutionInstanceName);
 $headers = [
     'Content-Type: application/json',
     'apikey: ' . $evolutionApiKey
@@ -146,6 +188,7 @@ curl_close($ch);
 // Log para debugging
 error_log("[EVOLUTION SEND TEXT] Number: $number");
 error_log("[EVOLUTION SEND TEXT] URL: $apiUrl");
+error_log("[EVOLUTION SEND TEXT] Payload: " . json_encode($payload));
 error_log("[EVOLUTION SEND TEXT] HTTP Code: $httpCode");
 error_log("[EVOLUTION SEND TEXT] Response: $response");
 if ($curlError) {
@@ -169,12 +212,43 @@ if ($httpCode === 200 || $httpCode === 201) {
 } else {
     // Intentar obtener más información del error
     $errorMessage = 'Error HTTP ' . $httpCode;
+    $errorDetails = [];
+    
     if ($response) {
         $errorData = json_decode($response, true);
-        if (is_array($errorData) && isset($errorData['message'])) {
-            $errorMessage = $errorData['message'];
+        if (is_array($errorData)) {
+            if (isset($errorData['message'])) {
+                $errorMessage = $errorData['message'];
+            }
+            $errorDetails = $errorData;
         }
     }
-    echo json_encode(['success' => false, 'message' => $errorMessage]);
+    
+    // Agregar información adicional para debugging
+    $errorDetails['instance_state'] = $instanceState;
+    $errorDetails['number'] = $number;
+    $errorDetails['http_code'] = $httpCode;
+    $errorDetails['payload'] = $payload;
+    
+    // Mensajes específicos para errores comunes
+    if ($httpCode === 400) {
+        if ($instanceState !== 'open') {
+            $errorMessage = 'La instancia no está conectada. Estado actual: ' . $instanceState;
+        } else {
+            $errorMessage = 'Error 400: Verifica que el número esté registrado en WhatsApp y que la instancia esté conectada';
+        }
+    } elseif ($httpCode === 401) {
+        $errorMessage = 'Error 401: API Key inválida o expirada';
+    } elseif ($httpCode === 404) {
+        $errorMessage = 'Error 404: Instancia no encontrada o URL incorrecta';
+    } elseif ($httpCode === 500) {
+        $errorMessage = 'Error 500: Error interno del servidor Evolution API';
+    }
+    
+    echo json_encode([
+        'success' => false, 
+        'message' => $errorMessage,
+        'debug_info' => $errorDetails
+    ]);
 }
 ?> 
