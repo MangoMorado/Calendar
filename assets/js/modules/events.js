@@ -587,7 +587,7 @@ export function handleEventResize(info, currentCalendarType) {
 /**
  * Actualiza la visibilidad del botón de deshacer
  */
-function updateUndoButton() {
+export function updateUndoButton() {
     const undoButton = document.getElementById('undoButton');
     if (!undoButton) return;
     

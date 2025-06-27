@@ -215,6 +215,81 @@ if (mysqli_query($conn, $sql)) {
     if (!mysqli_query($conn, $sql)) {
         error_log("Error al crear tabla de contactos: " . mysqli_error($conn));
     }
+
+    // Crear tabla de listas de difusión
+    $sql = "CREATE TABLE IF NOT EXISTS broadcast_lists (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        user_id INT(11) NOT NULL,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_user_id (user_id),
+        INDEX idx_is_active (is_active)
+    )";
+    if (!mysqli_query($conn, $sql)) {
+        error_log("Error al crear tabla de listas de difusión: " . mysqli_error($conn));
+    }
+
+    // Crear tabla de contactos en listas de difusión (relación muchos a muchos)
+    $sql = "CREATE TABLE IF NOT EXISTS broadcast_list_contacts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        list_id INT NOT NULL,
+        contact_id INT NOT NULL,
+        added_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (list_id) REFERENCES broadcast_lists(id) ON DELETE CASCADE,
+        FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_list_contact (list_id, contact_id),
+        INDEX idx_list_id (list_id),
+        INDEX idx_contact_id (contact_id)
+    )";
+    if (!mysqli_query($conn, $sql)) {
+        error_log("Error al crear tabla de contactos en listas: " . mysqli_error($conn));
+    }
+
+    // Crear tabla de historial de difusiones enviadas
+    $sql = "CREATE TABLE IF NOT EXISTS broadcast_history (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        list_id INT,
+        message TEXT NOT NULL,
+        image_path VARCHAR(500),
+        total_contacts INT NOT NULL DEFAULT 0,
+        sent_successfully INT NOT NULL DEFAULT 0,
+        sent_failed INT NOT NULL DEFAULT 0,
+        user_id INT(11) NOT NULL,
+        status ENUM('pending', 'in_progress', 'completed', 'failed') NOT NULL DEFAULT 'pending',
+        started_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        completed_at TIMESTAMP NULL,
+        FOREIGN KEY (list_id) REFERENCES broadcast_lists(id) ON DELETE SET NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_user_id (user_id),
+        INDEX idx_status (status),
+        INDEX idx_started_at (started_at)
+    )";
+    if (!mysqli_query($conn, $sql)) {
+        error_log("Error al crear tabla de historial de difusiones: " . mysqli_error($conn));
+    }
+
+    // Crear tabla de detalles de envío de difusiones
+    $sql = "CREATE TABLE IF NOT EXISTS broadcast_details (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        broadcast_id INT NOT NULL,
+        contact_id INT NOT NULL,
+        contact_number VARCHAR(50) NOT NULL,
+        status ENUM('pending', 'sent', 'failed') NOT NULL DEFAULT 'pending',
+        error_message TEXT,
+        sent_at TIMESTAMP NULL,
+        FOREIGN KEY (broadcast_id) REFERENCES broadcast_history(id) ON DELETE CASCADE,
+        FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
+        INDEX idx_broadcast_id (broadcast_id),
+        INDEX idx_contact_id (contact_id),
+        INDEX idx_status (status)
+    )";
+    if (!mysqli_query($conn, $sql)) {
+        error_log("Error al crear tabla de detalles de difusiones: " . mysqli_error($conn));
+    }
 } else {
     error_log("Error al crear base de datos: " . mysqli_error($conn));
 }

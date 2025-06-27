@@ -26,9 +26,6 @@ include 'includes/header.php';
             <button class="nav-link" id="tab-contactos-btn" data-bs-toggle="pill" data-bs-target="#tab-contactos" type="button" role="tab">
                 <i class="bi bi-person-lines-fill"></i> Contactos
             </button>
-            <button class="nav-link" id="tab-difusiones-btn" data-bs-toggle="pill" data-bs-target="#tab-difusiones" type="button" role="tab">
-                <i class="bi bi-megaphone"></i> Difusiones
-            </button>
             <button class="nav-link" id="tab-config-btn" data-bs-toggle="pill" data-bs-target="#tab-config" type="button" role="tab">
                 <i class="bi bi-gear"></i> Configuración
             </button>
@@ -37,8 +34,6 @@ include 'includes/header.php';
             <div class="chatbot-content-panel tab-content" id="chatbotTabsContent">
                 <?php include 'includes/chatbot/dashboard.php'; ?>
                 <?php include 'includes/chatbot/contactos.php'; ?>
-                <?php include 'includes/chatbot/difusiones.php'; ?>
-                
                 <div class="tab-pane fade" id="tab-config" role="tabpanel">
                     <div class="form-section">
                         <h2><i class="bi bi-gear"></i> Configuración</h2>

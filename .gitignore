@@ -9,4 +9,4 @@
 .env.production
 .env.local
 .env.development.local
-php_errors.log
+php_error.log

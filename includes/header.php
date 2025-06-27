@@ -79,6 +79,9 @@ $pageTitle = isset($pageTitle) ? $pageTitle : 'Agenda de Citas | Mundo Animal';
                     <a href="notes.php" class="nav-item" title="Libreta de Notas">
                         <i class="bi bi-journal-text"></i> Libreta de Notas
                     </a>
+                    <a href="broadcast_lists.php" class="nav-item" title="Listas de Difusión">
+                        <i class="bi bi-megaphone"></i> Difusiones
+                    </a>
                     <a href="chatbot.php" class="nav-item" title="Chatbot">
                         <i class="bi bi-robot"></i> Chatbot
                     </a>
@@ -97,6 +100,9 @@ $pageTitle = isset($pageTitle) ? $pageTitle : 'Agenda de Citas | Mundo Animal';
             </a>
             <a href="notes.php" class="mobile-nav-item" title="Libreta de Notas">
                 <i class="bi bi-journal-text"></i> Libreta de Notas
+            </a>
+            <a href="broadcast_lists.php" class="mobile-nav-item" title="Listas de Difusión">
+                <i class="bi bi-megaphone"></i> Difusiones
             </a>
             <a href="chatbot.php" class="mobile-nav-item" title="Chatbot">
                 <i class="bi bi-robot"></i> Chatbot

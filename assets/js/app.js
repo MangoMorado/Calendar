@@ -10,7 +10,8 @@ import {
     handleEventClick, 
     handleTimeSlotSelection, 
     handleEventDrop, 
-    handleEventResize 
+    handleEventResize,
+    updateUndoButton
 } from './modules/events.js';
 import { showNotification, openModal, closeModal } from './modules/ui.js';
 import { loadUsersIntoSelect } from './modules/modal.js';
@@ -101,6 +102,11 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function initializeApp() {
     console.log('Inicializando aplicación de calendario...');
+
+    // Limpiar estado de deshacer al cargar la app
+    window.lastAction = null;
+    window.lastEventState = null;
+    updateUndoButton();
 
     // Elementos del DOM
     const elements = {
@@ -334,3 +340,12 @@ import('./modules/events.js').then(module => {
 }).catch(error => {
     console.error('Error al cargar el módulo de eventos:', error);
 });
+
+// --- LIMPIEZA GLOBAL DE MODALES ATASCADOS (backdrop) ---
+function limpiarBackdrops() {
+    document.querySelectorAll('.modal-backdrop').forEach(e => e.remove());
+    document.body.classList.remove('modal-open');
+}
+document.addEventListener('hidden.bs.modal', limpiarBackdrops);
+document.addEventListener('show.bs.modal', limpiarBackdrops);
+window.limpiarBackdrops = limpiarBackdrops;

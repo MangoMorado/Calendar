@@ -1,7 +1,6 @@
 # CHANGENOTES - Calendario MundoAnimal
 
 ## Lista de Cambios por implementar:
-- Sistema de difusiones usando evolutionAPI
 - Estado de las citas según código de color (Verde, Amarillo: reprogramar, Rojo)
 - Sistema de cola de citas, que el sistema reciba citas del chatbot y que un humano las programe
 - Mejoras de seguridad: Mover la JWT_SECRET fuera del código fuente. Restringir Access-Control-Allow-Origin en producción. Revisar posibles vulnerabilidades (inyección SQL, XSS - aunque el uso de consultas preparadas y htmlspecialchars ayuda).
@@ -106,6 +105,9 @@
   - **Corregido `debug_broadcast_400.php`** para usar `rawurlencode()` en las URLs de prueba
   - **Solución para espacios**: Los espacios en nombres de instancia ahora se codifican correctamente como `%20`
   - **Compatibilidad mejorada**: Todas las URLs de Evolution API ahora manejan correctamente caracteres especiales
+
+### Version 0.0.9.7 - 📒 Paginas Amarillas
+- Sistema CRUD de difusiones
 
 ## Version 0.0.8 - 💚 Evolution
 - Nueva integración con Evolution API
