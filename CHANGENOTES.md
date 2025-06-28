@@ -1,7 +1,6 @@
 # CHANGENOTES - Calendario MundoAnimal
 
 ## Lista de Cambios por implementar:
-- Monitor de envio de difusiones
 - Agregar opción para agregar contacto
 - Mejorar la busqueda de contactos se laguea por la alta carga al servidor
 - Estado de las citas según código de color (Verde, Amarillo: reprogramar, Rojo)
@@ -38,6 +37,9 @@
   - Agregar Testing: Implementar pruebas unitarias y de integración
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
+
+## Version 0.1.1
+- Se actualizo el modal de envio de difusiones
 
 ## Version 0.1.0.4
 - Se agrego la funcion de agregar numeros de manera manual

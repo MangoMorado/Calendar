@@ -289,8 +289,8 @@ foreach ($contacts as $contact) {
         ];
     }
     
-    // Pausa aleatoria entre 1 y 5 segundos
-    usleep(rand(1,5)*1000000);
+    // Pausa aleatoria entre 1 y 3 segundos
+    usleep(rand(1,3)*1000000);
 }
 $consoleLogs[] = 'ENVÍO FINALIZADO. Exitosos: ' . $sentSuccessfully . ' Fallidos: ' . $sentFailed;
 error_log('[BULK] ENVÍO FINALIZADO. Exitosos: ' . $sentSuccessfully . ' Fallidos: ' . $sentFailed);
