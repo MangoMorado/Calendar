@@ -51,15 +51,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_broadcast'])) {
                 // Procesar imagen si se subió
                 $imagePath = null;
                 if ($image && $image['tmp_name']) {
-                    $uploadsDir = __DIR__ . '/uploads';
-                    if (!is_dir($uploadsDir)) {
-                        mkdir($uploadsDir, 0777, true);
-                    }
-                    $ext = pathinfo($image['name'], PATHINFO_EXTENSION);
-                    $filename = 'broadcast_' . uniqid() . '.' . $ext;
-                    $imagePath = 'uploads/' . $filename;
-                    if (!move_uploaded_file($image['tmp_name'], __DIR__ . '/' . $imagePath)) {
-                        $error = 'Error al subir la imagen';
+                    // Validar tipo de archivo
+                    $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                    $fileType = mime_content_type($image['tmp_name']);
+                    
+                    if (!in_array($fileType, $allowedTypes)) {
+                        $error = 'Tipo de archivo no válido. Solo se permiten imágenes JPG, PNG y GIF.';
+                    } elseif ($image['size'] > 5 * 1024 * 1024) { // 5MB
+                        $error = 'El archivo es demasiado grande. Máximo 5MB permitido.';
+                    } elseif ($image['error'] !== UPLOAD_ERR_OK) {
+                        $error = 'Error al subir el archivo: ' . $image['error'];
+                    } else {
+                        $uploadsDir = __DIR__ . '/uploads';
+                        if (!is_dir($uploadsDir)) {
+                            if (!mkdir($uploadsDir, 0777, true)) {
+                                $error = 'Error al crear el directorio de uploads';
+                            }
+                        }
+                        
+                        if (!$error) {
+                            $ext = strtolower(pathinfo($image['name'], PATHINFO_EXTENSION));
+                            $filename = 'broadcast_' . uniqid() . '.' . $ext;
+                            $imagePath = 'uploads/' . $filename;
+                            $fullPath = __DIR__ . '/' . $imagePath;
+                            
+                            if (!move_uploaded_file($image['tmp_name'], $fullPath)) {
+                                $error = 'Error al subir la imagen al servidor';
+                            } else {
+                                // Verificar que el archivo se subió correctamente
+                                if (!file_exists($fullPath)) {
+                                    $error = 'Error: El archivo no se guardó correctamente';
+                                }
+                            }
+                        }
                     }
                 }
                 if (!$error) {

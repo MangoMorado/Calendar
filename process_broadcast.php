@@ -121,47 +121,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     
                     $apiResponse = curl_exec($ch);
                     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    $curlError = curl_error($ch);
                     curl_close($ch);
                     
                     if ($httpCode === 200 || $httpCode === 201) {
                         $response = ['success' => true, 'message' => 'Mensaje enviado'];
                         $broadcastHistoryModel->updateBroadcastDetail($detailId, 'sent', null, date('Y-m-d H:i:s'));
                     } else {
-                        $response = ['success' => false, 'message' => 'Error al enviar mensaje'];
-                        $broadcastHistoryModel->updateBroadcastDetail($detailId, 'failed', 'Error HTTP ' . $httpCode, null);
+                        $errorMsg = 'Error al enviar mensaje';
+                        if ($curlError) {
+                            $errorMsg .= ' (CURL: ' . $curlError . ')';
+                        } else {
+                            $errorMsg .= ' (HTTP: ' . $httpCode . ')';
+                            if ($apiResponse) {
+                                $errorData = json_decode($apiResponse, true);
+                                if ($errorData && isset($errorData['message'])) {
+                                    $errorMsg .= ' - ' . $errorData['message'];
+                                }
+                            }
+                        }
+                        $response = ['success' => false, 'message' => $errorMsg];
+                        $broadcastHistoryModel->updateBroadcastDetail($detailId, 'failed', $errorMsg, null);
                     }
                 } else {
-                    // Enviar solo texto
-                    $apiUrl = rtrim($evolutionApiUrl, '/') . '/message/sendText/' . rawurlencode($evolutionInstanceName);
-                    $headers = [
-                        'apikey: ' . $evolutionApiKey,
-                        'Content-Type: application/json'
-                    ];
-                    
-                    $payload = [
-                        'number' => $contactNumber,
-                        'text' => $message
-                    ];
-                    
-                    $ch = curl_init();
-                    curl_setopt($ch, CURLOPT_URL, $apiUrl);
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($ch, CURLOPT_POST, true);
-                    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-                    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                    
-                    $apiResponse = curl_exec($ch);
-                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                    curl_close($ch);
-                    
-                    if ($httpCode === 200 || $httpCode === 201) {
-                        $response = ['success' => true, 'message' => 'Mensaje enviado'];
-                        $broadcastHistoryModel->updateBroadcastDetail($detailId, 'sent', null, date('Y-m-d H:i:s'));
+                    // Verificar si se esperaba una imagen pero no existe
+                    if ($imagePath && !file_exists(__DIR__ . '/' . $imagePath)) {
+                        $errorMsg = 'Error: La imagen no se encuentra en el servidor';
+                        $response = ['success' => false, 'message' => $errorMsg];
+                        $broadcastHistoryModel->updateBroadcastDetail($detailId, 'failed', $errorMsg, null);
                     } else {
-                        $response = ['success' => false, 'message' => 'Error al enviar mensaje'];
-                        $broadcastHistoryModel->updateBroadcastDetail($detailId, 'failed', 'Error HTTP ' . $httpCode, null);
+                        // Enviar solo texto
+                        $apiUrl = rtrim($evolutionApiUrl, '/') . '/message/sendText/' . rawurlencode($evolutionInstanceName);
+                        $headers = [
+                            'apikey: ' . $evolutionApiKey,
+                            'Content-Type: application/json'
+                        ];
+                        
+                        $payload = [
+                            'number' => $contactNumber,
+                            'text' => $message
+                        ];
+                        
+                        $ch = curl_init();
+                        curl_setopt($ch, CURLOPT_URL, $apiUrl);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($ch, CURLOPT_POST, true);
+                        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+                        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+                        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                        
+                        $apiResponse = curl_exec($ch);
+                        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                        $curlError = curl_error($ch);
+                        curl_close($ch);
+                        
+                        if ($httpCode === 200 || $httpCode === 201) {
+                            $response = ['success' => true, 'message' => 'Mensaje enviado'];
+                            $broadcastHistoryModel->updateBroadcastDetail($detailId, 'sent', null, date('Y-m-d H:i:s'));
+                        } else {
+                            $errorMsg = 'Error al enviar mensaje';
+                            if ($curlError) {
+                                $errorMsg .= ' (CURL: ' . $curlError . ')';
+                            } else {
+                                $errorMsg .= ' (HTTP: ' . $httpCode . ')';
+                                if ($apiResponse) {
+                                    $errorData = json_decode($apiResponse, true);
+                                    if ($errorData && isset($errorData['message'])) {
+                                        $errorMsg .= ' - ' . $errorData['message'];
+                                    }
+                                }
+                            }
+                            $response = ['success' => false, 'message' => $errorMsg];
+                            $broadcastHistoryModel->updateBroadcastDetail($detailId, 'failed', $errorMsg, null);
+                        }
                     }
                 }
             }
@@ -208,6 +241,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             'pending' => $pending,
             'percentage' => $percentage,
             'status' => $status
+        ]);
+        exit;
+        
+    } elseif ($action === 'get_pending_details') {
+        // Obtener detalles pendientes para envío
+        $details = $broadcastHistoryModel->getBroadcastDetails($broadcastId);
+        $pendingDetails = array_filter($details, function($detail) {
+            return $detail['status'] === 'pending';
+        });
+        
+        echo json_encode([
+            'success' => true,
+            'details' => array_values($pendingDetails)
         ]);
         exit;
     }
@@ -400,13 +446,33 @@ function loadPendingDetails() {
 
 // Función para obtener detalles pendientes
 function getPendingDetails() {
-    // Aquí deberías hacer una petición AJAX para obtener los detalles pendientes
-    // Por simplicidad, simularemos el proceso
-    setTimeout(() => {
-        if (isRunning) {
-            sendNextMessage();
+    fetch('process_broadcast.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'action=get_pending_details'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            pendingDetails = data.details;
+            currentIndex = 0;
+            
+            if (pendingDetails.length > 0 && isRunning) {
+                addLog(`Iniciando envío a ${pendingDetails.length} contactos`, 'info');
+                sendNextMessage();
+            } else {
+                addLog('No hay contactos pendientes para enviar', 'warning');
+                loadPendingDetails();
+            }
+        } else {
+            addLog('Error al obtener detalles pendientes', 'danger');
         }
-    }, 1000);
+    })
+    .catch(error => {
+        addLog(`Error de red: ${error.message}`, 'danger');
+    });
 }
 
 // Función para enviar el siguiente mensaje

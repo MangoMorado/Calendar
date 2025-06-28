@@ -39,6 +39,13 @@
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
 
+
+## Version 0.1.0.1 - TestRunner
+- Se agregó el test `test_broadcast_image.php` para verificar el soporte de envío de difusiones con imágenes (permisos, funciones PHP, directorio uploads, etc).
+- Se creó el endpoint API correspondiente en `api/test/test_broadcast_image.php` para integración automática.
+- Se integró el test de imágenes en el listado y lógica de la interfaz de tests (`test/index.php`), con soporte de LED verde/rojo/amarillo según el resultado.
+- Mejoras en validación y manejo de errores para el envío de imágenes en el sistema de difusión.
+
 ## Version 0.1.0 - "TestRunner"
 - Refactorización de los archivos de test para soportar ejecución dual: navegador (HTML informativo) y API (respuesta simple para automatización).
 - Creación de endpoints en api/test/ que permiten ejecutar cada test vía AJAX y obtener un resultado claro (ok/error/warning).

@@ -11,6 +11,10 @@ if (!isAuthenticated()) {
 // Obtener todos los archivos de prueba
 $testFiles = glob(__DIR__ . '/test_*.php');
 $testFiles = array_map('basename', $testFiles);
+// Agregar el test de imágenes si no está
+if (!in_array('test_broadcast_image.php', $testFiles)) {
+    $testFiles[] = 'test_broadcast_image.php';
+}
 sort($testFiles);
 
 // Categorizar los archivos
@@ -23,8 +27,11 @@ $categories = [
     'Otros' => []
 ];
 
+// Categorizar el test de imagen
 foreach ($testFiles as $file) {
-    if (strpos($file, 'session') !== false) {
+    if ($file === 'test_broadcast_image.php') {
+        $categories['Envío de Mensajes'][] = $file;
+    } elseif (strpos($file, 'session') !== false) {
         $categories['Sesiones'][] = $file;
     } elseif (strpos($file, 'endpoint') !== false || strpos($file, 'api') !== false) {
         $categories['API y Endpoints'][] = $file;
@@ -47,7 +54,9 @@ $categories = array_filter($categories, function($files) {
 // Generar lista de endpoints para cada test
 $apiTestEndpoints = [];
 foreach ($testFiles as $file) {
-    $apiTestEndpoints[$file] = '../api/test/' . $file;
+    $apiTestEndpoints[$file] = (strpos($file, 'test_broadcast_image.php') !== false)
+        ? '../api/test/test_broadcast_image.php'
+        : '../api/test/' . $file;
 }
 ?>
 
