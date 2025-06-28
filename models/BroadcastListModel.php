@@ -254,5 +254,58 @@ class BroadcastListModel {
         
         return $lists;
     }
+    
+    /**
+     * Obtener un contacto por número en una lista específica
+     */
+    public function getContactByNumber($listId, $number) {
+        $sql = "SELECT c.*
+                FROM contacts c
+                INNER JOIN broadcast_list_contacts blc ON c.id = blc.contact_id
+                WHERE blc.list_id = ? AND c.number = ?";
+        
+        $stmt = mysqli_prepare($this->conn, $sql);
+        mysqli_stmt_bind_param($stmt, "is", $listId, $number);
+        mysqli_stmt_execute($stmt);
+        
+        $result = mysqli_stmt_get_result($stmt);
+        return mysqli_fetch_assoc($result);
+    }
+    
+    /**
+     * Crear un nuevo contacto o obtener uno existente
+     */
+    public function createOrGetContact($contactData) {
+        // Primero verificar si el contacto ya existe
+        $sql = "SELECT id FROM contacts WHERE number = ?";
+        $stmt = mysqli_prepare($this->conn, $sql);
+        mysqli_stmt_bind_param($stmt, "s", $contactData['number']);
+        mysqli_stmt_execute($stmt);
+        
+        $result = mysqli_stmt_get_result($stmt);
+        $existingContact = mysqli_fetch_assoc($result);
+        
+        if ($existingContact) {
+            // El contacto ya existe, actualizar el nombre si es necesario
+            if (!empty($contactData['pushName']) && $contactData['pushName'] !== 'Contacto Manual') {
+                $updateSql = "UPDATE contacts SET pushName = ? WHERE id = ?";
+                $updateStmt = mysqli_prepare($this->conn, $updateSql);
+                mysqli_stmt_bind_param($updateStmt, "si", $contactData['pushName'], $existingContact['id']);
+                mysqli_stmt_execute($updateStmt);
+            }
+            return $existingContact['id'];
+        } else {
+            // Crear nuevo contacto
+            $sql = "INSERT INTO contacts (number, pushName, user_id, created_at) VALUES (?, ?, ?, NOW())";
+            $stmt = mysqli_prepare($this->conn, $sql);
+            mysqli_stmt_bind_param($stmt, "ssi", $contactData['number'], $contactData['pushName'], $contactData['user_id']);
+            
+            if (mysqli_stmt_execute($stmt)) {
+                return mysqli_insert_id($this->conn);
+            }
+            
+            return false;
+        }
+    }
 }
 ?> 

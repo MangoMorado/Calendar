@@ -261,6 +261,87 @@ $action = $_GET['action'] ?? 'edit';
                             sendBatch();
                         });
                         </script>
+                        
+                        <!-- Formulario para agregar números manualmente -->
+                        <hr>
+                        <h6>Agregar número manualmente</h6>
+                        <form id="addManualNumberForm" method="POST">
+                            <input type="hidden" name="list_id" value="<?php echo $currentList['id']; ?>">
+                            <div class="mb-3">
+                                <label for="manual_number" class="form-label">Número de WhatsApp</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="manual_number" name="manual_number" 
+                                           placeholder="Ej: 573217058135" pattern="[0-9]+" maxlength="15" required>
+                                    <span class="input-group-text">@s.whatsapp.net</span>
+                                </div>
+                                <small class="form-text text-muted">
+                                    Ingresa solo los números (sin espacios, guiones o símbolos). El sistema agregará automáticamente @s.whatsapp.net
+                                </small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="manual_name" class="form-label">Nombre (opcional)</label>
+                                <input type="text" class="form-control" id="manual_name" name="manual_name" 
+                                       placeholder="Nombre del contacto" maxlength="100">
+                            </div>
+                            <button type="submit" name="add_manual_number" class="btn btn-warning btn-sm">
+                                <i class="bi bi-plus-circle"></i> Agregar Número Manual
+                            </button>
+                        </form>
+                        <script>
+                        // Validación y procesamiento del formulario de número manual
+                        document.getElementById('addManualNumberForm').addEventListener('submit', function(e) {
+                            e.preventDefault();
+                            const number = document.getElementById('manual_number').value.trim();
+                            const name = document.getElementById('manual_name').value.trim();
+                            
+                            // Validar formato del número
+                            if (!/^\d{10,15}$/.test(number)) {
+                                alert('El número debe tener entre 10 y 15 dígitos numéricos.');
+                                return;
+                            }
+                            
+                            // Confirmar antes de agregar
+                            const fullNumber = number + '@s.whatsapp.net';
+                            const confirmMessage = `¿Estás seguro de agregar el número:\n${fullNumber}${name ? '\nNombre: ' + name : ''}`;
+                            
+                            if (!confirm(confirmMessage)) {
+                                return;
+                            }
+                            
+                            const formData = new FormData();
+                            formData.append('list_id', this.list_id.value);
+                            formData.append('manual_number', number);
+                            formData.append('manual_name', name);
+                            formData.append('add_manual_number', '1');
+                            
+                            // Mostrar indicador de carga
+                            const submitBtn = this.querySelector('button[type="submit"]');
+                            const originalText = submitBtn.innerHTML;
+                            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Agregando...';
+                            submitBtn.disabled = true;
+                            
+                            fetch(window.location.pathname + window.location.search, {
+                                method: 'POST',
+                                body: formData
+                            })
+                            .then(r => r.text())
+                            .then(() => {
+                                // Recargar la página para mostrar el nuevo contacto
+                                window.location.reload();
+                            })
+                            .catch(error => {
+                                alert('Error al agregar el número: ' + error.message);
+                                submitBtn.innerHTML = originalText;
+                                submitBtn.disabled = false;
+                            });
+                        });
+                        
+                        // Formatear automáticamente el número mientras se escribe
+                        document.getElementById('manual_number').addEventListener('input', function() {
+                            // Remover cualquier carácter que no sea número
+                            this.value = this.value.replace(/[^0-9]/g, '');
+                        });
+                        </script>
                     <?php endif; ?>
                 </div>
             </div>

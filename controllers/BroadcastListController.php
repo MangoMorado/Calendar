@@ -61,6 +61,8 @@ class BroadcastListController {
             return $this->addContacts();
         } elseif (isset($_POST['remove_contacts'])) {
             return $this->removeContacts();
+        } elseif (isset($_POST['add_manual_number'])) {
+            return $this->addManualNumber();
         }
         
         return ['error' => 'Acción no válida'];
@@ -177,6 +179,52 @@ class BroadcastListController {
             return ['message' => 'Contactos removidos correctamente'];
         } else {
             return ['error' => 'Error al remover contactos'];
+        }
+    }
+
+    /**
+     * Agrega un número manualmente a una lista
+     */
+    private function addManualNumber() {
+        $listId = (int)($_POST['list_id'] ?? 0);
+        $number = trim($_POST['manual_number'] ?? '');
+        $name = trim($_POST['manual_name'] ?? '');
+        
+        if (!$this->broadcastListModel->canAccessList($listId, $this->currentUser['id'])) {
+            return ['error' => 'No tienes permisos para modificar esta lista'];
+        }
+        
+        // Validar formato del número
+        if (empty($number) || !preg_match('/^\d{10,15}$/', $number)) {
+            return ['error' => 'El número debe tener entre 10 y 15 dígitos numéricos'];
+        }
+        
+        // Agregar sufijo de WhatsApp
+        $fullNumber = $number . '@s.whatsapp.net';
+        
+        // Verificar si el número ya existe en la lista
+        $existingContact = $this->broadcastListModel->getContactByNumber($listId, $fullNumber);
+        if ($existingContact) {
+            return ['error' => 'Este número ya existe en la lista'];
+        }
+        
+        // Crear o obtener el contacto
+        $contactData = [
+            'number' => $fullNumber,
+            'pushName' => $name ?: 'Contacto Manual',
+            'user_id' => $this->currentUser['id']
+        ];
+        
+        $contactId = $this->broadcastListModel->createOrGetContact($contactData);
+        if (!$contactId) {
+            return ['error' => 'Error al crear el contacto'];
+        }
+        
+        // Agregar el contacto a la lista
+        if ($this->broadcastListModel->addContactsToList($listId, [$contactId])) {
+            return ['message' => 'Número agregado correctamente a la lista'];
+        } else {
+            return ['error' => 'Error al agregar el número a la lista'];
         }
     }
 

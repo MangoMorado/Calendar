@@ -39,6 +39,9 @@
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
 
+## Version 0.1.0.4
+- Se agrego la funcion de agregar numeros de manera manual
+
 ## Version 0.1.0.3
 - **CORRECCIÓN DE AUTENTICACIÓN**: Se agregó `credentials: 'include'` al fetch en `views/broadcast_lists/send.php` para asegurar que las cookies de sesión se envíen correctamente a la API.
 - **DEBUGGING MEJORADO**: Se agregó logging detallado en `api/send_broadcast_bulk.php` para facilitar la depuración de problemas de autenticación.
