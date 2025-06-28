@@ -43,14 +43,51 @@ if (empty($evolutionApiUrl) || empty($evolutionApiKey) || empty($evolutionInstan
     exit;
 }
 
+// Verificar estado de la instancia
+echo "Verificando estado de la instancia...\n";
+$checkApiUrl = rtrim($evolutionApiUrl, '/') . '/instance/connectionState/' . rawurlencode($evolutionInstanceName);
+$checkHeaders = ['apikey: ' . $evolutionApiKey];
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $checkApiUrl);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, $checkHeaders);
+curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+$checkResponse = curl_exec($ch);
+$checkHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+echo "Estado de instancia - HTTP Code: $checkHttpCode\n";
+echo "Respuesta: $checkResponse\n";
+
+$instanceState = 'unknown';
+if ($checkHttpCode === 200) {
+    $checkData = json_decode($checkResponse, true);
+    if (isset($checkData['instance']['state'])) {
+        $instanceState = $checkData['instance']['state'];
+    } else if (isset($checkData['state'])) {
+        $instanceState = $checkData['state'];
+    }
+}
+
+echo "Estado de la instancia: $instanceState\n";
+
+if (strtolower($instanceState) !== 'open') {
+    echo "❌ La instancia no está conectada. Estado: $instanceState\n";
+    exit;
+}
+
+echo "✅ Instancia conectada y lista\n";
+
 // Enviar la imagen a Evolution API
-$apiUrl = rtrim($evolutionApiUrl, '/') . '/message/sendMedia';
+$apiUrl = rtrim($evolutionApiUrl, '/') . '/message/sendMedia/' . rawurlencode($evolutionInstanceName);
 $headers = [
     'apikey: ' . $evolutionApiKey
 ];
 $postfields = [
-    'instanceName' => $evolutionInstanceName,
-    'to' => $number,
+    'number' => $number,
     'file' => new CURLFile($filepath),
     'caption' => $caption,
     'mediatype' => 'image'
