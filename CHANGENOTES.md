@@ -40,7 +40,15 @@
 - Modificar arquitectura para SAAS
 
 
+## Version 0.1.0.2 - Corrección de Difusiones con Imágenes
+
+- **CORRECCIÓN CRÍTICA**: Se corrigió el error de tabla `broadcasts` que no existía, cambiando a `broadcast_history` en `api/send_broadcast_bulk.php`.
+- **NUEVA FUNCIÓN**: Se agregó `sendEvolutionMedia()` en `includes/evolution_api.php` para enviar imágenes según la documentación oficial de Evolution API.
+- **ACTUALIZACIÓN**: Se modificó `api/send_broadcast_bulk.php` para usar la función correcta según si hay imagen o solo texto.
+- **MEJORA**: El test de imágenes ahora verifica también la configuración de Evolution API y las funciones disponibles.
+
 ## Version 0.1.0.1 - TestRunner
+
 - Se agregó el test `test_broadcast_image.php` para verificar el soporte de envío de difusiones con imágenes (permisos, funciones PHP, directorio uploads, etc).
 - Se creó el endpoint API correspondiente en `api/test/test_broadcast_image.php` para integración automática.
 - Se integró el test de imágenes en el listado y lógica de la interfaz de tests (`test/index.php`), con soporte de LED verde/rojo/amarillo según el resultado.

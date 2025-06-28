@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/functions.php';
 require_once __DIR__ . '/../../models/BroadcastListModel.php';
 require_once __DIR__ . '/../../models/BroadcastHistoryModel.php';
+require_once __DIR__ . '/../../includes/evolution_api.php';
 
 $status = 'ok';
 $message = '';
@@ -21,6 +22,14 @@ if (!is_dir($uploadsDir) || !is_writable($uploadsDir)) {
 if (!function_exists('mime_content_type') || !function_exists('curl_init') || !class_exists('CURLFile')) {
     $status = 'error';
     $message = 'Faltan funciones requeridas de PHP (mime_content_type, curl, CURLFile).';
+    echo json_encode(['status' => $status, 'message' => $message]);
+    exit;
+}
+
+// Verificar que las funciones de Evolution API existen
+if (!function_exists('sendEvolutionText') || !function_exists('sendEvolutionMedia')) {
+    $status = 'error';
+    $message = 'Las funciones de Evolution API no están disponibles.';
     echo json_encode(['status' => $status, 'message' => $message]);
     exit;
 }
@@ -66,6 +75,21 @@ if (empty($lists)) {
     exit;
 }
 
+// Verificar configuración de Evolution API
+$config = [];
+$sql = "SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('evolution_api_url', 'evolution_api_key', 'evolution_instance_name')";
+$result = mysqli_query($conn, $sql);
+while ($row = mysqli_fetch_assoc($result)) {
+    $config[$row['setting_key']] = $row['setting_value'];
+}
+
+if (empty($config['evolution_api_url']) || empty($config['evolution_api_key']) || empty($config['evolution_instance_name'])) {
+    $status = 'warning';
+    $message = 'Configuración de Evolution API incompleta, pero el sistema está listo.';
+    echo json_encode(['status' => $status, 'message' => $message]);
+    exit;
+}
+
 $status = 'ok';
-$message = 'El sistema está listo para enviar difusiones con imágenes.';
+$message = 'El sistema está completamente listo para enviar difusiones con imágenes. Todas las funciones y configuraciones están correctas.';
 echo json_encode(['status' => $status, 'message' => $message]); 

@@ -125,13 +125,13 @@ if (strtolower($instanceState) !== 'open') {
         'sent' => 0
     ];
     // Total difusiones
-    $res = mysqli_query($conn, "SELECT COUNT(*) AS total FROM broadcasts");
+    $res = mysqli_query($conn, "SELECT COUNT(*) AS total FROM broadcast_history");
     if ($row = mysqli_fetch_assoc($res)) $metrics['total'] = (int)$row['total'];
     // Completadas
-    $res = mysqli_query($conn, "SELECT COUNT(*) AS completed FROM broadcasts WHERE status = 'completed'");
+    $res = mysqli_query($conn, "SELECT COUNT(*) AS completed FROM broadcast_history WHERE status = 'completed'");
     if ($row = mysqli_fetch_assoc($res)) $metrics['completed'] = (int)$row['completed'];
     // En progreso
-    $res = mysqli_query($conn, "SELECT COUNT(*) AS in_progress FROM broadcasts WHERE status = 'in_progress'");
+    $res = mysqli_query($conn, "SELECT COUNT(*) AS in_progress FROM broadcast_history WHERE status = 'in_progress'");
     if ($row = mysqli_fetch_assoc($res)) $metrics['in_progress'] = (int)$row['in_progress'];
     // Mensajes enviados
     $res = mysqli_query($conn, "SELECT COUNT(*) AS sent FROM broadcast_details WHERE status = 'sent'");
@@ -207,7 +207,11 @@ foreach ($contacts as $contact) {
     $detailId = $broadcastHistoryModel->addBroadcastDetail($detailData);
     
     // Enviar mensaje usando helper reutilizable
-    $sendResult = sendEvolutionText($conn, $number, $message);
+    if ($imagePath && file_exists($imagePath)) {
+        $sendResult = sendEvolutionMedia($conn, $number, $message, $imagePath);
+    } else {
+        $sendResult = sendEvolutionText($conn, $number, $message);
+    }
     $evolutionResponses[] = $sendResult['evolution_response'] ?? null;
     $consoleLogs[] = 'Resultado para ' . $number . ': ' . json_encode($sendResult);
     error_log('[BULK] Resultado para ' . $number . ': ' . json_encode($sendResult));
@@ -256,13 +260,13 @@ $metrics = [
     'sent' => 0
 ];
 // Total difusiones
-$res = mysqli_query($conn, "SELECT COUNT(*) AS total FROM broadcasts");
+$res = mysqli_query($conn, "SELECT COUNT(*) AS total FROM broadcast_history");
 if ($row = mysqli_fetch_assoc($res)) $metrics['total'] = (int)$row['total'];
 // Completadas
-$res = mysqli_query($conn, "SELECT COUNT(*) AS completed FROM broadcasts WHERE status = 'completed'");
+$res = mysqli_query($conn, "SELECT COUNT(*) AS completed FROM broadcast_history WHERE status = 'completed'");
 if ($row = mysqli_fetch_assoc($res)) $metrics['completed'] = (int)$row['completed'];
 // En progreso
-$res = mysqli_query($conn, "SELECT COUNT(*) AS in_progress FROM broadcasts WHERE status = 'in_progress'");
+$res = mysqli_query($conn, "SELECT COUNT(*) AS in_progress FROM broadcast_history WHERE status = 'in_progress'");
 if ($row = mysqli_fetch_assoc($res)) $metrics['in_progress'] = (int)$row['in_progress'];
 // Mensajes enviados
 $res = mysqli_query($conn, "SELECT COUNT(*) AS sent FROM broadcast_details WHERE status = 'sent'");
