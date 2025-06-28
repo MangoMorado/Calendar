@@ -54,6 +54,36 @@ include 'includes/chatbot/scripts.php';
 
 // Incluir scripts específicos de contactos
 include 'includes/chatbot/contactos-scripts.php';
+?>
+<script>
+// --- LIMPIEZA GLOBAL DE MODALES ATASCADOS (backdrop) ---
+function limpiarBackdrops() {
+    document.querySelectorAll('.modal-backdrop').forEach(e => e.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style = '';
+}
+document.addEventListener('hidden.bs.modal', limpiarBackdrops);
+document.addEventListener('hide.bs.modal', limpiarBackdrops);
+window.limpiarBackdrops = limpiarBackdrops;
 
+// Refuerza la gestión del modal de QR (conexión)
+const qrModalEl = document.getElementById('qrModal');
+let qrModalInstance = null;
+if (qrModalEl) {
+    qrModalEl.addEventListener('hidden.bs.modal', limpiarBackdrops);
+    qrModalEl.addEventListener('hide.bs.modal', limpiarBackdrops);
+    // Asocia todos los botones que abren el modal de QR
+    document.querySelectorAll('[data-bs-target="#qrModal"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (!qrModalInstance) {
+                qrModalInstance = new bootstrap.Modal(qrModalEl);
+            }
+            qrModalInstance.show();
+            setTimeout(limpiarBackdrops, 500);
+        });
+    });
+}
+</script>
+<?php
 include 'includes/footer.php'; 
 ?> 

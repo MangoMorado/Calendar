@@ -5,7 +5,7 @@
 .modal {
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 1050 !important;
     left: 0;
     top: 0;
     width: 100%;
@@ -140,4 +140,8 @@ input[type="datetime-local"]:focus {
         font-size: 0.85rem;
         padding: 0.4rem;
     }
+}
+
+.modal-backdrop {
+    z-index: 1040 !important;
 } 

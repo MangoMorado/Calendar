@@ -82,13 +82,14 @@ if ($imagen && $imagen['tmp_name']) {
         exit;
     }
     // Enviar la imagen a Evolution API
-    $apiUrl = rtrim($evolutionApiUrl, '/') . '/message/sendMedia/' . rawurlencode($evolutionInstanceName);
+    $apiUrl = rtrim($evolutionApiUrl, '/') . '/message/sendMedia';
     $headers = [
         'apikey: ' . $evolutionApiKey
     ];
     $caption = $mensaje;
     $postfields = [
-        'number' => $number,
+        'instanceName' => $evolutionInstanceName,
+        'to' => $number,
         'file' => new CURLFile($filepath),
         'caption' => $caption,
         'mediatype' => 'image'

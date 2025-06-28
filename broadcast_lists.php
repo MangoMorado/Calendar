@@ -5,6 +5,7 @@ require_once 'includes/functions.php';
 require_once 'includes/auth.php';
 require_once 'models/BroadcastListModel.php';
 require_once 'models/BroadcastHistoryModel.php';
+require_once 'includes/evolution_api.php'; // Importar helper Evolution API
 
 // Verificar que el usuario esté autenticado
 requireAuth();
@@ -141,6 +142,19 @@ if ($action === 'list') {
     }
 }
 
+// Ejemplo de uso para enviar mensajes de difusión a varios contactos con delay aleatorio:
+// $numeros = ['573217058135@s.whatsapp.net', '5732XXXXXXX@s.whatsapp.net'];
+// $mensaje = '¡Hola, esto es una difusión!';
+// foreach ($numeros as $numero) {
+//     $resultado = sendEvolutionText($conn, $numero, $mensaje);
+//     if ($resultado['success']) {
+//         // Mensaje enviado correctamente
+//     } else {
+//         // Error: $resultado['message']
+//     }
+//     sleep(rand(1,5)); // Espera entre 1 y 5 segundos antes del siguiente envío
+// }
+
 // Definir título de la página
 $pageTitle = 'Listas de Difusión | Mundo Animal';
 
@@ -160,7 +174,7 @@ include 'includes/header.php';
             <div class="card bg-primary text-white">
                 <div class="card-body">
                     <h5 class="card-title">Total Difusiones</h5>
-                    <h2><?php echo $stats['total_broadcasts'] ?? 0; ?></h2>
+                    <h2 id="cardTotalDifusiones"><?php echo $stats['total_broadcasts'] ?? 0; ?></h2>
                 </div>
             </div>
         </div>
@@ -168,7 +182,7 @@ include 'includes/header.php';
             <div class="card bg-success text-white">
                 <div class="card-body">
                     <h5 class="card-title">Completadas</h5>
-                    <h2><?php echo $stats['completed'] ?? 0; ?></h2>
+                    <h2 id="cardCompletadas"><?php echo $stats['completed'] ?? 0; ?></h2>
                 </div>
             </div>
         </div>
@@ -176,7 +190,7 @@ include 'includes/header.php';
             <div class="card bg-warning text-white">
                 <div class="card-body">
                     <h5 class="card-title">En Progreso</h5>
-                    <h2><?php echo $stats['in_progress'] ?? 0; ?></h2>
+                    <h2 id="cardEnProgreso"><?php echo $stats['in_progress'] ?? 0; ?></h2>
                 </div>
             </div>
         </div>
@@ -184,7 +198,7 @@ include 'includes/header.php';
             <div class="card bg-info text-white">
                 <div class="card-body">
                     <h5 class="card-title">Mensajes Enviados</h5>
-                    <h2><?php echo $stats['total_sent'] ?? 0; ?></h2>
+                    <h2 id="cardMensajesEnviados"><?php echo $stats['total_sent'] ?? 0; ?></h2>
                 </div>
             </div>
         </div>
@@ -624,7 +638,7 @@ include 'includes/header.php';
                     <button type="submit" class="btn btn-success" id="btnEnviarDifusion">
                         <i class="bi bi-send"></i> Enviar difusión
                     </button>
-                    <button type="button" class="btn btn-outline-secondary" id="btnVistaPrevia">
+                    <button type="button" class="btn btn-secondary ms-2 mb-0" id="btnVistaPrevia">
                         <i class="bi bi-eye"></i> Vista previa
                     </button>
                 </div>
@@ -725,7 +739,19 @@ include 'includes/header.php';
 function confirmDelete(listId, listName) {
     document.getElementById('deleteListId').value = listId;
     document.getElementById('listName').textContent = listName;
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    const modalEl = document.getElementById('deleteModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+    // Limpieza de backdrops antes y después
+    setTimeout(() => limpiarBackdrops(), 500);
+    modalEl.addEventListener('hidden.bs.modal', limpiarBackdrops, { once: true });
+}
+
+// Refuerza el cierre del modal de eliminación para limpiar el estado visual
+const deleteModalEl = document.getElementById('deleteModal');
+if (deleteModalEl) {
+    deleteModalEl.addEventListener('hidden.bs.modal', limpiarBackdrops);
+    deleteModalEl.addEventListener('hide.bs.modal', limpiarBackdrops);
 }
 
 // Manejo de selección de lista y carga de contactos
@@ -953,34 +979,60 @@ document.getElementById('formDifusion').addEventListener('submit', function(e) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
+        // Mostrar logs de backend en consola
+        if (data.consoleLogs) {
+            data.consoleLogs.forEach(msg => console.log('[BULK]', msg));
+        }
+
+        // Validar respuestas de Evolution API
+        let algunPendiente = false;
+        if (data.data && Array.isArray(data.data.evolution_responses)) {
+            algunPendiente = data.data.evolution_responses.some(
+                resp => resp && resp.status && resp.status.toUpperCase() === 'PENDING'
+            );
+        }
+
+        if (data.success && algunPendiente) {
             // Actualizar progreso
             document.getElementById('barraProgresoEnvio').style.width = '100%';
             document.getElementById('barraProgresoEnvio').textContent = '100%';
             document.getElementById('estadoEnvioDifusion').textContent = '¡Difusión completada!';
-            
+
             // Mostrar detalles
-            document.getElementById('enviadosExitosos').textContent = data.data.sent_successfully;
-            document.getElementById('enviadosFallidos').textContent = data.data.sent_failed;
+            document.getElementById('enviadosExitosos').textContent = data.data.sent_successfully ?? 0;
+            document.getElementById('enviadosFallidos').textContent = data.data.sent_failed ?? 0;
             document.getElementById('detallesEnvio').style.display = 'block';
-            
+
             // Configurar botón de detalles
-            document.getElementById('btnVerDetalles').href = `broadcast_details.php?id=${data.data.broadcast_id}`;
-            document.getElementById('modalFooter').style.display = 'block';
-            
+            if (data.data.broadcast_id) {
+                document.getElementById('btnVerDetalles').href = `broadcast_details.php?id=${data.data.broadcast_id}`;
+                document.getElementById('modalFooter').style.display = 'block';
+            }
+
             // Mostrar notificación
-            const mensaje = `Difusión completada. Enviados: ${data.data.sent_successfully}, Fallidos: ${data.data.sent_failed}`;
-            showNotification(mensaje, data.data.sent_failed === 0 ? 'success' : 'warning');
-            
-            // Limpiar formulario si todo fue exitoso
-            if (data.data.sent_failed === 0) {
-                document.getElementById('formDifusion').reset();
-                contactosContainer.style.display = 'none';
+            const mensaje = `Difusión completada. Enviados: ${data.data.sent_successfully ?? 0}, Fallidos: ${data.data.sent_failed ?? 0}`;
+            showNotification(mensaje, (data.data.sent_failed ?? 0) === 0 ? 'success' : 'warning');
+
+            // Limpiar formulario y cerrar modal si todo fue exitoso
+            if ((data.data.sent_failed ?? 0) === 0) {
+                setTimeout(() => {
+                    document.getElementById('formDifusion').reset();
+                    contactosContainer.style.display = 'none';
+                    cerrarModalProgreso();
+                }, 1500); // Pequeño delay para que el usuario vea el 100%
+            }
+
+            // Actualizar métricas si existen
+            if (data.data.metrics) {
+                document.getElementById('cardTotalDifusiones').textContent = data.data.metrics.total;
+                document.getElementById('cardCompletadas').textContent = data.data.metrics.completed;
+                document.getElementById('cardEnProgreso').textContent = data.data.metrics.in_progress;
+                document.getElementById('cardMensajesEnviados').textContent = data.data.metrics.sent;
             }
         } else {
             cerrarModalProgreso();
-            document.getElementById('estadoEnvioDifusion').textContent = 'Error: ' + data.message;
-            showNotification('Error al enviar la difusión: ' + data.message, 'error');
+            showNotification('Error: Ningún mensaje fue aceptado por Evolution API.', 'error');
+            document.getElementById('estadoEnvioDifusion').textContent = 'Error: Ningún mensaje fue aceptado por Evolution API.';
         }
     })
     .catch(error => {

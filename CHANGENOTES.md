@@ -109,6 +109,10 @@
 ### Version 0.0.9.7 - 📒 Paginas Amarillas
 - Sistema CRUD de difusiones
 
+### Version 0.0.9.8 - 📒 Paginas Amarillas
+- Correciones de backdrops y modales
+- Corrección de envio de difusiones
+
 ## Version 0.0.8 - 💚 Evolution
 - Nueva integración con Evolution API
   - Permite ingresar la API Key de Evoluution API

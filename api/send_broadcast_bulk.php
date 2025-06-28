@@ -3,6 +3,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../models/BroadcastHistoryModel.php';
 require_once __DIR__ . '/../models/BroadcastListModel.php';
+require_once __DIR__ . '/../includes/evolution_api.php'; // Importar helper Evolution API
 
 // Verificar autenticación
 requireAuth();
@@ -98,20 +99,49 @@ curl_close($ch);
 error_log('[BULK] HTTP_CODE: ' . $checkHttpCode);
 error_log('[BULK] RESPONSE: ' . $checkResponse);
 
+error_log('[BULK] INICIO DE ENVÍO DE DIFUSIÓN');
+error_log('[BULK] Total de contactos a enviar: ' . count($contacts));
+
 $instanceState = 'unknown';
 if ($checkHttpCode === 200) {
     $checkData = json_decode($checkResponse, true);
-    $instanceState = $checkData['state'] ?? 'unknown';
+    if (isset($checkData['instance']['state'])) {
+        $instanceState = $checkData['instance']['state'];
+    } else if (isset($checkData['state'])) {
+        $instanceState = $checkData['state'];
+    }
 }
-
-error_log('[BULK] Instance state: ' . $instanceState);
-
-if ($instanceState !== 'open') {
-    error_log('[BULK] Instancia no conectada. State: ' . $instanceState);
+error_log('[BULK] Estado de la instancia leído: ' . $instanceState);
+$consoleLogs = [];
+$consoleLogs[] = 'INICIO DE ENVÍO DE DIFUSIÓN';
+$consoleLogs[] = 'Total de contactos a enviar: ' . count($contacts);
+if (strtolower($instanceState) !== 'open') {
+    $consoleLogs[] = 'Instancia no conectada. State: ' . $instanceState;
+    // Obtener métricas actualizadas
+    $metrics = [
+        'total' => 0,
+        'completed' => 0,
+        'in_progress' => 0,
+        'sent' => 0
+    ];
+    // Total difusiones
+    $res = mysqli_query($conn, "SELECT COUNT(*) AS total FROM broadcasts");
+    if ($row = mysqli_fetch_assoc($res)) $metrics['total'] = (int)$row['total'];
+    // Completadas
+    $res = mysqli_query($conn, "SELECT COUNT(*) AS completed FROM broadcasts WHERE status = 'completed'");
+    if ($row = mysqli_fetch_assoc($res)) $metrics['completed'] = (int)$row['completed'];
+    // En progreso
+    $res = mysqli_query($conn, "SELECT COUNT(*) AS in_progress FROM broadcasts WHERE status = 'in_progress'");
+    if ($row = mysqli_fetch_assoc($res)) $metrics['in_progress'] = (int)$row['in_progress'];
+    // Mensajes enviados
+    $res = mysqli_query($conn, "SELECT COUNT(*) AS sent FROM broadcast_details WHERE status = 'sent'");
+    if ($row = mysqli_fetch_assoc($res)) $metrics['sent'] = (int)$row['sent'];
     echo json_encode([
         'success' => false, 
         'message' => 'La instancia de WhatsApp no está conectada',
-        'debug_info' => ['instance_state' => $instanceState]
+        'debug_info' => ['instance_state' => $instanceState],
+        'metrics' => $metrics,
+        'consoleLogs' => $consoleLogs
     ]);
     exit;
 }
@@ -151,108 +181,16 @@ if (!$broadcastId) {
     exit;
 }
 
-// Función para enviar mensaje individual
-function sendMessage($number, $message, $imagePath, $evolutionApiUrl, $evolutionApiKey, $evolutionInstanceName) {
-    $result = ['success' => false, 'message' => '', 'debug_info' => []];
-    
-    try {
-        if ($imagePath && file_exists($imagePath)) {
-            // Enviar imagen con mensaje
-            $apiUrl = rtrim($evolutionApiUrl, '/') . '/message/sendMedia/' . rawurlencode($evolutionInstanceName);
-            $headers = ['apikey: ' . $evolutionApiKey];
-            
-            $postfields = [
-                'number' => $number,
-                'file' => new CURLFile($imagePath),
-                'caption' => $message,
-                'mediatype' => 'image'
-            ];
-            
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $apiUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlError = curl_error($ch);
-            curl_close($ch);
-            
-            if ($curlError) {
-                $result['message'] = 'Error de conexión: ' . $curlError;
-                $result['debug_info']['curl_error'] = $curlError;
-                return $result;
-            }
-            
-            if ($httpCode === 200 || $httpCode === 201) {
-                $result['success'] = true;
-                $result['message'] = 'Imagen enviada correctamente';
-            } else {
-                $result['message'] = 'Error HTTP ' . $httpCode;
-                $result['debug_info']['http_code'] = $httpCode;
-                $result['debug_info']['response'] = $response;
-            }
-        } else {
-            // Enviar mensaje de texto
-            $apiUrl = rtrim($evolutionApiUrl, '/') . '/message/sendText/' . rawurlencode($evolutionInstanceName);
-            $headers = [
-                'Content-Type: application/json',
-                'apikey: ' . $evolutionApiKey
-            ];
-            
-            $payload = [
-                'number' => $number,
-                'text' => $message
-            ];
-            
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $apiUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlError = curl_error($ch);
-            curl_close($ch);
-            
-            if ($curlError) {
-                $result['message'] = 'Error de conexión: ' . $curlError;
-                $result['debug_info']['curl_error'] = $curlError;
-                return $result;
-            }
-            
-            if ($httpCode === 200 || $httpCode === 201) {
-                $result['success'] = true;
-                $result['message'] = 'Mensaje enviado correctamente';
-            } else {
-                $result['message'] = 'Error HTTP ' . $httpCode;
-                $result['debug_info']['http_code'] = $httpCode;
-                $result['debug_info']['response'] = $response;
-            }
-        }
-    } catch (Exception $e) {
-        $result['message'] = 'Excepción: ' . $e->getMessage();
-        $result['debug_info']['exception'] = $e->getMessage();
-    }
-    
-    return $result;
-}
-
 // Iniciar envío de difusión
 $totalContacts = count($contacts);
 $sentSuccessfully = 0;
 $sentFailed = 0;
 $errors = [];
+$evolutionResponses = [];
 
 foreach ($contacts as $contact) {
+    $consoleLogs[] = 'Enviando a: ' . $contact['number'];
+    error_log('[BULK] Enviando a: ' . $contact['number']);
     $number = $contact['number'];
     $contactId = $contact['id'];
     
@@ -268,8 +206,11 @@ foreach ($contacts as $contact) {
     
     $detailId = $broadcastHistoryModel->addBroadcastDetail($detailData);
     
-    // Enviar mensaje
-    $sendResult = sendMessage($number, $message, $imagePath, $evolutionApiUrl, $evolutionApiKey, $evolutionInstanceName);
+    // Enviar mensaje usando helper reutilizable
+    $sendResult = sendEvolutionText($conn, $number, $message);
+    $evolutionResponses[] = $sendResult['evolution_response'] ?? null;
+    $consoleLogs[] = 'Resultado para ' . $number . ': ' . json_encode($sendResult);
+    error_log('[BULK] Resultado para ' . $number . ': ' . json_encode($sendResult));
     
     $status = $sendResult['success'] ? 'sent' : 'failed';
     $errorMessage = $sendResult['success'] ? null : $sendResult['message'];
@@ -288,13 +229,15 @@ foreach ($contacts as $contact) {
         $errors[] = [
             'number' => $number,
             'error' => $sendResult['message'],
-            'debug' => $sendResult['debug_info'] ?? []
+            'debug' => $sendResult['response'] ?? []
         ];
     }
     
-    // Pausa entre envíos para evitar rate limiting
-    usleep(500000); // 0.5 segundos
+    // Pausa aleatoria entre 1 y 5 segundos
+    usleep(rand(1,5)*1000000);
 }
+$consoleLogs[] = 'ENVÍO FINALIZADO. Exitosos: ' . $sentSuccessfully . ' Fallidos: ' . $sentFailed;
+error_log('[BULK] ENVÍO FINALIZADO. Exitosos: ' . $sentSuccessfully . ' Fallidos: ' . $sentFailed);
 
 // Actualizar estado final de la difusión
 $finalStatus = ($sentFailed === 0) ? 'completed' : (($sentSuccessfully === 0) ? 'failed' : 'completed');
@@ -305,6 +248,26 @@ if ($imagePath && file_exists($imagePath)) {
     unlink($imagePath);
 }
 
+// Obtener métricas actualizadas
+$metrics = [
+    'total' => 0,
+    'completed' => 0,
+    'in_progress' => 0,
+    'sent' => 0
+];
+// Total difusiones
+$res = mysqli_query($conn, "SELECT COUNT(*) AS total FROM broadcasts");
+if ($row = mysqli_fetch_assoc($res)) $metrics['total'] = (int)$row['total'];
+// Completadas
+$res = mysqli_query($conn, "SELECT COUNT(*) AS completed FROM broadcasts WHERE status = 'completed'");
+if ($row = mysqli_fetch_assoc($res)) $metrics['completed'] = (int)$row['completed'];
+// En progreso
+$res = mysqli_query($conn, "SELECT COUNT(*) AS in_progress FROM broadcasts WHERE status = 'in_progress'");
+if ($row = mysqli_fetch_assoc($res)) $metrics['in_progress'] = (int)$row['in_progress'];
+// Mensajes enviados
+$res = mysqli_query($conn, "SELECT COUNT(*) AS sent FROM broadcast_details WHERE status = 'sent'");
+if ($row = mysqli_fetch_assoc($res)) $metrics['sent'] = (int)$row['sent'];
+
 // Preparar respuesta
 $response = [
     'success' => true,
@@ -314,8 +277,11 @@ $response = [
         'total_contacts' => $totalContacts,
         'sent_successfully' => $sentSuccessfully,
         'sent_failed' => $sentFailed,
-        'status' => $finalStatus
-    ]
+        'status' => $finalStatus,
+        'metrics' => $metrics,
+        'evolution_responses' => $evolutionResponses
+    ],
+    'consoleLogs' => $consoleLogs
 ];
 
 // Agregar errores si existen
@@ -327,4 +293,17 @@ if (!empty($errors)) {
 }
 
 echo json_encode($response);
+
+// Manejo global de errores fatales
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error fatal en el servidor',
+            'error_detail' => $error['message']
+        ]);
+    }
+});
 ?> 

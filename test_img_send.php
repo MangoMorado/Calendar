@@ -44,12 +44,13 @@ if (empty($evolutionApiUrl) || empty($evolutionApiKey) || empty($evolutionInstan
 }
 
 // Enviar la imagen a Evolution API
-$apiUrl = rtrim($evolutionApiUrl, '/') . '/message/sendMedia/' . $evolutionInstanceName;
+$apiUrl = rtrim($evolutionApiUrl, '/') . '/message/sendMedia';
 $headers = [
     'apikey: ' . $evolutionApiKey
 ];
 $postfields = [
-    'number' => $number,
+    'instanceName' => $evolutionInstanceName,
+    'to' => $number,
     'file' => new CURLFile($filepath),
     'caption' => $caption,
     'mediatype' => 'image'
