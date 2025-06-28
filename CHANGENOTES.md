@@ -1,6 +1,9 @@
 # CHANGENOTES - Calendario MundoAnimal
 
 ## Lista de Cambios por implementar:
+- Monitor de envio de difusiones
+- Agregar opción para agregar contacto
+- Mejorar la busqueda de contactos se laguea por la alta carga al servidor
 - Estado de las citas según código de color (Verde, Amarillo: reprogramar, Rojo)
 - Sistema de cola de citas, que el sistema reciba citas del chatbot y que un humano las programe
 - Mejoras de seguridad: Mover la JWT_SECRET fuera del código fuente. Restringir Access-Control-Allow-Origin en producción. Revisar posibles vulnerabilidades (inyección SQL, XSS - aunque el uso de consultas preparadas y htmlspecialchars ayuda).
@@ -35,6 +38,18 @@
   - Agregar Testing: Implementar pruebas unitarias y de integración
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
+
+## Version 0.1.0 - "TestRunner"
+- Refactorización de los archivos de test para soportar ejecución dual: navegador (HTML informativo) y API (respuesta simple para automatización).
+- Creación de endpoints en api/test/ que permiten ejecutar cada test vía AJAX y obtener un resultado claro (ok/error/warning).
+- Integración visual en test/index.php con botón "Correr todos los tests" y LEDs de estado para cada test y global.
+- Corrección de rutas relativas y absolutas para compatibilidad total en la navegación y ejecución de pruebas.
+- Robustez en la detección de modo API para evitar análisis de HTML y asegurar resultados confiables en el dashboard de pruebas.
+- **Refactorización y conversión a MVC de broadcast_lists:**
+    - Separación de la lógica en un controlador (`BroadcastListController.php`).
+    - Creación de vistas independientes para listar, crear, editar, ver y enviar difusiones.
+    - Implementación de un router minimalista en `broadcast_lists.php` para delegar acciones.
+    - Mejora de la experiencia de usuario y mantenibilidad del módulo de listas de difusión.
 
 ## Version 0.0.9 - 📒 Paginas Amarillas
 - Ahora la app permite importar contactos de WhatsApp y guardarlos en la base de datos
