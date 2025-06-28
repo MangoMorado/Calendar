@@ -137,6 +137,7 @@ formDifusion.addEventListener('submit', function(e) {
     // Enviar difusión
     fetch('api/send_broadcast_bulk.php', {
         method: 'POST',
+        credentials: 'include',
         body: formData
     })
     .then(response => response.json())

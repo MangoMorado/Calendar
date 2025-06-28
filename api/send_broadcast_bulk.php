@@ -1,48 +1,100 @@
 <?php
+// Logging detallado para debugging
+error_log('[BROADCAST_BULK] Iniciando script');
+error_log('[BROADCAST_BULK] REQUEST_METHOD: ' . $_SERVER['REQUEST_METHOD']);
+error_log('[BROADCAST_BULK] POST data: ' . print_r($_POST, true));
+error_log('[BROADCAST_BULK] FILES data: ' . print_r($_FILES, true));
+
 require_once __DIR__ . '/../config/database.php';
+error_log('[BROADCAST_BULK] Database config loaded');
+
 require_once __DIR__ . '/../includes/auth.php';
+error_log('[BROADCAST_BULK] Auth loaded');
+
 require_once __DIR__ . '/../models/BroadcastHistoryModel.php';
+error_log('[BROADCAST_BULK] BroadcastHistoryModel loaded');
+
 require_once __DIR__ . '/../models/BroadcastListModel.php';
+error_log('[BROADCAST_BULK] BroadcastListModel loaded');
+
 require_once __DIR__ . '/../includes/evolution_api.php'; // Importar helper Evolution API
+error_log('[BROADCAST_BULK] Evolution API loaded');
 
 // Verificar autenticación
-requireAuth();
+error_log('[BROADCAST_BULK] Verificando autenticación');
+error_log('[BROADCAST_BULK] Session status: ' . session_status());
+error_log('[BROADCAST_BULK] Session ID: ' . (session_id() ?: 'none'));
+error_log('[BROADCAST_BULK] Session data: ' . print_r($_SESSION, true));
+
+if (!isAuthenticated()) {
+    error_log('[BROADCAST_BULK] Usuario no autenticado - SESSION: ' . print_r($_SESSION, true));
+    http_response_code(401);
+    echo json_encode([
+        'success' => false, 
+        'message' => 'No autenticado',
+        'debug' => [
+            'session_status' => session_status(),
+            'session_id' => session_id(),
+            'session_data' => $_SESSION
+        ]
+    ]);
+    exit;
+}
+error_log('[BROADCAST_BULK] Autenticación verificada');
+
 header('Content-Type: application/json; charset=utf-8');
+error_log('[BROADCAST_BULK] Header Content-Type establecido');
 
 // Verificar que sea una petición POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    error_log('[BROADCAST_BULK] Método no permitido: ' . $_SERVER['REQUEST_METHOD']);
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Método no permitido']);
     exit;
 }
 
 // Obtener datos de la petición
+error_log('[BROADCAST_BULK] Obteniendo datos de la petición');
 $listId = (int)($_POST['list_id'] ?? 0);
 $message = trim($_POST['message'] ?? '');
 $image = $_FILES['image'] ?? null;
 $selectedContacts = $_POST['selected_contacts'] ?? [];
 
+error_log('[BROADCAST_BULK] listId: ' . $listId);
+error_log('[BROADCAST_BULK] message length: ' . strlen($message));
+error_log('[BROADCAST_BULK] image: ' . ($image ? 'present' : 'not present'));
+
 // Validar datos requeridos
 if (!$listId || (empty($message) && !$image)) {
+    error_log('[BROADCAST_BULK] Validación fallida: listId=' . $listId . ', message empty=' . (empty($message) ? 'true' : 'false') . ', image=' . ($image ? 'present' : 'not present'));
     echo json_encode(['success' => false, 'message' => 'Lista, mensaje o imagen son requeridos']);
     exit;
 }
 
 // Obtener información del usuario actual
+error_log('[BROADCAST_BULK] Obteniendo usuario actual');
 $currentUser = getCurrentUser();
+error_log('[BROADCAST_BULK] Usuario obtenido: ' . ($currentUser ? 'ID ' . $currentUser['id'] : 'null'));
 
 // Inicializar modelos
+error_log('[BROADCAST_BULK] Inicializando modelos');
 $broadcastHistoryModel = new BroadcastHistoryModel($conn);
 $broadcastListModel = new BroadcastListModel($conn);
+error_log('[BROADCAST_BULK] Modelos inicializados');
 
 // Verificar permisos de acceso a la lista
+error_log('[BROADCAST_BULK] Verificando permisos para lista ' . $listId);
 if (!$broadcastListModel->canAccessList($listId, $currentUser['id'])) {
+    error_log('[BROADCAST_BULK] Permisos denegados para lista ' . $listId . ' y usuario ' . $currentUser['id']);
     echo json_encode(['success' => false, 'message' => 'No tienes permisos para usar esta lista']);
     exit;
 }
+error_log('[BROADCAST_BULK] Permisos verificados');
 
 // Obtener contactos de la lista
+error_log('[BROADCAST_BULK] Obteniendo contactos de la lista ' . $listId);
 $contacts = $broadcastListModel->getContactsInList($listId);
+error_log('[BROADCAST_BULK] Contactos obtenidos: ' . count($contacts));
 
 // Filtrar contactos seleccionados si se especificaron
 if (!empty($selectedContacts)) {
