@@ -126,7 +126,6 @@ function sendEvolutionMedia($conn, $number, $text, $imagePath) {
 
     // Obtener información del archivo
     $fileInfo = pathinfo($imagePath);
-    $fileName = $fileInfo['basename'];
     $fileExtension = strtolower($fileInfo['extension']);
     
     // Determinar el tipo de medio
@@ -139,29 +138,17 @@ function sendEvolutionMedia($conn, $number, $text, $imagePath) {
         $mediaType = 'document';
     }
 
-    // Leer el archivo y convertirlo a base64
-    $fileContent = file_get_contents($imagePath);
-    $base64Media = base64_encode($fileContent);
-
-    // Enviar medio según la documentación de Evolution API
+    // Enviar medio usando CURLFile (mismo método que test_img_send.php)
     $apiUrl = rtrim($evolutionApiUrl, '/') . '/message/sendMedia/' . rawurlencode($evolutionInstanceName);
     $headers = [
-        'Content-Type: application/json',
         'apikey: ' . $evolutionApiKey
     ];
     
-    $payload = [
+    $postfields = [
         'number' => $number,
-        'options' => [
-            'delay' => 1200,
-            'presence' => 'composing'
-        ],
-        'mediaMessage' => [
-            'mediaType' => $mediaType,
-            'fileName' => $fileName,
-            'caption' => $text,
-            'media' => $base64Media
-        ]
+        'file' => new CURLFile($imagePath),
+        'caption' => $text,
+        'mediatype' => $mediaType
     ];
 
     $ch = curl_init();
@@ -169,7 +156,7 @@ function sendEvolutionMedia($conn, $number, $text, $imagePath) {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     $response = curl_exec($ch);
@@ -179,7 +166,7 @@ function sendEvolutionMedia($conn, $number, $text, $imagePath) {
 
     $evolutionResponse = json_decode($response, true);
 
-    if ($httpCode === 201 && isset($evolutionResponse['status']) && strtoupper($evolutionResponse['status']) === 'PENDING') {
+    if (($httpCode === 200 || $httpCode === 201) && isset($evolutionResponse['status']) && strtoupper($evolutionResponse['status']) === 'PENDING') {
         return [
             'success' => true,
             'message' => 'Mensaje con imagen enviado correctamente',

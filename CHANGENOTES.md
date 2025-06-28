@@ -46,6 +46,9 @@
 ## Version 0.1.0.3.1
 - Se agrego test de envio de imagenes
 
+## Version 0.1.0.3.2
+- Se corrigio bug de envio de imagenes
+
 ## Version 0.1.0.2 - Corrección de Difusiones con Imágenes
 
 - **CORRECCIÓN CRÍTICA**: Se corrigió el error de tabla `broadcasts` que no existía, cambiando a `broadcast_history` en `api/send_broadcast_bulk.php`.
