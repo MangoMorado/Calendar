@@ -65,7 +65,7 @@ function sendEvolutionText($conn, $number, $text) {
 
     $evolutionResponse = json_decode($response, true);
 
-    if ($httpCode === 201 && isset($evolutionResponse['status']) && strtoupper($evolutionResponse['status']) === 'PENDING') {
+    if (($httpCode === 200 || $httpCode === 201) && isset($evolutionResponse['status']) && strtoupper($evolutionResponse['status']) === 'PENDING') {
         return [
             'success' => true,
             'message' => 'Mensaje enviado correctamente',

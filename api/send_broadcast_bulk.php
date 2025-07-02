@@ -64,6 +64,16 @@ error_log('[BROADCAST_BULK] listId: ' . $listId);
 error_log('[BROADCAST_BULK] message length: ' . strlen($message));
 error_log('[BROADCAST_BULK] image: ' . ($image ? 'present' : 'not present'));
 
+// Obtener el nombre de la lista de difusión de forma segura
+$listName = 'Desconocida';
+if (isset($listId) && !empty($listId)) {
+    $broadcastListModel = new BroadcastListModel($conn);
+    $listData = $broadcastListModel->getListById($listId);
+    if ($listData && isset($listData['name'])) {
+        $listName = $listData['name'];
+    }
+}
+
 // Validar datos requeridos
 if (!$listId || (empty($message) && !$image)) {
     error_log('[BROADCAST_BULK] Validación fallida: listId=' . $listId . ', message empty=' . (empty($message) ? 'true' : 'false') . ', image=' . ($image ? 'present' : 'not present'));
@@ -165,8 +175,19 @@ if ($checkHttpCode === 200) {
 }
 error_log('[BULK] Estado de la instancia leído: ' . $instanceState);
 $consoleLogs = [];
-$consoleLogs[] = 'INICIO DE ENVÍO DE DIFUSIÓN';
-$consoleLogs[] = 'Total de contactos a enviar: ' . count($contacts);
+$consoleLogs[] = '[INICIO] Iniciando proceso de difusión...';
+$consoleLogs[] = '[INFO] Lista seleccionada: ' . $listName;
+$consoleLogs[] = '[INFO] Total de contactos: ' . count($contacts);
+$consoleLogs[] = 'Verificando conexión con Evolution API...';
+
+if (strtolower($instanceState) === 'open') {
+    $consoleLogs[] = '✅ Instancia de WhatsApp conectada';
+} else {
+    $consoleLogs[] = '❌ Instancia de WhatsApp NO conectada. Estado: ' . $instanceState;
+}
+
+$consoleLogs[] = 'Iniciando envío de mensajes...';
+
 if (strtolower($instanceState) !== 'open') {
     $consoleLogs[] = 'Instancia no conectada. State: ' . $instanceState;
     // Obtener métricas actualizadas
@@ -239,52 +260,91 @@ $sentSuccessfully = 0;
 $sentFailed = 0;
 $errors = [];
 $evolutionResponses = [];
-
+$maxRetries = 3;
 foreach ($contacts as $contact) {
     $consoleLogs[] = 'Enviando a: ' . $contact['number'];
     error_log('[BULK] Enviando a: ' . $contact['number']);
     $number = $contact['number'];
     $contactId = $contact['id'];
     
-    // Crear detalle de envío
-    $detailData = [
-        'broadcast_id' => $broadcastId,
-        'contact_id' => $contactId,
-        'contact_number' => $number,
-        'status' => 'pending',
-        'error_message' => null,
-        'sent_at' => null
-    ];
-    
-    $detailId = $broadcastHistoryModel->addBroadcastDetail($detailData);
-    
-    // Enviar mensaje usando helper reutilizable
-    if ($imagePath && file_exists($imagePath)) {
-        $sendResult = sendEvolutionMedia($conn, $number, $message, $imagePath);
+    // Buscar si ya existe un detalle para este contacto y difusión
+    $detailId = null;
+    $sql = "SELECT id FROM broadcast_details WHERE broadcast_id = $broadcastId AND contact_id = {$contact['id']} LIMIT 1";
+    $res = mysqli_query($conn, $sql);
+    if ($row = mysqli_fetch_assoc($res)) {
+        $detailId = $row['id'];
     } else {
-        $sendResult = sendEvolutionText($conn, $number, $message);
+        // Crear detalle de envío solo si no existe
+        $detailData = [
+            'broadcast_id' => $broadcastId,
+            'contact_id' => $contactId,
+            'contact_number' => $number,
+            'status' => 'pending',
+            'error_message' => null,
+            'sent_at' => null
+        ];
+        $broadcastHistoryModel = new BroadcastHistoryModel($conn); // Asegura instancia
+        $broadcastHistoryModel->addBroadcastDetail($detailData);
+        $detailId = mysqli_insert_id($conn);
     }
+    
+    // --- NUEVA LÓGICA DE REINTENTOS Y LOG DETALLADO ---
+    $intentos = 0;
+    $enviado = false;
+    $lastError = '';
+    $sendResult = null;
+    while ($intentos < $maxRetries && !$enviado) {
+        $consoleLogs[] = "Intento " . ($intentos+1) . " para " . $number;
+        if ($imagePath && file_exists($imagePath)) {
+            $sendResult = sendEvolutionMedia($conn, $number, $message, $imagePath);
+        } else {
+            $sendResult = sendEvolutionText($conn, $number, $message);
+        }
+        if ($sendResult['success']) {
+            $enviado = true;
+            $consoleLogs[] = "✅ Enviado a $number en intento " . ($intentos+1);
+        } else {
+            $lastError = $sendResult['message'];
+            $consoleLogs[] = "❌ Error enviando a $number en intento " . ($intentos+1) . ": $lastError";
+            // Si es error de conexión o HTTP 500, intenta reconectar (dummy)
+            $httpCode = $sendResult['http_code'] ?? null;
+            if ((strpos(strtolower($lastError), 'conexión') !== false) || ($httpCode == 500)) {
+                $consoleLogs[] = '[BULK] Intentando reconexión tras error de conexión o HTTP 500...';
+                error_log('[BULK] Intentando reconexión tras error de conexión o HTTP 500...');
+                sleep(5); // Espera antes de reintentar
+            }
+            $intentos++;
+        }
+    }
+    if (!$enviado) {
+        $consoleLogs[] = "❌ No se pudo enviar a $number tras $maxRetries intentos. Error final: $lastError";
+    }
+    // --- FIN NUEVA LÓGICA ---
     $evolutionResponses[] = $sendResult['evolution_response'] ?? null;
     $consoleLogs[] = 'Resultado para ' . $number . ': ' . json_encode($sendResult);
     error_log('[BULK] Resultado para ' . $number . ': ' . json_encode($sendResult));
     
-    $status = $sendResult['success'] ? 'sent' : 'failed';
-    $errorMessage = $sendResult['success'] ? null : $sendResult['message'];
-    $sentAt = $sendResult['success'] ? date('Y-m-d H:i:s') : null;
+    $status = $enviado ? 'sent' : 'failed';
+    $errorMessage = $enviado ? null : $lastError;
+    $sentAt = $enviado ? date('Y-m-d H:i:s') : null;
     
     // Actualizar detalle
     if ($detailId) {
-        $broadcastHistoryModel->updateBroadcastDetail($detailId, $status, $errorMessage, $sentAt);
+        $updateOk = $broadcastHistoryModel->updateBroadcastDetail($detailId, $status, $errorMessage, $sentAt);
+        if (!$updateOk) {
+            $consoleLogs[] = "[ERROR] No se pudo actualizar el estado del detalle (ID: $detailId) a '$status'";
+            error_log("[BULK][ERROR] No se pudo actualizar el estado del detalle (ID: $detailId) a '$status'");
+        }
     }
     
     // Contar resultados
-    if ($sendResult['success']) {
+    if ($enviado) {
         $sentSuccessfully++;
     } else {
         $sentFailed++;
         $errors[] = [
             'number' => $number,
-            'error' => $sendResult['message'],
+            'error' => $lastError,
             'debug' => $sendResult['response'] ?? []
         ];
     }

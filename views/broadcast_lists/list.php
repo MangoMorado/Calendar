@@ -70,7 +70,7 @@ $stats = $data['stats'];
                     <input type="hidden" name="action" value="list">
                     <input type="text" name="search" class="form-control me-2" placeholder="Buscar listas..." 
                            value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
-                    <button type="submit" class="btn btn-outline-secondary">
+                    <button type="submit" class="btn btn-secondary">
                         <i class="bi bi-search"></i>
                     </button>
                 </form>

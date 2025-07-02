@@ -1,6 +1,23 @@
 # CHANGENOTES - Calendario MundoAnimal
 
 ## Lista de Cambios por implementar:
+- Revisar linea 67 de Appointments.php / API
+- reparar bug: (no modifiques nada solo explicame porque sale esto:
+
+Warning: ini_set(): Session ini settings cannot be changed after headers have already been sent in /includes/session_config.php on line 17
+
+Warning: session_set_cookie_params(): Session cookie parameters cannot be changed after headers have already been sent in includes/session_config.php on line 18
+
+Warning: ini_set(): Session ini settings cannot be changed after headers have already been sent in includes/session_config.php on line 17
+
+Warning: session_set_cookie_params(): Session cookie parameters cannot be changed after headers have already been sent in includes/session_config.php on line 18
+
+Warning: session_start(): Session cannot be started after headers have already been sent in includes/auth.php on line 10
+
+Warning: session_start(): Session cannot be started after headers have already been sent in includes/auth.php on line 299
+
+Warning: Cannot modify header information - headers already sent by (output started at config/database.php:296) in includes/auth.php on line 110)
+
 - Agregar opción para agregar contacto
 - Mejorar la busqueda de contactos se laguea por la alta carga al servidor
 - Estado de las citas según código de color (Verde, Amarillo: reprogramar, Rojo)
@@ -37,6 +54,9 @@
   - Agregar Testing: Implementar pruebas unitarias y de integración
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
+
+## Version 0.1.1.1
+- Mejoras y correcciones en el envío masivo de difusiones, gestión de contactos y estilos de listas.
 
 ## Version 0.1.1
 - Se actualizo el modal de envio de difusiones

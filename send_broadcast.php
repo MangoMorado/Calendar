@@ -27,6 +27,9 @@ $activeLists = array_filter($activeLists, function($list) {
     return $list['is_active'] && $list['contact_count'] > 0;
 });
 
+// Leer list_id de la URL para preselección
+$selectedListId = isset($_GET['list_id']) ? (int)$_GET['list_id'] : 0;
+
 // Procesar envío de difusión
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_broadcast'])) {
     $listId = (int)($_POST['list_id'] ?? 0);
@@ -168,7 +171,7 @@ include 'includes/header.php';
                                 <select class="form-select" id="list_id" name="list_id" required>
                                     <option value="">Selecciona una lista...</option>
                                     <?php foreach ($activeLists as $list): ?>
-                                        <option value="<?php echo $list['id']; ?>">
+                                        <option value="<?php echo $list['id']; ?>" <?php if ($list['id'] == $selectedListId) echo 'selected'; ?>>
                                             <?php echo htmlspecialchars($list['name']); ?> (<?php echo $list['contact_count']; ?> contactos)
                                         </option>
                                     <?php endforeach; ?>

@@ -1,6 +1,8 @@
 <?php
 // Vista para enviar difusión
 $lists = $data['lists'];
+// Leer list_id de la URL para preselección
+$selectedListId = isset($_GET['list_id']) ? (int)$_GET['list_id'] : 0;
 ?>
 <div class="container">
     <div class="card mb-4 mt-4">
@@ -14,7 +16,7 @@ $lists = $data['lists'];
                     <select id="listaDifusion" name="listaDifusion" class="form-select" required>
                         <option value="">Selecciona una lista...</option>
                         <?php foreach ($lists as $list): ?>
-                            <option value="<?php echo $list['id']; ?>">
+                            <option value="<?php echo $list['id']; ?>" <?php if ($list['id'] == $selectedListId) echo 'selected'; ?>>
                                 <?php echo htmlspecialchars($list['name']); ?> (<?php echo $list['contact_count']; ?> contactos)
                             </option>
                         <?php endforeach; ?>
@@ -358,8 +360,64 @@ formDifusion.addEventListener('submit', function(e) {
     modal.show();
     
     // Iniciar envío
-    enviarDifusion(formData, totalContactos);
+    fetch('api/send_broadcast_bulk.php', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success && data.data && data.data.broadcast_id) {
+            // Iniciar polling de progreso
+            iniciarPollingProgreso(data.data.broadcast_id, totalContactos);
+        } else {
+            agregarLog('Error al iniciar la difusión: ' + (data.message || 'Error desconocido'), 'error');
+            actualizarProgreso(0, '<i class="bi bi-x-circle"></i> Error al iniciar', 'No se pudo iniciar la difusión');
+        }
+    })
+    .catch(err => {
+        agregarLog('Error de red: ' + err.message, 'error');
+        actualizarProgreso(0, '<i class="bi bi-x-circle"></i> Error de red', err.message);
+    });
 });
+
+function iniciarPollingProgreso(broadcastId, totalContactos) {
+    let polling = setInterval(() => {
+        fetch(`api/broadcast_status.php?id=${broadcastId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Actualizar barra y estadísticas
+                    actualizarProgreso(data.percentage, `<i class='bi bi-send'></i> Enviando...`, `Enviados: ${data.sent}, Fallidos: ${data.failed}, Pendientes: ${data.pending}`);
+                    document.getElementById('estadisticasEnvio').style.display = 'block';
+                    actualizarEstadisticas(data.sent, data.failed, Math.floor((Date.now() - tiempoInicio) / 1000));
+                    if (data.status === 'completed' || data.status === 'failed') {
+                        clearInterval(polling);
+                        agregarLog('Difusión finalizada. Enviados: ' + data.sent + ', Fallidos: ' + data.failed, data.failed === 0 ? 'success' : 'warning');
+                        actualizarProgreso(100, '<i class="bi bi-check-circle"></i> ¡Difusión completada!', 'Proceso finalizado');
+                        document.getElementById('modalFooter').style.display = 'block';
+                        document.getElementById('btnCerrarModal').style.display = 'block';
+                    }
+                    if (data.logs && Array.isArray(data.logs)) {
+                        const logContainer = document.getElementById('logActividad');
+                        logContainer.innerHTML = '';
+                        data.logs.forEach(msg => {
+                            const logEntry = document.createElement('div');
+                            logEntry.className = 'mb-1';
+                            logEntry.textContent = msg;
+                            logContainer.appendChild(logEntry);
+                        });
+                        logContainer.scrollTop = logContainer.scrollHeight;
+                    }
+                }
+            });
+    }, 2000);
+}
 
 function inicializarModalProgreso(nombreLista, totalContactos) {
     // Limpiar log
@@ -395,81 +453,6 @@ function iniciarActualizacionTiempo() {
         const tiempoTranscurrido = Math.floor((Date.now() - tiempoInicio) / 1000);
         document.getElementById('tiempoTranscurrido').textContent = tiempoTranscurrido + 's';
     }, 1000);
-}
-
-function enviarDifusion(formData, totalContactos) {
-    // Simular progreso inicial
-    setTimeout(() => {
-        actualizarProgreso(10, '<i class="bi bi-gear"></i> Configurando envío...', 'Preparando datos y verificando instancia');
-        agregarLog('Verificando estado de la instancia de WhatsApp...', 'progress');
-    }, 500);
-    
-    setTimeout(() => {
-        actualizarProgreso(20, '<i class="bi bi-check-circle"></i> Instancia verificada', 'Conexión establecida correctamente');
-        agregarLog('✅ Instancia de WhatsApp conectada', 'success');
-        agregarLog('Iniciando envío de mensajes...', 'progress');
-    }, 1500);
-    
-    // Enviar difusión real
-    fetch('api/send_broadcast_bulk.php', {
-        method: 'POST',
-        credentials: 'include',
-        body: formData
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        clearInterval(intervaloActualizacion);
-        const tiempoTranscurrido = Math.floor((Date.now() - tiempoInicio) / 1000);
-        
-        if (data.success) {
-            // Éxito
-            actualizarProgreso(100, '<i class="bi bi-check-circle"></i> ¡Difusión completada!', 'Proceso finalizado exitosamente');
-            agregarLog('✅ Difusión completada exitosamente', 'success');
-            agregarLog(`📊 Resultados: ${data.data.sent_successfully} enviados, ${data.data.sent_failed} fallidos`, 'info');
-            
-            // Mostrar estadísticas
-            document.getElementById('estadisticasEnvio').style.display = 'block';
-            actualizarEstadisticas(data.data.sent_successfully, data.data.sent_failed, tiempoTranscurrido);
-            
-            // Mostrar footer
-            document.getElementById('modalFooter').style.display = 'block';
-            document.getElementById('btnCerrarModal').style.display = 'block';
-            
-            // Notificación
-            const tipoNotificacion = data.data.sent_failed === 0 ? 'success' : 'warning';
-            showNotification(
-                `Difusión completada en ${tiempoTranscurrido}s. Enviados: ${data.data.sent_successfully}, Fallidos: ${data.data.sent_failed}`,
-                tipoNotificacion
-            );
-            
-            // Limpiar formulario después de 3 segundos
-            setTimeout(() => {
-                formDifusion.reset();
-                document.getElementById('caracteresRestantes').textContent = 'Sin límite de caracteres';
-            }, 3000);
-            
-        } else {
-            // Error
-            actualizarProgreso(0, '<i class="bi bi-x-circle"></i> Error en el envío', data.message || 'Error desconocido');
-            agregarLog(`❌ Error: ${data.message}`, 'error');
-            
-            document.getElementById('btnCerrarModal').style.display = 'block';
-            showNotification(data.message || 'Error en el envío', 'error');
-        }
-    })
-    .catch(error => {
-        clearInterval(intervaloActualizacion);
-        actualizarProgreso(0, '<i class="bi bi-x-circle"></i> Error de conexión', 'No se pudo conectar con el servidor');
-        agregarLog(`❌ Error de conexión: ${error.message}`, 'error');
-        
-        document.getElementById('btnCerrarModal').style.display = 'block';
-        showNotification('Error de conexión: ' + error.message, 'error');
-    });
 }
 
 // Notificaciones mejoradas
