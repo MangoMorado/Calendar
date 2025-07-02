@@ -9,6 +9,9 @@
                 <i class="bi bi-upload"></i> Importar
                 <input type="file" id="inputImportarContactos" accept="application/json" style="display:none;">
             </label>
+            <button id="btnLimpiarContactos" class="btn btn-danger ms-2">
+                <i class="bi bi-trash"></i> Limpiar
+            </button>
         </div>
         
         <!-- Buscador -->

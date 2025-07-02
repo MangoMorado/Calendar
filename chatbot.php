@@ -57,6 +57,7 @@ include 'includes/chatbot/contactos-scripts.php';
 ?>
 <script>
 // --- LIMPIEZA GLOBAL DE MODALES ATASCADOS (backdrop) ---
+(function() {
 function limpiarBackdrops() {
     document.querySelectorAll('.modal-backdrop').forEach(e => e.remove());
     document.body.classList.remove('modal-open');
@@ -83,6 +84,7 @@ if (qrModalEl) {
         });
     });
 }
+})();
 </script>
 <?php
 include 'includes/footer.php'; 

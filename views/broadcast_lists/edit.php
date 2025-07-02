@@ -257,6 +257,8 @@ $action = $_GET['action'] ?? 'edit';
                             </button>
                         </form>
 
+                        <button type="button" class="btn btn-danger ms-2" id="btnLimpiarContactos"><i class="bi bi-trash"></i> Limpiar</button>
+
                         <script>
                         // Variables globales para la gestión de contactos
                         let currentPage = 1;
@@ -559,7 +561,7 @@ $action = $_GET['action'] ?? 'edit';
 
                             const formData = new FormData();
                             formData.append('list_id', listId);
-                            formData.append('contact_ids', Array.from(selectedContacts));
+                            Array.from(selectedContacts).forEach(id => formData.append('contact_ids[]', id));
                             formData.append('add_contacts', '1');
 
                             const submitBtn = document.getElementById('add_contacts_btn');
@@ -643,6 +645,25 @@ $action = $_GET['action'] ?? 'edit';
                         document.getElementById('only_named_switch').addEventListener('change', function() {
                             onlyNamed = this.checked;
                             loadContacts(1, document.getElementById('contact_search').value.trim());
+                        });
+
+                        // Limpiar contactos
+                        document.getElementById('btnLimpiarContactos').addEventListener('click', function() {
+                            if (!confirm('¿Estás seguro de que deseas limpiar la lista de contactos?')) return;
+                            const formData = new FormData();
+                            formData.append('list_id', listId);
+                            formData.append('clear_contacts', '1');
+                            fetch(window.location.pathname + window.location.search, {
+                                method: 'POST',
+                                body: formData
+                            })
+                            .then(r => r.text())
+                            .then(() => {
+                                window.location.reload();
+                            })
+                            .catch(error => {
+                                alert('Error al limpiar la lista de contactos: ' + error.message);
+                            });
                         });
                         </script>
                     <?php endif; ?>

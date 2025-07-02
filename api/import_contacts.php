@@ -79,9 +79,9 @@ $errores = [];
 foreach ($data as $contact) {
     $remoteJid = $contact['remoteJid'] ?? '';
     $pushName = $contact['pushName'] ?? null;
-    if (!$remoteJid || str_ends_with($remoteJid, '@g.us')) {
+    if (!$remoteJid || str_ends_with($remoteJid, '@g.us') || str_contains($remoteJid, '@lid')) {
         $skipped++;
-        continue; // Ignorar grupos
+        continue;
     }
     // Insertar o actualizar contacto
     $sql = "SELECT id FROM contacts WHERE number = ?";

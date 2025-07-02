@@ -55,6 +55,9 @@ Warning: Cannot modify header information - headers already sent by (output star
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
 
+## Version 0.1.1.2
+- Correciones de bug de listado de los contactos
+
 ## Version 0.1.1.1
 - Mejoras y correcciones en el envío masivo de difusiones, gestión de contactos y estilos de listas.
 

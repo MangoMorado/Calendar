@@ -151,11 +151,15 @@ function cargarContactos() {
 }
 
 function obtenerContactos() {
-    fetch('api/contacts_list.php')
+    fetch('api/contacts_list.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'action=get_contacts'
+    })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                todosLosContactos = data.contactos;
+                todosLosContactos = data.contacts || data.contactos;
                 aplicarFiltrosYRenderizar();
             } else {
                 createAutoCloseAlert('No se pudieron cargar los contactos', 'danger', document.getElementById('contactos-lista'));
@@ -164,8 +168,10 @@ function obtenerContactos() {
 }
 
 function aplicarFiltrosYRenderizar() {
-    // Filtrar contactos válidos
+    // Filtrar contactos válidos y que NO tengan @lid después del número
     const contactosValidos = todosLosContactos.filter(c => {
+        // Excluir si el número contiene '@lid' después del número principal
+        if (typeof c.number === 'string' && c.number.includes('@lid')) return false;
         const numero = c.number.split('@')[0];
         return validarNumeroTelefono(numero);
     });
@@ -446,4 +452,21 @@ if (inputImportarContactos) {
         reader.readAsText(file);
     });
 }
+
+document.getElementById('btnLimpiarContactos').addEventListener('click', function() {
+    if (!confirm('¿Estás seguro de que deseas limpiar la lista de contactos?')) return;
+    const formData = new FormData();
+    formData.append('clear_contacts', '1');
+    fetch(window.location.pathname, {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.text())
+    .then(() => {
+        window.location.reload();
+    })
+    .catch(error => {
+        alert('Error al limpiar la lista de contactos: ' + error.message);
+    });
+});
 </script> 

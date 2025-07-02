@@ -63,6 +63,8 @@ class BroadcastListController {
             return $this->removeContacts();
         } elseif (isset($_POST['add_manual_number'])) {
             return $this->addManualNumber();
+        } elseif (isset($_POST['clear_contacts'])) {
+            return $this->clearContacts();
         }
         
         return ['error' => 'Acción no válida'];
@@ -226,6 +228,17 @@ class BroadcastListController {
         } else {
             return ['error' => 'Error al agregar el número a la lista'];
         }
+    }
+
+    /**
+     * Elimina todos los contactos de la tabla contacts
+     */
+    private function clearContacts() {
+        // Borrar todos los contactos de la tabla contacts
+        $sql = "DELETE FROM contacts";
+        mysqli_query($this->conn, $sql);
+        // Opcional: también puedes limpiar otras tablas relacionadas si es necesario
+        return ['message' => 'Contactos eliminados correctamente'];
     }
 
     /**
