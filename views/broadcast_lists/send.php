@@ -120,7 +120,12 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error:', error);
-                showNotification('Error al enviar la difusión', 'error');
+                // Verificar si es un error de red o de respuesta
+                if (error.name === 'TypeError' && error.message.includes('JSON')) {
+                    showNotification('Error al procesar la respuesta del servidor', 'error');
+                } else {
+                    showNotification('Error al enviar la difusión: ' + (error.message || 'Error de conexión'), 'error');
+                }
             })
             .finally(() => {
                 btnEnviar.innerHTML = originalText;

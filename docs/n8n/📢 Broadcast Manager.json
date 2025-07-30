@@ -1,5 +1,4 @@
 {
-  "name": "📢 Broadcast Manager",
   "nodes": [
     {
       "parameters": {
@@ -10,8 +9,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -224,
-        0
+        -400,
+        -64
       ],
       "id": "cc7ee68f-ee72-41b7-bef9-2dd63d9007bc",
       "name": "Webhook",
@@ -29,7 +28,7 @@
             },
             {
               "id": "0b7d6a4f-4332-4db3-a589-728219bfb950",
-              "name": "imagen_base64",
+              "name": "base64",
               "value": "={{ $json.body.imagen_base64 }}",
               "type": "string"
             },
@@ -82,8 +81,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        0,
-        0
+        32,
+        -256
       ],
       "id": "2eee2168-4bcf-45c6-acc5-ed72e6a4dbf3",
       "name": "Normalizar Datos"
@@ -96,11 +95,116 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        224,
-        0
+        192,
+        -256
       ],
       "id": "67345b3e-9b71-41a2-8ff1-680b3d83e87f",
       "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.mediatype }}",
+                    "rightValue": "image",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "292002d2-8796-4ea7-9718-e2c479f1a91d"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Multimedia"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "8b299087-efd4-4c88-967c-662d4a86a4b2",
+                    "leftValue": "={{ $json.body.mediatype }}",
+                    "rightValue": "text",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "txt"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e32f1ae4-81c4-4b0c-83e2-7a1b9acbd7bb",
+                    "leftValue": "={{ $json.body.mediatype }}",
+                    "rightValue": "audio",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "audio"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -192,
+        -80
+      ],
+      "id": "62a3d0ad-a0f8-422e-b280-18713d896ea0",
+      "name": "TipoMensaje"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "contactos",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        192,
+        -64
+      ],
+      "id": "3ff0592a-5822-47be-bf50-94f5be504fe8",
+      "name": "Split Out1"
     },
     {
       "parameters": {
@@ -117,26 +221,245 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"number\": \"{{ $json.numero }}\",\n  \"mediatype\": \"{{ $('Normalizar Datos').item.json.mediatype }}\",\n  \"mimetype\": \"{{ $('Normalizar Datos').item.json.mimetype }}\",\n  \"caption\": \"{{ $('Normalizar Datos').item.json.texto }}\",\n  \"media\": \"{{ $('Normalizar Datos').item.json.imagen_base64 }}\",\n  \"fileName\": \"{{ $('Normalizar Datos').item.json.fileName }}\",\n  \"delay\": {{ Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000 }},\n  \"linkPreview\": false,\n  \"mentionsEveryOne\": false\n}",
+        "jsonBody": "={\n  \"number\": \"{{ $json.numero }}\",\n  \"mediatype\": \"{{ $('Normalizar Datos').item.json.mediatype }}\",\n  \"mimetype\": \"{{ $('Normalizar Datos').item.json.mimetype }}\",\n  \"caption\": \"{{ $('Normalizar Datos').item.json.texto }}\",\n  \"media\": \"{{ $('Normalizar Datos').item.json.base64 }}\",\n  \"fileName\": \"{{ $('Normalizar Datos').item.json.fileName }}\",\n  \"delay\": {{ Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000 }},\n  \"linkPreview\": false,\n  \"mentionsEveryOne\": false\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        448,
-        0
+        352,
+        -256
       ],
       "id": "adb3fd7d-9830-40ab-b86b-48a480bd4a18",
-      "name": "Send_Broadcast"
+      "name": "Send_Multimedia_Broadcast"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Normalizar Datos_TXT').item.json.evolution_api_url }}/message/sendText/{{ $('Normalizar Datos_TXT').item.json.evolution_instance_name }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "B97556079A36-4AE3-B85A-7BBF9EC15B72"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.numero }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $('Normalizar Datos_TXT').item.json.texto }}"
+            },
+            {
+              "name": "delay",
+              "value": "={{ Math.floor(Math.random() * (5000 - 1000 + 1)) + 1000 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        352,
+        -64
+      ],
+      "id": "ea18aa04-cf7a-4220-9502-4a57d4b6fec2",
+      "name": "Send_TXT_Broadcast"
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.floor(Math.random() * 5) + 1 }}"
+      },
+      "id": "6182e774-c4f8-4a37-9404-29216b2695e2",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        576,
+        -64
+      ],
+      "webhookId": "b8e2e214-f82b-49c2-96e2-91e093137857",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2e05c136-8660-4365-884d-9f1380dd6735",
+              "name": "texto",
+              "value": "={{ $json.body.texto }}",
+              "type": "string"
+            },
+            {
+              "id": "f22994e5-94fd-450f-aa8f-632dadc70cdd",
+              "name": "mediatype",
+              "value": "={{ $json.body.mediatype }}",
+              "type": "string"
+            },
+            {
+              "id": "e4fe98d4-9ea8-4a48-8115-d6c484677405",
+              "name": "broadcast_id",
+              "value": "={{ $json.body.broadcast_id }}",
+              "type": "string"
+            },
+            {
+              "id": "5171c7d8-07b5-4551-9029-b9152be88f88",
+              "name": "contactos",
+              "value": "={{ $json.body.contactos }}",
+              "type": "array"
+            },
+            {
+              "id": "371ade3c-920c-44d7-8e5e-feada0c282bf",
+              "name": "evolution_api_url",
+              "value": "https://evolution.mangomorado.com",
+              "type": "string"
+            },
+            {
+              "id": "f7c179c7-8c2e-447f-bafd-8b5ed70dfd8e",
+              "name": "evolution_instance_name",
+              "value": "Parrot",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        32,
+        -64
+      ],
+      "id": "3c9a6d42-2611-45b7-9e86-305b3ef40fb0",
+      "name": "Normalizar Datos_TXT"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "contactos",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        192,
+        128
+      ],
+      "id": "0165b193-5abf-463a-aeed-cdc0bef1513c",
+      "name": "Split Out2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Normalizar Datos_Audio').item.json.evolution_api_url }}/message/sendWhatsAppAudio/{{ $('Normalizar Datos_Audio').item.json.evolution_instance_name }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "B97556079A36-4AE3-B85A-7BBF9EC15B72"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $json.numero }}\",\n  \"mediatype\": \"{{ $('Normalizar Datos_Audio').item.json.mediatype }}\",\n  \"mimetype\": \"{{ $('Normalizar Datos_Audio').item.json.mimetype }}\",\n  \"caption\": \"{{ $('Normalizar Datos_Audio').item.json.texto }}\",\n  \"media\": \"{{ $('Normalizar Datos_Audio').item.json.base64 }}\",\n  \"fileName\": \"{{ $('Normalizar Datos_Audio').item.json.fileName }}\",\n  \"delay\": {{ Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000 }},\n  \"linkPreview\": false,\n  \"mentionsEveryOne\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        352,
+        128
+      ],
+      "id": "6e189c3d-68df-445e-875e-d539f99bf643",
+      "name": "Send_Multimedia_Broadcast1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2e05c136-8660-4365-884d-9f1380dd6735",
+              "name": "texto",
+              "value": "={{ $json.body.texto }}",
+              "type": "string"
+            },
+            {
+              "id": "0b7d6a4f-4332-4db3-a589-728219bfb950",
+              "name": "base64",
+              "value": "={{ $json.body.imagen_base64 }}",
+              "type": "string"
+            },
+            {
+              "id": "f22994e5-94fd-450f-aa8f-632dadc70cdd",
+              "name": "mediatype",
+              "value": "={{ $json.body.mediatype }}",
+              "type": "string"
+            },
+            {
+              "id": "73d1d55d-852f-45d2-8965-db6f8831f884",
+              "name": "mimetype",
+              "value": "={{ $json.body.mimetype }}",
+              "type": "string"
+            },
+            {
+              "id": "e4fe98d4-9ea8-4a48-8115-d6c484677405",
+              "name": "broadcast_id",
+              "value": "={{ $json.body.broadcast_id }}",
+              "type": "string"
+            },
+            {
+              "id": "5171c7d8-07b5-4551-9029-b9152be88f88",
+              "name": "contactos",
+              "value": "={{ $json.body.contactos }}",
+              "type": "array"
+            },
+            {
+              "id": "371ade3c-920c-44d7-8e5e-feada0c282bf",
+              "name": "evolution_api_url",
+              "value": "https://evolution.mangomorado.com",
+              "type": "string"
+            },
+            {
+              "id": "f7c179c7-8c2e-447f-bafd-8b5ed70dfd8e",
+              "name": "evolution_instance_name",
+              "value": "Parrot",
+              "type": "string"
+            },
+            {
+              "id": "db1a9016-8e63-417a-9508-ba5878efb971",
+              "name": "fileName",
+              "value": "={{ $json.body.fileName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        32,
+        128
+      ],
+      "id": "3f5ad0a7-618f-4b2f-8067-492c307cfa32",
+      "name": "Normalizar Datos_Audio"
     }
   ],
-  "pinData": {},
   "connections": {
     "Webhook": {
       "main": [
         [
           {
-            "node": "Normalizar Datos",
+            "node": "TipoMensaje",
             "type": "main",
             "index": 0
           }
@@ -158,7 +481,109 @@
       "main": [
         [
           {
-            "node": "Send_Broadcast",
+            "node": "Send_Multimedia_Broadcast",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TipoMensaje": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Datos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normalizar Datos_TXT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normalizar Datos_Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Send_TXT_Broadcast",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send_Multimedia_Broadcast": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send_TXT_Broadcast": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Datos_TXT": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out2": {
+      "main": [
+        [
+          {
+            "node": "Send_Multimedia_Broadcast1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send_Multimedia_Broadcast1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Datos_Audio": {
+      "main": [
+        [
+          {
+            "node": "Split Out2",
             "type": "main",
             "index": 0
           }
@@ -166,21 +591,8 @@
       ]
     }
   },
-  "active": true,
-  "settings": {
-    "executionOrder": "v1"
-  },
-  "versionId": "7ca74d64-8a68-4de9-a760-316c47154a57",
+  "pinData": {},
   "meta": {
     "instanceId": "492216dba7ead6f870ef4169d10664ed44bcfc662cf5e8e4907018d95ca96a66"
-  },
-  "id": "YAbbGoVqQtm9NHfR",
-  "tags": [
-    {
-      "createdAt": "2025-04-09T02:18:33.396Z",
-      "updatedAt": "2025-04-09T02:18:33.396Z",
-      "id": "vifRv5TDExGPAt8l",
-      "name": "Calendar"
-    }
-  ]
+  }
 }

@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS settings (
     id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
     setting_key VARCHAR(255) NOT NULL,
     setting_value TEXT NULL,
-    setting_description TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY unique_setting_key (setting_key),
@@ -19,15 +18,14 @@ CREATE TABLE IF NOT EXISTS settings (
 
 -- Agregar columnas faltantes si la tabla ya existe
 ALTER TABLE settings 
-ADD COLUMN IF NOT EXISTS setting_description TEXT NULL AFTER setting_value,
-ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER setting_description,
+ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER setting_value,
 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at;
 
 -- Insertar configuración de n8n (solo si no existe)
-INSERT IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES
-('n8n_url', 'https://n8n.mangomorado.com', 'URL base de n8n'),
-('n8n_api_key', '', 'API Key de n8n (opcional)'),
-('n8n_broadcast_webhook_url', 'https://n8n.mangomorado.com/webhook/broadcast', 'URL del webhook de n8n para difusiones');
+INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
+('n8n_url', 'https://n8n.mangomorado.com'),
+('n8n_api_key', ''),
+('n8n_broadcast_webhook_url', 'https://n8n.mangomorado.com/webhook/broadcast');
 
 -- ============================================================================
 -- 2. ACTUALIZAR TABLAS EXISTENTES

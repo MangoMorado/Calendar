@@ -18,6 +18,7 @@ Warning: session_start(): Session cannot be started after headers have already b
 
 Warning: Cannot modify header information - headers already sent by (output started at config/database.php:296) in includes/auth.php on line 110)
 
+- Agregar retroalimentación del estado de envio de las difusiones
 - Agregar opción para agregar contacto
 - Mejorar la busqueda de contactos se laguea por la alta carga al servidor
 - Estado de las citas según código de color (Verde, Amarillo: reprogramar, Rojo)
@@ -54,6 +55,9 @@ Warning: Cannot modify header information - headers already sent by (output star
   - Agregar Testing: Implementar pruebas unitarias y de integración
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
+
+## Version 0.2.0.1 - Aullador
+- Se corrigio bug de respuesta JSON de n8n
 
 ## Version 0.2 - Aullador
 - Se reformo por completo el sistema de difusiones, ahora funciona con n8n, el flujo esta disponible en docs/n8n
