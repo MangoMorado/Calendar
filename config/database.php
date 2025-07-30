@@ -210,7 +210,12 @@ if (mysqli_query($conn, $sql)) {
         id INT AUTO_INCREMENT PRIMARY KEY,
         number VARCHAR(50) NOT NULL UNIQUE,
         pushName VARCHAR(255) DEFAULT NULL,
-        send BOOLEAN NOT NULL DEFAULT FALSE
+        user_id INT(11) DEFAULT NULL,
+        send BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+        INDEX idx_user_id (user_id),
+        INDEX idx_number (number)
     )";
     if (!mysqli_query($conn, $sql)) {
         error_log("Error al crear tabla de contactos: " . mysqli_error($conn));

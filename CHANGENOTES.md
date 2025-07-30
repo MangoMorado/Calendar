@@ -56,6 +56,9 @@ Warning: Cannot modify header information - headers already sent by (output star
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
 
+## Version 0.2.0.2 - Aullador
+- Se agregaron tools relacionadas con los cambios a la base de datos, si da error al enviar difusion ejecutar tools/fix_contacts_table.php
+
 ## Version 0.2.0.1 - Aullador
 - Se corrigio bug de respuesta JSON de n8n
 
