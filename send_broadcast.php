@@ -194,9 +194,9 @@ include 'includes/header.php';
                         <small class="form-text text-muted">El mensaje es opcional si vas a enviar solo una imagen</small>
                     </div>
                     <div class="mb-3">
-                        <label for="image" class="form-label">Imagen (opcional)</label>
-                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
-                        <small class="form-text text-muted">Formatos soportados: JPG, PNG, GIF. Máximo 5MB</small>
+                                        <label for="image" class="form-label">Adjunto</label>
+                <input type="file" class="form-control" id="image" name="image" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.csv,.json,.xml,.html,.css,.js,.zip,.rar,.7z,.tar,.gz">
+                <small class="form-text text-muted">Formatos soportados: Imágenes (JPG, PNG, GIF, WebP, BMP, SVG, ICO, TIFF), Videos (MP4, AVI, MOV, WMV, FLV, WebM, MKV, 3GP, M4V), Audio (MP3, WAV, OGG, AAC, WMA, FLAC, M4A), Documentos (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, RTF, CSV, JSON, XML, HTML, CSS, JS), Comprimidos (ZIP, RAR, 7Z, TAR, GZ). Máximo 5MB</small>
                     </div>
                     <div class="alert alert-warning">
                         <i class="bi bi-exclamation-triangle"></i>

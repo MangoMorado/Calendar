@@ -30,10 +30,10 @@ $selectedListId = isset($_GET['list_id']) ? (int)$_GET['list_id'] : 0;
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label for="imagenDifusion" class="form-label">Imagen (opcional)</label>
-                    <input type="file" id="imagenDifusion" name="imagen" class="form-control" accept="image/*">
+                    <label for="imagenDifusion" class="form-label">Adjunto</label>
+                    <input type="file" id="imagenDifusion" name="imagen" class="form-control" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.csv,.json,.xml,.html,.css,.js,.zip,.rar,.7z,.tar,.gz">
                     <div class="form-text">
-                        Formatos soportados: JPG, PNG, GIF. Tamaño máximo: 5MB
+                        Formatos soportados: Imágenes (JPG, PNG, GIF, WebP, BMP, SVG, ICO, TIFF), Videos (MP4, AVI, MOV, WMV, FLV, WebM, MKV, 3GP, M4V), Audio (MP3, WAV, OGG, AAC, WMA, FLAC, M4A), Documentos (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, RTF, CSV, JSON, XML, HTML, CSS, JS), Comprimidos (ZIP, RAR, 7Z, TAR, GZ). Tamaño máximo: 5MB
                     </div>
                 </div>
                 <div class="d-flex gap-2">
@@ -49,127 +49,92 @@ $selectedListId = isset($_GET['list_id']) ? (int)$_GET['list_id'] : 0;
     </div>
 </div>
 
-<!-- Modal de progreso mejorado -->
-<div class="modal fade" id="modalProgresoEnvio" tabindex="-1" aria-labelledby="modalProgresoEnvioLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="modalProgresoEnvioLabel">
-                    <i class="bi bi-send"></i> Enviando Difusión
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" id="btnCerrarModal" style="display:none;"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Información de la difusión -->
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="card bg-light">
-                            <div class="card-body p-3">
-                                <h6 class="card-title mb-2"><i class="bi bi-list-ul"></i> Información de la Lista</h6>
-                                <div class="small">
-                                    <strong>Lista:</strong> <span id="nombreLista">-</span><br>
-                                    <strong>Total contactos:</strong> <span id="totalContactos">-</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card bg-light">
-                            <div class="card-body p-3">
-                                <h6 class="card-title mb-2"><i class="bi bi-clock"></i> Tiempo Estimado</h6>
-                                <div class="small">
-                                    <strong>Tiempo estimado:</strong> <span id="tiempoEstimado">-</span><br>
-                                    <strong>Velocidad:</strong> <span id="velocidadEnvio">-</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Barra de progreso principal -->
-                <div class="progress mb-3" style="height: 25px;">
-                    <div id="barraProgresoEnvio" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
-                         role="progressbar" style="width: 0%; font-weight: bold; font-size: 14px;">0%</div>
-                </div>
-
-                <!-- Estado actual -->
-                <div class="text-center mb-3">
-                    <div id="estadoEnvioDifusion" class="h5 text-primary mb-2">
-                        <i class="bi bi-hourglass-split"></i> Preparando envío...
-                    </div>
-                    <div id="estadoDetallado" class="text-muted small">Inicializando sistema de difusión</div>
-                </div>
-
-                <!-- Estadísticas en tiempo real -->
-                <div class="row mb-3" id="estadisticasEnvio" style="display:none;">
-                    <div class="col-md-3">
-                        <div class="card text-center bg-success text-white">
-                            <div class="card-body p-2">
-                                <div class="h4 mb-0" id="enviadosExitosos">0</div>
-                                <small>Enviados</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card text-center bg-danger text-white">
-                            <div class="card-body p-2">
-                                <div class="h4 mb-0" id="enviadosFallidos">0</div>
-                                <small>Fallidos</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card text-center bg-info text-white">
-                            <div class="card-body p-2">
-                                <div class="h4 mb-0" id="porcentajeExito">0%</div>
-                                <small>Éxito</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card text-center bg-warning text-white">
-                            <div class="card-body p-2">
-                                <div class="h4 mb-0" id="tiempoTranscurrido">0s</div>
-                                <small>Tiempo</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Log de actividad -->
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0"><i class="bi bi-list-check"></i> Log de Actividad</h6>
-                    </div>
-                    <div class="card-body p-0">
-                        <div id="logActividad" class="p-3" style="max-height: 200px; overflow-y: auto; background: #f8f9fa; font-family: monospace; font-size: 12px;">
-                            <div class="text-muted">Iniciando sistema...</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer" id="modalFooter" style="display:none;">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <button type="button" class="btn btn-primary" id="btnVerDetalles" style="display:none;">
-                    <i class="bi bi-list-ul"></i> Ver Detalles
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <script>
-// Variables globales para el progreso
-let tiempoInicio = 0;
-let intervaloActualizacion = null;
-let progresoActual = 0;
+// NUEVO JAVASCRIPT SIMPLIFICADO
+document.addEventListener('DOMContentLoaded', function() {
+    const formDifusion = document.getElementById('formDifusion');
+    if (formDifusion) {
+        formDifusion.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const mensaje = document.getElementById('mensajeDifusion').value.trim();
+            const imagen = document.getElementById('imagenDifusion').files[0];
+            const listId = document.getElementById('listaDifusion').value;
+            const listaSelect = document.getElementById('listaDifusion');
+            const listaSeleccionada = listaSelect.options[listaSelect.selectedIndex];
+            
+            // Validaciones
+            if (!listId) {
+                showNotification('Debes seleccionar una lista de difusión.', 'error');
+                return;
+            }
+            if (!mensaje && !imagen) {
+                showNotification('Debes ingresar un mensaje o seleccionar una imagen.', 'error');
+                return;
+            }
+            
+            // Obtener información de la lista
+            const totalContactos = parseInt(listaSeleccionada.text.match(/\((\d+) contactos\)/)?.[1] || '0');
+            const nombreLista = listaSeleccionada.text.split(' (')[0];
+            
+            // Confirmar envío
+            const confirmacion = confirm(
+                `¿Estás seguro de que quieres enviar la difusión?\n\n` +
+                `📋 Lista: ${nombreLista}\n` +
+                `👥 Contactos: ${totalContactos}\n` +
+                `📝 Mensaje: ${mensaje ? 'Sí' : 'No'}\n` +
+                `🖼️ Imagen: ${imagen ? 'Sí' : 'No'}`
+            );
+            
+            if (!confirmacion) return;
+            
+            // Preparar datos
+            const formData = new FormData();
+            formData.append('list_id', listId);
+            formData.append('message', mensaje);
+            if (imagen) {
+                formData.append('image', imagen);
+            }
+            
+            // Mostrar loading
+            const btnEnviar = document.getElementById('btnEnviarDifusion');
+            const originalText = btnEnviar.innerHTML;
+            btnEnviar.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
+            btnEnviar.disabled = true;
+            
+            // Enviar a n8n
+            fetch('api/send_broadcast_n8n.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Difusión enviada correctamente. ID: ' + data.data.broadcast_id, 'success');
+                    
+                } else {
+                    showNotification('Error: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error al enviar la difusión', 'error');
+            })
+            .finally(() => {
+                btnEnviar.innerHTML = originalText;
+                btnEnviar.disabled = false;
+            });
+        });
+    }
 
 // Contador de caracteres
 const mensajeDifusion = document.getElementById('mensajeDifusion');
 const caracteresRestantes = document.getElementById('caracteresRestantes');
 if (mensajeDifusion && caracteresRestantes) {
     mensajeDifusion.addEventListener('input', function() {
-        const maxChars = 4096; // Límite de WhatsApp
+            const maxChars = 4096;
         const currentChars = this.value.length;
         const remaining = maxChars - currentChars;
         if (remaining < 0) {
@@ -182,8 +147,10 @@ if (mensajeDifusion && caracteresRestantes) {
     });
 }
 
-// Vista previa mejorada
-document.getElementById('btnVistaPrevia').addEventListener('click', function() {
+    // Vista previa
+    const btnVistaPrevia = document.getElementById('btnVistaPrevia');
+    if (btnVistaPrevia) {
+        btnVistaPrevia.addEventListener('click', function() {
     const mensaje = mensajeDifusion.value.trim();
     const imagen = document.getElementById('imagenDifusion').files[0];
     
@@ -207,6 +174,8 @@ document.getElementById('btnVistaPrevia').addEventListener('click', function() {
     } else {
         html += `<div class="message-text">${mensaje.replace(/\n/g, '<br>')}</div></div>`;
         showPreviewModal(html);
+            }
+        });
     }
 });
 
@@ -242,220 +211,7 @@ function showPreviewModal(html) {
     new bootstrap.Modal(modal).show();
 }
 
-// Función para agregar log
-function agregarLog(mensaje, tipo = 'info') {
-    const logContainer = document.getElementById('logActividad');
-    const timestamp = new Date().toLocaleTimeString();
-    const iconos = {
-        'info': 'bi-info-circle',
-        'success': 'bi-check-circle',
-        'warning': 'bi-exclamation-triangle',
-        'error': 'bi-x-circle',
-        'progress': 'bi-arrow-right'
-    };
-    const colores = {
-        'info': 'text-primary',
-        'success': 'text-success',
-        'warning': 'text-warning',
-        'error': 'text-danger',
-        'progress': 'text-info'
-    };
-    
-    const logEntry = document.createElement('div');
-    logEntry.className = `mb-1 ${colores[tipo]}`;
-    logEntry.innerHTML = `<i class="bi ${iconos[tipo]}"></i> [${timestamp}] ${mensaje}`;
-    logContainer.appendChild(logEntry);
-    logContainer.scrollTop = logContainer.scrollHeight;
-}
-
-// Función para actualizar progreso
-function actualizarProgreso(porcentaje, estado, estadoDetallado) {
-    const barra = document.getElementById('barraProgresoEnvio');
-    const estadoElement = document.getElementById('estadoEnvioDifusion');
-    const estadoDetalladoElement = document.getElementById('estadoDetallado');
-    
-    barra.style.width = porcentaje + '%';
-    barra.textContent = porcentaje + '%';
-    estadoElement.innerHTML = estado;
-    estadoDetalladoElement.textContent = estadoDetallado;
-    
-    // Cambiar color según el progreso
-    if (porcentaje < 25) {
-        barra.className = 'progress-bar progress-bar-striped progress-bar-animated bg-primary';
-    } else if (porcentaje < 75) {
-        barra.className = 'progress-bar progress-bar-striped progress-bar-animated bg-warning';
-    } else {
-        barra.className = 'progress-bar progress-bar-striped progress-bar-animated bg-success';
-    }
-}
-
-// Función para actualizar estadísticas
-function actualizarEstadisticas(enviados, fallidos, tiempoTranscurrido) {
-    const total = enviados + fallidos;
-    const porcentajeExito = total > 0 ? Math.round((enviados / total) * 100) : 0;
-    
-    document.getElementById('enviadosExitosos').textContent = enviados;
-    document.getElementById('enviadosFallidos').textContent = fallidos;
-    document.getElementById('porcentajeExito').textContent = porcentajeExito + '%';
-    document.getElementById('tiempoTranscurrido').textContent = tiempoTranscurrido + 's';
-}
-
-// Función para calcular tiempo estimado
-function calcularTiempoEstimado(totalContactos) {
-    const segundosPorContacto = 2; // Promedio de 1-3 segundos
-    const tiempoTotal = Math.ceil((totalContactos * segundosPorContacto) / 60);
-    return tiempoTotal > 1 ? `${tiempoTotal} minutos` : 'Menos de 1 minuto';
-}
-
-// Envío de difusión AJAX mejorado
-const formDifusion = document.getElementById('formDifusion');
-formDifusion.addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const mensaje = document.getElementById('mensajeDifusion').value.trim();
-    const imagen = document.getElementById('imagenDifusion').files[0];
-    const listId = document.getElementById('listaDifusion').value;
-    const listaSelect = document.getElementById('listaDifusion');
-    const listaSeleccionada = listaSelect.options[listaSelect.selectedIndex];
-    
-    // Validaciones
-    if (!listId) {
-        showNotification('Debes seleccionar una lista de difusión.', 'error');
-        return;
-    }
-    if (!mensaje && !imagen) {
-        showNotification('Debes ingresar un mensaje o seleccionar una imagen.', 'error');
-        return;
-    }
-    
-    // Obtener información de la lista
-    const totalContactos = parseInt(listaSeleccionada.text.match(/\((\d+) contactos\)/)?.[1] || '0');
-    const nombreLista = listaSeleccionada.text.split(' (')[0];
-    
-    // Confirmar envío con información detallada
-    const confirmacion = confirm(
-        `¿Estás seguro de que quieres enviar la difusión?\n\n` +
-        `📋 Lista: ${nombreLista}\n` +
-        `👥 Contactos: ${totalContactos}\n` +
-        `⏱️ Tiempo estimado: ${calcularTiempoEstimado(totalContactos)}\n` +
-        `📝 Mensaje: ${mensaje ? 'Sí' : 'No'}\n` +
-        `🖼️ Imagen: ${imagen ? 'Sí' : 'No'}`
-    );
-    
-    if (!confirmacion) return;
-    
-    // Inicializar modal de progreso
-    inicializarModalProgreso(nombreLista, totalContactos);
-    
-    // Preparar datos
-    const formData = new FormData();
-    formData.append('list_id', listId);
-    formData.append('message', mensaje);
-    if (imagen) {
-        formData.append('image', imagen);
-    }
-    
-    // Mostrar modal
-    const modal = new bootstrap.Modal(document.getElementById('modalProgresoEnvio'));
-    modal.show();
-    
-    // Iniciar envío
-    fetch('api/send_broadcast_bulk.php', {
-        method: 'POST',
-        credentials: 'include',
-        body: formData
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success && data.data && data.data.broadcast_id) {
-            // Iniciar polling de progreso
-            iniciarPollingProgreso(data.data.broadcast_id, totalContactos);
-        } else {
-            agregarLog('Error al iniciar la difusión: ' + (data.message || 'Error desconocido'), 'error');
-            actualizarProgreso(0, '<i class="bi bi-x-circle"></i> Error al iniciar', 'No se pudo iniciar la difusión');
-        }
-    })
-    .catch(err => {
-        agregarLog('Error de red: ' + err.message, 'error');
-        actualizarProgreso(0, '<i class="bi bi-x-circle"></i> Error de red', err.message);
-    });
-});
-
-function iniciarPollingProgreso(broadcastId, totalContactos) {
-    let polling = setInterval(() => {
-        fetch(`api/broadcast_status.php?id=${broadcastId}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    // Actualizar barra y estadísticas
-                    actualizarProgreso(data.percentage, `<i class='bi bi-send'></i> Enviando...`, `Enviados: ${data.sent}, Fallidos: ${data.failed}, Pendientes: ${data.pending}`);
-                    document.getElementById('estadisticasEnvio').style.display = 'block';
-                    actualizarEstadisticas(data.sent, data.failed, Math.floor((Date.now() - tiempoInicio) / 1000));
-                    if (data.status === 'completed' || data.status === 'failed') {
-                        clearInterval(polling);
-                        agregarLog('Difusión finalizada. Enviados: ' + data.sent + ', Fallidos: ' + data.failed, data.failed === 0 ? 'success' : 'warning');
-                        actualizarProgreso(100, '<i class="bi bi-check-circle"></i> ¡Difusión completada!', 'Proceso finalizado');
-                        document.getElementById('modalFooter').style.display = 'block';
-                        document.getElementById('btnCerrarModal').style.display = 'block';
-                    }
-                    if (data.logs && Array.isArray(data.logs)) {
-                        const logContainer = document.getElementById('logActividad');
-                        logContainer.innerHTML = '';
-                        data.logs.forEach(msg => {
-                            const logEntry = document.createElement('div');
-                            logEntry.className = 'mb-1';
-                            logEntry.textContent = msg;
-                            logContainer.appendChild(logEntry);
-                        });
-                        logContainer.scrollTop = logContainer.scrollHeight;
-                    }
-                }
-            });
-    }, 2000);
-}
-
-function inicializarModalProgreso(nombreLista, totalContactos) {
-    // Limpiar log
-    document.getElementById('logActividad').innerHTML = '';
-    
-    // Configurar información inicial
-    document.getElementById('nombreLista').textContent = nombreLista;
-    document.getElementById('totalContactos').textContent = totalContactos;
-    document.getElementById('tiempoEstimado').textContent = calcularTiempoEstimado(totalContactos);
-    document.getElementById('velocidadEnvio').textContent = '1-3 segundos por contacto';
-    
-    // Ocultar elementos
-    document.getElementById('estadisticasEnvio').style.display = 'none';
-    document.getElementById('modalFooter').style.display = 'none';
-    document.getElementById('btnCerrarModal').style.display = 'none';
-    
-    // Inicializar progreso
-    actualizarProgreso(0, '<i class="bi bi-hourglass-split"></i> Preparando envío...', 'Inicializando sistema de difusión');
-    
-    // Agregar logs iniciales
-    agregarLog('Iniciando proceso de difusión...', 'info');
-    agregarLog(`Lista seleccionada: ${nombreLista}`, 'info');
-    agregarLog(`Total de contactos: ${totalContactos}`, 'info');
-    agregarLog('Verificando conexión con Evolution API...', 'progress');
-    
-    // Iniciar temporizador
-    tiempoInicio = Date.now();
-    iniciarActualizacionTiempo();
-}
-
-function iniciarActualizacionTiempo() {
-    intervaloActualizacion = setInterval(() => {
-        const tiempoTranscurrido = Math.floor((Date.now() - tiempoInicio) / 1000);
-        document.getElementById('tiempoTranscurrido').textContent = tiempoTranscurrido + 's';
-    }, 1000);
-}
-
-// Notificaciones mejoradas
+// Función de notificación simplificada
 function showNotification(message, type) {
     const notification = document.createElement('div');
     notification.className = `alert alert-${type === 'success' ? 'success' : (type === 'warning' ? 'warning' : 'danger')} notification-toast`;

@@ -55,6 +55,9 @@ Warning: Cannot modify header information - headers already sent by (output star
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
 
+## Version 0.2 - Aullador
+- Se reformo por completo el sistema de difusiones, ahora funciona con n8n, el flujo esta disponible en docs/n8n
+
 ## Version 0.1.1.2
 - Correciones de bug de listado de los contactos
 

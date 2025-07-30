@@ -1,0 +1,186 @@
+{
+  "name": "📢 Broadcast Manager",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "broadcast",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        0
+      ],
+      "id": "cc7ee68f-ee72-41b7-bef9-2dd63d9007bc",
+      "name": "Webhook",
+      "webhookId": "ebe6d641-959c-4f99-bcb7-8e011f2e1c54"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2e05c136-8660-4365-884d-9f1380dd6735",
+              "name": "texto",
+              "value": "={{ $json.body.texto }}",
+              "type": "string"
+            },
+            {
+              "id": "0b7d6a4f-4332-4db3-a589-728219bfb950",
+              "name": "imagen_base64",
+              "value": "={{ $json.body.imagen_base64 }}",
+              "type": "string"
+            },
+            {
+              "id": "f22994e5-94fd-450f-aa8f-632dadc70cdd",
+              "name": "mediatype",
+              "value": "={{ $json.body.mediatype }}",
+              "type": "string"
+            },
+            {
+              "id": "73d1d55d-852f-45d2-8965-db6f8831f884",
+              "name": "mimetype",
+              "value": "={{ $json.body.mimetype }}",
+              "type": "string"
+            },
+            {
+              "id": "e4fe98d4-9ea8-4a48-8115-d6c484677405",
+              "name": "broadcast_id",
+              "value": "={{ $json.body.broadcast_id }}",
+              "type": "string"
+            },
+            {
+              "id": "5171c7d8-07b5-4551-9029-b9152be88f88",
+              "name": "contactos",
+              "value": "={{ $json.body.contactos }}",
+              "type": "array"
+            },
+            {
+              "id": "371ade3c-920c-44d7-8e5e-feada0c282bf",
+              "name": "evolution_api_url",
+              "value": "https://evolution.mangomorado.com",
+              "type": "string"
+            },
+            {
+              "id": "f7c179c7-8c2e-447f-bafd-8b5ed70dfd8e",
+              "name": "evolution_instance_name",
+              "value": "Parrot",
+              "type": "string"
+            },
+            {
+              "id": "db1a9016-8e63-417a-9508-ba5878efb971",
+              "name": "fileName",
+              "value": "={{ $json.body.fileName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2eee2168-4bcf-45c6-acc5-ed72e6a4dbf3",
+      "name": "Normalizar Datos"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "contactos",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "67345b3e-9b71-41a2-8ff1-680b3d83e87f",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Normalizar Datos').item.json.evolution_api_url }}/message/sendMedia/{{ $('Normalizar Datos').item.json.evolution_instance_name }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "B97556079A36-4AE3-B85A-7BBF9EC15B72"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $json.numero }}\",\n  \"mediatype\": \"{{ $('Normalizar Datos').item.json.mediatype }}\",\n  \"mimetype\": \"{{ $('Normalizar Datos').item.json.mimetype }}\",\n  \"caption\": \"{{ $('Normalizar Datos').item.json.texto }}\",\n  \"media\": \"{{ $('Normalizar Datos').item.json.imagen_base64 }}\",\n  \"fileName\": \"{{ $('Normalizar Datos').item.json.fileName }}\",\n  \"delay\": {{ Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000 }},\n  \"linkPreview\": false,\n  \"mentionsEveryOne\": false\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "adb3fd7d-9830-40ab-b86b-48a480bd4a18",
+      "name": "Send_Broadcast"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Datos": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Send_Broadcast",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7ca74d64-8a68-4de9-a760-316c47154a57",
+  "meta": {
+    "instanceId": "492216dba7ead6f870ef4169d10664ed44bcfc662cf5e8e4907018d95ca96a66"
+  },
+  "id": "YAbbGoVqQtm9NHfR",
+  "tags": [
+    {
+      "createdAt": "2025-04-09T02:18:33.396Z",
+      "updatedAt": "2025-04-09T02:18:33.396Z",
+      "id": "vifRv5TDExGPAt8l",
+      "name": "Calendar"
+    }
+  ]
+}

@@ -339,114 +339,34 @@ function createAutoCloseAlert(message, type, container, timeout = 3000) {
     return alerta;
 }
 
-// Envío de difusión
-function enviarDifusion(formData, contactos) {
-    const modal = new bootstrap.Modal(document.getElementById('modalProgresoEnvio'));
-    document.getElementById('barraProgresoEnvio').style.width = '0%';
-    document.getElementById('barraProgresoEnvio').textContent = '0%';
-    document.getElementById('estadoEnvioDifusion').textContent = 'Preparando envío...';
-    modal.show();
+// Envío de difusión simplificado con n8n
+function enviarDifusionN8n(formData) {
+    // Mostrar loading
+    const loadingBtn = document.getElementById('btnEnviarDifusion');
+    const originalText = loadingBtn.innerHTML;
+    loadingBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
+    loadingBtn.disabled = true;
     
-    // Enviar uno a uno para mostrar progreso
-    let total = contactos.length;
-    let enviados = 0;
-    let errores = 0;
-    let erroresDetallados = [];
-    
-    function enviarSiguiente(idx) {
-        if (idx >= total) {
-            document.getElementById('estadoEnvioDifusion').textContent = '¡Envío completado! Enviados: ' + enviados + ', Errores: ' + errores;
-            setTimeout(() => modal.hide(), 1200);
-            
-            // Mostrar resumen detallado si hay errores
-            if (errores > 0) {
-                let mensajeError = `Difusión finalizada. Enviados: ${enviados}, Errores: ${errores}`;
-                if (erroresDetallados.length > 0) {
-                    mensajeError += '\n\nErrores principales:\n' + erroresDetallados.slice(0, 3).join('\n');
-                    if (erroresDetallados.length > 3) {
-                        mensajeError += `\n... y ${erroresDetallados.length - 3} errores más`;
-                    }
-                }
-                showNotification(mensajeError, 'error');
-            } else {
-                showNotification('Difusión finalizada. Enviados: ' + enviados + ', Errores: ' + errores, 'success');
-            }
-            return;
+    fetch('api/send_broadcast_n8n.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Difusión enviada correctamente. ID: ' + data.data.broadcast_id, 'success');
+        } else {
+            showNotification('Error: ' + data.message, 'error');
         }
-        
-        const contacto = contactos[idx];
-        const numero = contacto.number.split('@')[0]; // Extraer solo el número (antes del @)
-        document.getElementById('estadoEnvioDifusion').textContent = 'Enviando a: ' + (contacto.pushName || numero) + ' (' + (idx + 1) + '/' + total + ')';
-        
-        // Construir FormData para cada contacto
-        let fd = new FormData();
-        fd.append('number', numero);
-        fd.append('mensaje', formData.get('mensaje'));
-        if (formData.get('imagen')) {
-            fd.append('imagen', formData.get('imagen'));
-        }
-        
-        fetch('api/send_broadcast.php', {
-            method: 'POST',
-            body: fd
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success || (data.data && data.data.status === 'PENDING')) {
-                enviados++;
-                console.log('✅ Mensaje enviado exitosamente a:', numero);
-            } else {
-                errores++;
-                let errorMsg = data.message || 'Error desconocido';
-                
-                // Log detallado del error
-                console.error('❌ Error enviando a', numero, ':', errorMsg);
-                if (data.debug_info) {
-                    console.error('🔍 Información de debugging:', data.debug_info);
-                }
-                
-                // Agregar error detallado para el resumen
-                let errorDetallado = `${numero}: ${errorMsg}`;
-                if (data.debug_info && data.debug_info.instance_state) {
-                    errorDetallado += ` (Estado instancia: ${data.debug_info.instance_state})`;
-                }
-                erroresDetallados.push(errorDetallado);
-                
-                // Mostrar error específico para HTTP 400
-                if (data.debug_info && data.debug_info.http_code === 400) {
-                    if (data.debug_info.instance_state !== 'open') {
-                        console.error('🚨 PROBLEMA CRÍTICO: La instancia no está conectada');
-                        document.getElementById('estadoEnvioDifusion').textContent = '🚨 ERROR: Instancia no conectada - Deteniendo envío';
-                        setTimeout(() => {
-                            modal.hide();
-                            showNotification('🚨 ERROR CRÍTICO: La instancia de Evolution API no está conectada. Verifica la conexión antes de continuar.', 'error');
-                        }, 2000);
-                        return;
-                    } else {
-                        console.error('⚠️ El número puede no estar registrado en WhatsApp:', numero);
-                    }
-                }
-            }
-        })
-        .catch(error => {
-            errores++;
-            console.error('❌ Error de red enviando a', numero, ':', error);
-            erroresDetallados.push(`${numero}: Error de red - ${error.message}`);
-        })
-        .finally(() => {
-            // Actualizar progreso
-            let progreso = Math.round(((idx + 1) / total) * 100);
-            document.getElementById('barraProgresoEnvio').style.width = progreso + '%';
-            document.getElementById('barraProgresoEnvio').textContent = progreso + '%';
-            
-            // Pequeño delay antes del siguiente envío para no sobrecargar la API
-            setTimeout(() => {
-                enviarSiguiente(idx + 1);
-            }, 500); // 500ms entre envíos
-        });
-    }
-    
-    enviarSiguiente(0);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error al enviar la difusión', 'error');
+    })
+    .finally(() => {
+        loadingBtn.innerHTML = originalText;
+        loadingBtn.disabled = false;
+    });
 }
 
 // Envío de difusión
@@ -455,13 +375,15 @@ document.addEventListener('DOMContentLoaded', function() {
     if (formDifusion) {
         formDifusion.addEventListener('submit', function(e) {
             e.preventDefault();
-            // Validar al menos mensaje o imagen
+            
             const mensaje = document.getElementById('mensajeDifusion').value.trim();
             const imagen = document.getElementById('imagenDifusion').files[0];
+            
             if (!mensaje && !imagen) {
                 showNotification('Debes ingresar un mensaje o seleccionar una imagen.', 'error');
                 return;
             }
+            
             // Obtener contactos seleccionados
             fetch('api/contacts_list.php')
                 .then(r => r.json())
@@ -470,16 +392,34 @@ document.addEventListener('DOMContentLoaded', function() {
                         showNotification('No se pudieron obtener los contactos seleccionados.', 'error');
                         return;
                     }
+                    
                     const seleccionados = data.contactos.filter(c => c.send);
                     if (seleccionados.length === 0) {
                         showNotification('Debes seleccionar al menos un contacto para enviar la difusión.', 'error');
                         return;
                     }
-                    // Preparar FormData base
+                    
+                    // Preparar FormData para n8n
                     const formData = new FormData();
                     formData.append('mensaje', mensaje);
                     if (imagen) formData.append('imagen', imagen);
-                    enviarDifusion(formData, seleccionados);
+                    
+                    // Agregar contactos seleccionados
+                    seleccionados.forEach(contacto => {
+                        formData.append('selected_contacts[]', contacto.number);
+                    });
+                    
+                    // Confirmar envío
+                    const confirmacion = confirm(
+                        `¿Estás seguro de que quieres enviar la difusión?\n\n` +
+                        `👥 Contactos: ${seleccionados.length}\n` +
+                        `📝 Mensaje: ${mensaje ? 'Sí' : 'No'}\n` +
+                        `🖼️ Imagen: ${imagen ? 'Sí' : 'No'}`
+                    );
+                    
+                    if (confirmacion) {
+                        enviarDifusionN8n(formData);
+                    }
                 });
         });
     }
