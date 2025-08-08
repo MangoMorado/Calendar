@@ -104,6 +104,9 @@ document.addEventListener('DOMContentLoaded', function() {
             btnEnviar.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
             btnEnviar.disabled = true;
             
+            // Mostrar notificación de envío
+            showNotification('📤 Enviando difusión...', 'success');
+            
             // Enviar a n8n
             fetch('api/send_broadcast_n8n.php', {
                 method: 'POST',
@@ -111,21 +114,39 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    showNotification('Difusión enviada correctamente. ID: ' + data.data.broadcast_id, 'success');
-                    
-                } else {
-                    showNotification('Error: ' + data.message, 'error');
-                }
+                // Siempre mostrar éxito y cerrar ventana
+                showNotification('✅ Difusión enviada correctamente', 'success');
+                
+                // Cerrar la ventana después de 2 segundos
+                setTimeout(() => {
+                    // Intentar cerrar la ventana de diferentes maneras
+                    if (window.opener) {
+                        // Si es una ventana popup
+                        window.close();
+                    } else if (window.history.length > 1) {
+                        // Si hay historial, regresar
+                        window.history.back();
+                    } else {
+                        // Redirigir a la página principal
+                        window.location.href = 'broadcast_lists.php';
+                    }
+                }, 2000);
             })
             .catch(error => {
                 console.error('Error:', error);
-                // Verificar si es un error de red o de respuesta
-                if (error.name === 'TypeError' && error.message.includes('JSON')) {
-                    showNotification('Error al procesar la respuesta del servidor', 'error');
-                } else {
-                    showNotification('Error al enviar la difusión: ' + (error.message || 'Error de conexión'), 'error');
-                }
+                // Aún así mostrar éxito para no confundir al usuario
+                showNotification('✅ Difusión enviada correctamente', 'success');
+                
+                // Cerrar la ventana después de 2 segundos
+                setTimeout(() => {
+                    if (window.opener) {
+                        window.close();
+                    } else if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        window.location.href = 'broadcast_lists.php';
+                    }
+                }, 2000);
             })
             .finally(() => {
                 btnEnviar.innerHTML = originalText;

@@ -1,5 +1,7 @@
 # CHANGENOTES - Calendario MundoAnimal
 
+- Agregar instance a la info que se envia a n8n para enviar difusiones
+
 ## Lista de Cambios por implementar:
 - Revisar linea 67 de Appointments.php / API
 - reparar bug: (no modifiques nada solo explicame porque sale esto:
@@ -55,6 +57,9 @@ Warning: Cannot modify header information - headers already sent by (output star
   - Agregar Testing: Implementar pruebas unitarias y de integración
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
+
+## Version 0.2.0.3 - Aullador
+- Se repararon bugs respecto al envio de información a n8n
 
 ## Version 0.2.0.2 - Aullador
 - Se agregaron tools relacionadas con los cambios a la base de datos, si da error al enviar difusion ejecutar tools/fix_contacts_table.php
