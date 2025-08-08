@@ -1,7 +1,5 @@
 # CHANGENOTES - Calendario MundoAnimal
 
-- Agregar instance a la info que se envia a n8n para enviar difusiones
-
 ## Lista de Cambios por implementar:
 - Revisar linea 67 de Appointments.php / API
 - reparar bug: (no modifiques nada solo explicame porque sale esto:
@@ -21,8 +19,6 @@ Warning: session_start(): Session cannot be started after headers have already b
 Warning: Cannot modify header information - headers already sent by (output started at config/database.php:296) in includes/auth.php on line 110)
 
 - Agregar retroalimentación del estado de envio de las difusiones
-- Agregar opción para agregar contacto
-- Mejorar la busqueda de contactos se laguea por la alta carga al servidor
 - Estado de las citas según código de color (Verde, Amarillo: reprogramar, Rojo)
 - Sistema de cola de citas, que el sistema reciba citas del chatbot y que un humano las programe
 - Mejoras de seguridad: Mover la JWT_SECRET fuera del código fuente. Restringir Access-Control-Allow-Origin en producción. Revisar posibles vulnerabilidades (inyección SQL, XSS - aunque el uso de consultas preparadas y htmlspecialchars ayuda).
@@ -45,7 +41,6 @@ Warning: Cannot modify header information - headers already sent by (output star
 - carga lazy de eventos para calendarios con muchas citas
 - Reparar consistencia: Hay dos formas de manejar las citas (API REST en api/ y el script process_appointment.php). Sería ideal consolidar en una sola (probablemente la API). La eliminación de citas en assets/js/app.js usa el endpoint antiguo y recarga la página, podría mejorarse usando la API y actualizando dinámicamente.
 - Mejorar eficiencia: La obtención y paginación del historial en historial.php podría optimizarse. El sistema de migración automática en config/database.php podría reemplazarse por uno más robusto si la aplicación crece.
-- Bug con el token en la libreta de notas
 - Mejoras detectas en la 0.0.8:
   - Consistencia: Dos formas de manejar citas (API y process_appointment.php)
   - Arquitectura: Migración gradual a MVC en progreso
@@ -57,6 +52,10 @@ Warning: Cannot modify header information - headers already sent by (output star
   - Agregar Testing: Implementar pruebas unitarias y de integración
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
+
+## Version 0.3.1 - GPT Review
+- Nuevo sistema de creación de difusiones automaticas
+- Se agrega la difusion de Evolution API el parametro de la intancia configurada
 
 ## Version 0.3 - GPT Review
 - Reparación de bugs conocidos

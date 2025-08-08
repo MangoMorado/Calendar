@@ -117,7 +117,7 @@ try {
 
     // Obtener configuración de n8n
     $config = [];
-    $sql = "SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('n8n_url', 'n8n_api_key', 'n8n_broadcast_webhook_url')";
+    $sql = "SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('n8n_url', 'n8n_api_key', 'n8n_broadcast_webhook_url', 'evolution_instance_name')";
     $result = mysqli_query($conn, $sql);
     
     if (!$result) {
@@ -132,6 +132,7 @@ try {
     $n8nUrl = $config['n8n_url'] ?? '';
     $n8nApiKey = $config['n8n_api_key'] ?? '';
     $n8nWebhookUrl = $config['n8n_broadcast_webhook_url'] ?? '';
+    $evolutionInstanceName = $config['evolution_instance_name'] ?? '';
 
     if (empty($n8nUrl) || empty($n8nWebhookUrl)) {
         sendJsonResponse(false, 'Configuración de n8n incompleta. Verifica la configuración del sistema.');
@@ -223,7 +224,8 @@ try {
             (strpos($imageData['mimetype'], 'audio/') === 0 ? 'audio' : 
             (strpos($imageData['mimetype'], 'image/') === 0 ? 'image' : 'document'))
         ) : 'text',
-        'broadcast_id' => $broadcastId
+        'broadcast_id' => $broadcastId,
+        'evolution_instance_name' => $evolutionInstanceName
     ];
 
     logError("Enviando a n8n", [

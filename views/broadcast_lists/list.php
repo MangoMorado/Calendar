@@ -84,6 +84,12 @@ $stats = $data['stats'];
                 <a href="?action=send" class="btn btn-primary">
                     <i class="bi bi-megaphone"></i> Enviar Difusión
                 </a>
+                <form method="POST" onsubmit="return confirmAutoCreate()">
+                    <input type="hidden" name="auto_create_batches" value="1">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-collection"></i> Crear difusiones automáticas
+                    </button>
+                </form>
             </div>
             <?php if (empty($lists)): ?>
                 <div class="text-center py-4">
@@ -210,4 +216,8 @@ const safeGlobalClean = () => (window.limpiarBackdrops && window.limpiarBackdrop
 document.addEventListener('hidden.bs.modal', safeGlobalClean);
 document.addEventListener('show.bs.modal', safeGlobalClean);
 window.limpiarBackdrops = window.limpiarBackdrops || safeGlobalClean;
+
+function confirmAutoCreate() {
+    return confirm('¿Crear listas automáticas de 500 contactos sin repetir y con nombres secuenciales?');
+}
 </script> 

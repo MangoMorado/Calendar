@@ -24,8 +24,10 @@ class BroadcastListController {
      */
     public function handleRequest() {
         $action = $_GET['action'] ?? 'list';
-        $message = '';
-        $error = '';
+        // Recuperar mensajes flash de sesión (si existen)
+        $message = $_SESSION['success_message'] ?? '';
+        $error = $_SESSION['error_message'] ?? '';
+        unset($_SESSION['success_message'], $_SESSION['error_message']);
 
         // Procesar formularios POST
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -51,7 +53,9 @@ class BroadcastListController {
      * Procesa todas las solicitudes POST
      */
     private function processPostRequest() {
-        if (isset($_POST['create_list'])) {
+        if (isset($_POST['auto_create_batches'])) {
+            return $this->autoCreateBatches();
+        } elseif (isset($_POST['create_list'])) {
             return $this->createList();
         } elseif (isset($_POST['update_list'])) {
             return $this->updateList();
@@ -307,6 +311,89 @@ class BroadcastListController {
         
         // Incluir el footer
         include 'includes/footer.php';
+    }
+
+    /**
+     * Crea listas de difusión en lotes de 500 contactos con nombres secuenciales sin repetir
+     */
+    private function autoCreateBatches() {
+        $userId = $this->currentUser['id'] ?? null;
+        if (!$userId) {
+            $_SESSION['error_message'] = 'No autorizado';
+            return ['redirect' => '?action=list'];
+        }
+
+        // 1) Último número usado en nombres tipo "Difusion N" o "Difusionen N"
+        $lastNumber = 0;
+        $sqlLast = "SELECT name FROM broadcast_lists WHERE user_id = ? AND (name REGEXP '^[Dd]ifusion(en)? [0-9]+$') ORDER BY created_at DESC, id DESC LIMIT 200";
+        $stmt = mysqli_prepare($this->conn, $sqlLast);
+        mysqli_stmt_bind_param($stmt, 'i', $userId);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        while ($row = mysqli_fetch_assoc($res)) {
+            if (preg_match('/[0-9]+$/', $row['name'], $m)) {
+                $n = intval($m[0]);
+                if ($n > $lastNumber) $lastNumber = $n;
+            }
+        }
+
+        // 2) Contactos no asignados a ninguna lista aún
+        $contactIds = [];
+        $sqlContacts = "SELECT c.id FROM contacts c WHERE c.id NOT IN (SELECT contact_id FROM broadcast_list_contacts) ORDER BY c.id";
+        if ($rc = mysqli_query($this->conn, $sqlContacts)) {
+            while ($r = mysqli_fetch_assoc($rc)) { $contactIds[] = (int)$r['id']; }
+        }
+
+        if (empty($contactIds)) {
+            $_SESSION['success_message'] = 'No hay contactos disponibles para agrupar';
+            return ['redirect' => '?action=list'];
+        }
+
+        // 3) Crear lotes de 500
+        $batchSize = 500;
+        $created = 0;
+        for ($i = 0; $i < count($contactIds); $i += $batchSize) {
+            $batch = array_slice($contactIds, $i, $batchSize);
+            if (empty($batch)) break;
+
+            // Buscar número único siguiente
+            $candidate = $lastNumber + 1;
+            while (true) {
+                $nameA = "Difusion $candidate";
+                $nameB = "Difusionen $candidate";
+                $check = mysqli_prepare($this->conn, "SELECT COUNT(*) as cnt FROM broadcast_lists WHERE name IN (?, ?) AND user_id = ?");
+                mysqli_stmt_bind_param($check, 'ssi', $nameA, $nameB, $userId);
+                mysqli_stmt_execute($check);
+                $rchk = mysqli_stmt_get_result($check);
+                $rowc = mysqli_fetch_assoc($rchk);
+                if ((int)$rowc['cnt'] === 0) { $uniqueNumber = $candidate; break; }
+                $candidate++;
+            }
+            $lastNumber = $uniqueNumber; // reservar
+
+            // Crear lista
+            $name = "Difusion $uniqueNumber";
+            $desc = "Creada automáticamente con hasta $batchSize contactos";
+            $stmtIns = mysqli_prepare($this->conn, "INSERT INTO broadcast_lists (name, description, user_id) VALUES (?, ?, ?)");
+            mysqli_stmt_bind_param($stmtIns, 'ssi', $name, $desc, $userId);
+            if (!mysqli_stmt_execute($stmtIns)) { continue; }
+            $listId = mysqli_insert_id($this->conn);
+
+            // Insertar contactos del batch
+            $values = [];
+            $types = '';
+            $params = [];
+            foreach ($batch as $cid) { $values[] = '(?, ?)'; $types .= 'ii'; $params[] = $listId; $params[] = $cid; }
+            $sqlBulk = 'INSERT IGNORE INTO broadcast_list_contacts (list_id, contact_id) VALUES ' . implode(', ', $values);
+            $stmtBulk = mysqli_prepare($this->conn, $sqlBulk);
+            mysqli_stmt_bind_param($stmtBulk, $types, ...$params);
+            mysqli_stmt_execute($stmtBulk);
+
+            $created++;
+        }
+
+        $_SESSION['success_message'] = "Listas creadas: $created";
+        return ['redirect' => '?action=list'];
     }
 
     /**
