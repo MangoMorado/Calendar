@@ -4,15 +4,8 @@
  * Este archivo contiene funciones relacionadas con el procesamiento de datos del calendario
  */
 
-// Establecer timezone global desde settings
-$timezone = 'America/Bogota';
-require_once __DIR__ . '/../../config/database.php';
-$sql = "SELECT setting_value FROM settings WHERE setting_key = 'timezone' LIMIT 1";
-$result = mysqli_query($conn, $sql);
-if ($result && $row = mysqli_fetch_assoc($result)) {
-    $timezone = $row['setting_value'];
-}
-date_default_timezone_set($timezone);
+// Bootstrap común ya establece timezone y conexión
+require_once __DIR__ . '/../../includes/bootstrap.php';
 
 // Función para obtener las citas según el tipo de calendario
 function getCalendarData($calendarType = 'general') {

@@ -3,15 +3,15 @@
  * API para obtener detalles de una cita específica
  */
 
-// Incluir archivos de configuración, funciones y autenticación
-require_once '../config/database.php';
+// Bootstrap común y funciones
+require_once '../includes/bootstrap.php';
 require_once '../includes/functions.php';
-require_once '../includes/auth.php';
+// Autenticación por JWT únicamente
 require_once '../includes/api/jwt.php';
 
-// Configurar headers CORS y JSON
+// Configurar headers CORS y JSON (solo API)
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *'); // En producción, especificar los dominios permitidos
+header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Allow-Credentials: true');

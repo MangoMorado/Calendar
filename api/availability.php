@@ -14,20 +14,12 @@ $requestUri = $_SERVER['REQUEST_URI'] ?? 'UNKNOWN';
 $requestBody = file_get_contents('php://input');
 error_log("REQUEST [$requestMethod] $requestUri - BODY: $requestBody");
 
-// Incluir archivos de configuración, funciones y autenticación
-require_once '../config/database.php';
+// Bootstrap común y dependencias
+require_once '../includes/bootstrap.php';
 require_once '../includes/functions.php';
-require_once '../includes/auth.php';
 require_once '../includes/api/jwt.php';
 
-// Establecer timezone global desde settings
-$timezone = 'America/Bogota';
-$sql = "SELECT setting_value FROM settings WHERE setting_key = 'timezone' LIMIT 1";
-$result = mysqli_query($conn, $sql);
-if ($result && $row = mysqli_fetch_assoc($result)) {
-    $timezone = $row['setting_value'];
-}
-date_default_timezone_set($timezone);
+// Timezone ya establecido en bootstrap
 
 // Verificar conexión a la base de datos
 if (!isset($conn) || mysqli_connect_errno()) {

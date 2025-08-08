@@ -251,6 +251,57 @@ export function handleEventClick(info, elements, config, state) {
     // Configurar el modal de edición
     setupEditModal(info.event, elements, config, state);
     
+    // Obtener detalles actualizados de la cita desde API protegida por JWT
+    getJwtToken()
+        .then(token => {
+            if (!token) throw new Error('No se pudo obtener token JWT');
+            return fetch(`api/get_appointment.php?id=${info.event.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+                credentials: 'include'
+            });
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error de servidor: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(json => {
+            if (!json || json.success !== true || !json.data) {
+                const message = (json && json.message) ? json.message : 'Respuesta inválida del servidor';
+                throw new Error(message);
+            }
+            const data = json.data;
+            // Llenar el formulario con los datos recibidos
+            const titleField = document.getElementById('title');
+            const descriptionField = document.getElementById('description');
+            const startTimeField = document.getElementById('startTime') || document.getElementById('start_time');
+            const endTimeField = document.getElementById('endTime') || document.getElementById('end_time');
+            const calendarTypeSelect = document.getElementById('calendarType') || document.getElementById('calendar_type');
+            const userSelect = document.getElementById('user_id');
+
+            if (titleField) titleField.value = data.title || '';
+            if (descriptionField) descriptionField.value = data.description || '';
+
+            if (startTimeField) startTimeField.value = data.start_time || '';
+            if (endTimeField) endTimeField.value = data.end_time || '';
+
+            if (calendarTypeSelect) {
+                const calendarType = data.calendar_type || 'general';
+                calendarTypeSelect.value = calendarType;
+            }
+
+            if (userSelect && data.user_id) {
+                userSelect.value = data.user_id;
+                const changeEvent = new Event('change');
+                userSelect.dispatchEvent(changeEvent);
+            }
+        })
+        .catch(error => {
+            console.error('Error al cargar los detalles de la cita:', error);
+            showNotification(`Error: ${error.message || 'Error al cargar los detalles'}`, 'error');
+        });
+
     // Después de abrir el modal, verificar si los usuarios se cargaron correctamente
     setTimeout(() => {
         const userSelect = document.getElementById('user_id');
@@ -273,6 +324,26 @@ export function handleEventClick(info, elements, config, state) {
             }
         }
     }, 100);
+}
+
+/**
+ * Obtiene y cachea un JWT basado en la sesión actual (api/token.php)
+ */
+function getJwtToken() {
+    if (window.jwtToken) return Promise.resolve(window.jwtToken);
+    return fetch('api/token.php', { method: 'POST', credentials: 'include' })
+        .then(r => r.json())
+        .then(json => {
+            if (json && json.success && json.data && json.data.token) {
+                window.jwtToken = json.data.token;
+                return window.jwtToken;
+            }
+            throw new Error(json && json.message ? json.message : 'No se pudo obtener token');
+        })
+        .catch(err => {
+            console.error('Error obteniendo token JWT:', err);
+            return null;
+        });
 }
 
 /**

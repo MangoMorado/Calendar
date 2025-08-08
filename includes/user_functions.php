@@ -1,16 +1,6 @@
 <?php
-// Incluir la configuración de la base de datos
-require_once __DIR__ . '/../config/database.php';
-
-// Establecer timezone global desde settings
-$timezone = 'America/Bogota';
-global $conn;
-$sql = "SELECT setting_value FROM settings WHERE setting_key = 'timezone' LIMIT 1";
-$result = mysqli_query($conn, $sql);
-if ($result && $row = mysqli_fetch_assoc($result)) {
-    $timezone = $row['setting_value'];
-}
-date_default_timezone_set($timezone);
+// Bootstrap común (conexión y timezone)
+require_once __DIR__ . '/bootstrap.php';
 
 /**
  * Registrar un nuevo usuario

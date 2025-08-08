@@ -58,8 +58,12 @@ Warning: Cannot modify header information - headers already sent by (output star
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
 
+## Version 0.3 - GPT Review
+- Reparación de bugs conocidos
+
 ## Version 0.2.0.3 - Aullador
 - Se repararon bugs respecto al envio de información a n8n
+- Se eliminaron documentos obsoletos
 
 ## Version 0.2.0.2 - Aullador
 - Se agregaron tools relacionadas con los cambios a la base de datos, si da error al enviar difusion ejecutar tools/fix_contacts_table.php

@@ -83,3 +83,22 @@ export function showNotification(message, type) {
         }
     }, timeout);
 } 
+
+/**
+ * Elimina backdrops atascados de modales y restablece el estado del body
+ */
+export function limpiarBackdrops() {
+    try {
+        document.querySelectorAll('.modal-backdrop').forEach(e => e.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+    } catch (e) {
+        // no-op
+    }
+}
+
+// Exponer utilidades críticas en window para uso desde scripts inline/legacy
+if (typeof window !== 'undefined') {
+    window.showNotification = window.showNotification || showNotification;
+    window.limpiarBackdrops = window.limpiarBackdrops || limpiarBackdrops;
+}

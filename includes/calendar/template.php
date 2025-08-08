@@ -75,7 +75,7 @@ function renderCalendarTemplate($calendarType = 'general') {
         </div>
         
         <div class="undo-section">
-            <button id="undoButton" class="btn btn-warning d-flex align-items-center gap-2" style="display: none;">
+            <button id="undoButton" class="btn btn-warning align-items-center gap-2" style="display: none;">
                 <i class="bi bi-arrow-counterclockwise"></i>
                 <span>Deshacer último cambio</span>
             </button>

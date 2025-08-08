@@ -238,46 +238,13 @@ function showPreviewModal(html) {
 }
 
 // Función de notificación simplificada
+// Usar showNotification centralizado si está disponible
 function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type === 'success' ? 'success' : (type === 'warning' ? 'warning' : 'danger')} notification-toast`;
-    notification.style.cssText = `
-        position: fixed; 
-        top: 20px; 
-        right: 20px; 
-        z-index: 9999; 
-        min-width: 350px; 
-        max-width: 500px;
-        animation: slideIn 0.3s ease;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        border: none;
-        border-radius: 8px;
-    `;
-    
-    const iconos = {
-        'success': 'bi-check-circle-fill',
-        'warning': 'bi-exclamation-triangle-fill',
-        'error': 'bi-x-circle-fill'
-    };
-    
-    notification.innerHTML = `
-        <div class="d-flex align-items-center">
-            <i class="bi ${iconos[type]} me-2" style="font-size: 1.2em;"></i>
-            <div class="flex-grow-1">${message}</div>
-            <button type="button" class="btn-close ms-2" onclick="this.parentElement.parentElement.remove()"></button>
-        </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => { 
-                if (notification.parentNode) notification.parentNode.removeChild(notification); 
-            }, 300);
-        }
-    }, 6000);
+    if (window.showNotification) {
+        return window.showNotification(message, type);
+    }
+    // Fallback mínimo si aún no cargó el bundle
+    alert(`${type?.toUpperCase() || 'INFO'}: ${message}`);
 }
 </script>
 

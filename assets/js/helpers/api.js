@@ -51,12 +51,34 @@ window.api.fetchWithAuth = window.api.fetchWithAuth || function(url, options = {
  * @returns {Promise} - Promesa con la respuesta procesada
  */
 window.api.fetchWithAuthAndErrorHandling = window.api.fetchWithAuthAndErrorHandling || function(url, options = {}) {
+    // Primer intento con el token actual
     return window.api.fetchWithAuth(url, options)
         .then(response => {
-            if (!response.ok && response.status === 401) {
-                // Si hay un error 401, utilizamos el manejador especial
-                return window.auth.handle401Error(response);
+            if (response.status === 401) {
+                // Renovar token y reintentar UNA vez automáticamente
+                return window.auth.storeAuthToken()
+                    .then(success => {
+                        if (!success) {
+                            // Sin token renovado, forzar login
+                            window.auth.clearAuthToken();
+                            window.location.href = '/login.php';
+                            return Promise.reject(new Error('No autorizado'));
+                        }
+                        // Reintento con token renovado
+                        return window.api.fetchWithAuth(url, options)
+                            .then(r2 => {
+                                if (!r2.ok) {
+                                    if (r2.status === 401) {
+                                        window.auth.clearAuthToken();
+                                        window.location.href = '/login.php';
+                                    }
+                                    return r2.json();
+                                }
+                                return r2.json();
+                            });
+                    });
             }
+            // Respuesta no-401: devolver JSON (éxito o error manejable por caller)
             return response.json();
         });
 };

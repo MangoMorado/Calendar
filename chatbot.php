@@ -58,29 +58,23 @@ include 'includes/chatbot/contactos-scripts.php';
 <script>
 // --- LIMPIEZA GLOBAL DE MODALES ATASCADOS (backdrop) ---
 (function() {
-function limpiarBackdrops() {
-    document.querySelectorAll('.modal-backdrop').forEach(e => e.remove());
-    document.body.classList.remove('modal-open');
-    document.body.style = '';
-}
-document.addEventListener('hidden.bs.modal', limpiarBackdrops);
-document.addEventListener('hide.bs.modal', limpiarBackdrops);
-window.limpiarBackdrops = limpiarBackdrops;
+const safeClean = () => { if (window.limpiarBackdrops) window.limpiarBackdrops(); };
+document.addEventListener('hidden.bs.modal', safeClean);
+document.addEventListener('hide.bs.modal', safeClean);
 
 // Refuerza la gestión del modal de QR (conexión)
 const qrModalEl = document.getElementById('qrModal');
 let qrModalInstance = null;
 if (qrModalEl) {
-    qrModalEl.addEventListener('hidden.bs.modal', limpiarBackdrops);
-    qrModalEl.addEventListener('hide.bs.modal', limpiarBackdrops);
-    // Asocia todos los botones que abren el modal de QR
+    qrModalEl.addEventListener('hidden.bs.modal', safeClean);
+    qrModalEl.addEventListener('hide.bs.modal', safeClean);
     document.querySelectorAll('[data-bs-target="#qrModal"]').forEach(btn => {
         btn.addEventListener('click', function() {
             if (!qrModalInstance) {
                 qrModalInstance = new bootstrap.Modal(qrModalEl);
             }
             qrModalInstance.show();
-            setTimeout(limpiarBackdrops, 500);
+            setTimeout(safeClean, 500);
         });
     });
 }

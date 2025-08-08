@@ -287,29 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Función para mostrar notificaciones
-function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} notification-toast`;
-    notification.innerHTML = `
-        <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
-        ${message}
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Remover después de 3 segundos
-    setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
-}
-
-// Función global para crear alertas con auto-cierre
+// Función global para crear alertas con auto-cierre (mantener como utilidad secundaria)
 function createAutoCloseAlert(message, type, container, timeout = 3000) {
     const alerta = document.createElement('div');
     alerta.className = `alert alert-${type}`;
@@ -453,14 +431,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // --- LIMPIEZA GLOBAL DE MODALES ATASCADOS (backdrop) ---
-function limpiarBackdrops() {
-    document.querySelectorAll('.modal-backdrop').forEach(e => e.remove());
-    document.body.classList.remove('modal-open');
-    document.body.style = '';
-}
-document.addEventListener('hidden.bs.modal', limpiarBackdrops);
-document.addEventListener('hide.bs.modal', limpiarBackdrops);
-window.limpiarBackdrops = limpiarBackdrops;
+document.addEventListener('hidden.bs.modal', () => { if (window.limpiarBackdrops) window.limpiarBackdrops(); });
+document.addEventListener('hide.bs.modal', () => { if (window.limpiarBackdrops) window.limpiarBackdrops(); });
 
 // Refuerza la gestión del modal de QR (conexión)
 const qrModalEl = document.getElementById('qrModal');

@@ -72,27 +72,10 @@ window.auth.clearAuthToken = window.auth.clearAuthToken || function() {
  * @returns {Promise} - Promesa con la respuesta procesada
  */
 window.auth.handle401Error = window.auth.handle401Error || function(response) {
-    if (response.status === 401) {
-        console.warn('Token JWT no válido o expirado. Intentando renovar...');
-        
-        // Eliminar el token actual
-        window.auth.clearAuthToken();
-        
-        // Intentar obtener un nuevo token
-        return window.auth.storeAuthToken()
-            .then(success => {
-                if (success) {
-                    console.log('Token renovado exitosamente. Reintentando petición...');
-                    // Aquí podrías reintentar la petición original
-                    return { success: false, message: 'Token renovado. Por favor, reintenta la operación.' };
-                } else {
-                    console.error('No se pudo renovar el token. Redireccionando al login...');
-                    window.location.href = '/login.php';
-                    return { success: false, message: 'Sesión expirada. Redireccionando...' };
-                }
-            });
+    // Deprecated: la lógica de reintento automático se movió a api.fetchWithAuthAndErrorHandling
+    if (response && response.status === 401) {
+        return { success: false, message: 'No autorizado' };
     }
-    
     return response.json();
 };
 

@@ -13,7 +13,7 @@ import {
     handleEventResize,
     updateUndoButton
 } from './modules/events.js';
-import { showNotification, openModal, closeModal } from './modules/ui.js';
+import { showNotification, openModal, closeModal, limpiarBackdrops } from './modules/ui.js';
 import { loadUsersIntoSelect } from './modules/modal.js';
 
 // Funciones auxiliares para verificación
@@ -342,10 +342,6 @@ import('./modules/events.js').then(module => {
 });
 
 // --- LIMPIEZA GLOBAL DE MODALES ATASCADOS (backdrop) ---
-function limpiarBackdrops() {
-    document.querySelectorAll('.modal-backdrop').forEach(e => e.remove());
-    document.body.classList.remove('modal-open');
-}
 document.addEventListener('hidden.bs.modal', limpiarBackdrops);
 document.addEventListener('show.bs.modal', limpiarBackdrops);
 window.limpiarBackdrops = limpiarBackdrops;

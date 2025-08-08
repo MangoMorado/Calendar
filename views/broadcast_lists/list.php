@@ -193,23 +193,21 @@ function confirmDelete(listId, listName) {
     const modal = new bootstrap.Modal(modalEl);
     modal.show();
     // Limpieza de backdrops antes y después
-    setTimeout(() => limpiarBackdrops(), 500);
-    modalEl.addEventListener('hidden.bs.modal', limpiarBackdrops, { once: true });
+    setTimeout(() => (window.limpiarBackdrops && window.limpiarBackdrops()), 500);
+    modalEl.addEventListener('hidden.bs.modal', () => (window.limpiarBackdrops && window.limpiarBackdrops()), { once: true });
 }
 
 // Refuerza el cierre del modal de eliminación para limpiar el estado visual
 const deleteModalEl = document.getElementById('deleteModal');
 if (deleteModalEl) {
-    deleteModalEl.addEventListener('hidden.bs.modal', limpiarBackdrops);
-    deleteModalEl.addEventListener('hide.bs.modal', limpiarBackdrops);
+    const safeClean = () => (window.limpiarBackdrops && window.limpiarBackdrops());
+    deleteModalEl.addEventListener('hidden.bs.modal', safeClean);
+    deleteModalEl.addEventListener('hide.bs.modal', safeClean);
 }
 
 // --- LIMPIEZA GLOBAL DE MODALES ATASCADOS (backdrop) ---
-function limpiarBackdrops() {
-    document.querySelectorAll('.modal-backdrop').forEach(e => e.remove());
-    document.body.classList.remove('modal-open');
-}
-document.addEventListener('hidden.bs.modal', limpiarBackdrops);
-document.addEventListener('show.bs.modal', limpiarBackdrops);
-window.limpiarBackdrops = limpiarBackdrops;
+const safeGlobalClean = () => (window.limpiarBackdrops && window.limpiarBackdrops());
+document.addEventListener('hidden.bs.modal', safeGlobalClean);
+document.addEventListener('show.bs.modal', safeGlobalClean);
+window.limpiarBackdrops = window.limpiarBackdrops || safeGlobalClean;
 </script> 
