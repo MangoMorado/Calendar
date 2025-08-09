@@ -6,6 +6,12 @@
     
     <!-- Scripts comunes -->
     <script src="assets/js/helpers/ios-fixes.js"></script>
+    <!-- Cargar utilidades de UI y exponer funciones globales para scripts inline -->
+    <script type="module">
+        import { showNotification, limpiarBackdrops } from './assets/js/modules/ui.js';
+        window.showNotification = window.showNotification || showNotification;
+        window.limpiarBackdrops = window.limpiarBackdrops || limpiarBackdrops;
+    </script>
     <?php if (isAuthenticated()): ?>
     <!-- Scripts de autenticación JWT -->
     <script src="assets/js/helpers/api.js"></script>

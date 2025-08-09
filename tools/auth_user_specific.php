@@ -1,6 +1,7 @@
 <?php
-require_once 'config/database.php';
-require_once 'includes/auth.php';
+$root = dirname(__DIR__);
+require_once $root . '/config/database.php';
+require_once $root . '/includes/auth.php';
 
 echo "<h2>Autenticación de Usuario Específico</h2>";
 
@@ -85,7 +86,7 @@ if ($user = mysqli_fetch_assoc($result)) {
     // Probar el endpoint
     echo "<h3>4. Probando endpoint import_contacts.php:</h3>";
     ob_start();
-    include 'api/import_contacts.php';
+    include $root . '/api/import_contacts.php';
     $apiOutput = ob_get_clean();
     
     echo "Respuesta del API:<br>";
@@ -121,3 +122,5 @@ echo "1. Si el endpoint funciona (código 200), el problema está resuelto<br>";
 echo "2. Si obtienes error 401, ejecuta primero: php create_permanent_sessions.php<br>";
 echo "3. Si obtienes error 400, verifica la configuración de Evolution API<br>";
 ?> 
+
+
