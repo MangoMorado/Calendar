@@ -41,8 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_broadcast'])) {
     } elseif (empty($messageText) && !$image) {
         $error = 'Debes escribir un mensaje o seleccionar una imagen';
     } else {
-        // Verificar que la lista existe y pertenece al usuario
-        $selectedList = $broadcastListModel->getListById($listId, $currentUser['id']);
+        // Verificar que la lista existe (listas globales)
+        $selectedList = $broadcastListModel->getListById($listId);
         if (!$selectedList || !$selectedList['is_active']) {
             $error = 'Lista no válida o inactiva';
         } else {

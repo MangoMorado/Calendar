@@ -20,12 +20,10 @@ class BroadcastListModel {
                 FROM broadcast_lists bl
                 LEFT JOIN broadcast_list_contacts blc ON bl.id = blc.list_id
                 LEFT JOIN users u ON bl.user_id = u.id
-                WHERE bl.user_id = ?
                 GROUP BY bl.id
                 ORDER BY bl.created_at DESC";
         
         $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, "i", $userId);
         mysqli_stmt_execute($stmt);
         
         $result = mysqli_stmt_get_result($stmt);
@@ -51,12 +49,6 @@ class BroadcastListModel {
         
         $params = [$listId];
         $types = "i";
-        
-        if ($userId) {
-            $sql .= " AND bl.user_id = ?";
-            $params[] = $userId;
-            $types .= "i";
-        }
         
         $stmt = mysqli_prepare($this->conn, $sql);
         mysqli_stmt_bind_param($stmt, $types, ...$params);
@@ -213,15 +205,28 @@ class BroadcastListModel {
      * Verificar si el usuario puede acceder a la lista
      */
     public function canAccessList($listId, $userId) {
-        $sql = "SELECT COUNT(*) as count FROM broadcast_lists WHERE id = ? AND user_id = ?";
+        $sql = "SELECT COUNT(*) as count FROM broadcast_lists WHERE id = ?";
         
         $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ii", $listId, $userId);
+        mysqli_stmt_bind_param($stmt, "i", $listId);
         mysqli_stmt_execute($stmt);
         
         $result = mysqli_stmt_get_result($stmt);
         $row = mysqli_fetch_assoc($result);
         
+        return $row['count'] > 0;
+    }
+
+    /**
+     * Verificar si el usuario es propietario de la lista
+     */
+    public function isOwner($listId, $userId) {
+        $sql = "SELECT COUNT(*) as count FROM broadcast_lists WHERE id = ? AND user_id = ?";
+        $stmt = mysqli_prepare($this->conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ii", $listId, $userId);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $row = mysqli_fetch_assoc($result);
         return $row['count'] > 0;
     }
     
@@ -236,13 +241,13 @@ class BroadcastListModel {
                 FROM broadcast_lists bl
                 LEFT JOIN broadcast_list_contacts blc ON bl.id = blc.list_id
                 LEFT JOIN users u ON bl.user_id = u.id
-                WHERE bl.user_id = ? AND (bl.name LIKE ? OR bl.description LIKE ?)
+                WHERE (bl.name LIKE ? OR bl.description LIKE ?)
                 GROUP BY bl.id
                 ORDER BY bl.created_at DESC";
         
         $searchPattern = "%$searchTerm%";
         $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, "iss", $userId, $searchPattern, $searchPattern);
+        mysqli_stmt_bind_param($stmt, "ss", $searchPattern, $searchPattern);
         mysqli_stmt_execute($stmt);
         
         $result = mysqli_stmt_get_result($stmt);

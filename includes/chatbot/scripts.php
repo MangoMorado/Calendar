@@ -1,5 +1,19 @@
 <!-- Script para tabs de chatbot -->
 <script>
+// Fallback mínimo para notificaciones si aún no cargó ui.js
+window.showNotification = window.showNotification || function(msg, type = 'info') {
+    try {
+        const el = document.createElement('div');
+        el.className = `alert alert-${type === 'error' ? 'danger' : (type === 'success' ? 'success' : 'info')}`;
+        el.textContent = msg;
+        el.style.position = 'fixed';
+        el.style.top = '16px';
+        el.style.right = '16px';
+        el.style.zIndex = '2000';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 3000);
+    } catch (e) { console.log(msg); }
+};
 document.addEventListener('DOMContentLoaded', function() {
     const tabButtons = document.querySelectorAll('#chatbotTabs .nav-link');
     const tabPanes = document.querySelectorAll('#chatbotTabsContent .tab-pane');
@@ -77,15 +91,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     // Mostrar mensaje de éxito
-                    showNotification('Workflow ' + (newStatus === 'active' ? 'activado' : 'desactivado') + ' correctamente', 'success');
+                    window.showNotification('Workflow ' + (newStatus === 'active' ? 'activado' : 'desactivado') + ' correctamente', 'success');
                 } else {
                     // Revertir cambios si hay error
-                    showNotification('Error: ' + (data.message || 'No se pudo cambiar el estado del workflow'), 'error');
+                    window.showNotification('Error: ' + (data.message || 'No se pudo cambiar el estado del workflow'), 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showNotification('Error de conexión', 'error');
+                window.showNotification('Error de conexión', 'error');
             })
             .finally(() => {
                 // Rehabilitar el botón
@@ -145,15 +159,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     // Mostrar mensaje de éxito
-                    showNotification('Instancia ' + instanceName + ' ' + (newStatus === 'active' ? 'conectada' : 'desconectada') + ' correctamente', 'success');
+                    window.showNotification('Instancia ' + instanceName + ' ' + (newStatus === 'active' ? 'conectada' : 'desconectada') + ' correctamente', 'success');
                 } else {
                     // Revertir cambios si hay error
-                    showNotification('Error: ' + (data.message || 'No se pudo cambiar el estado de la instancia'), 'error');
+                    window.showNotification('Error: ' + (data.message || 'No se pudo cambiar el estado de la instancia'), 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showNotification('Error de conexión', 'error');
+                window.showNotification('Error de conexión', 'error');
             })
             .finally(() => {
                 // Rehabilitar el botón
@@ -217,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
                     
                     // Mostrar mensaje de éxito
-                    showNotification('QR generado correctamente', 'success');
+                    window.showNotification('QR generado correctamente', 'success');
                 } else {
                     // Mostrar error en el modal
                     const qrContent = document.getElementById('qrContent');
@@ -229,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
                     
                     // Mostrar mensaje de error
-                    showNotification('Error: ' + data.message, 'error');
+                    window.showNotification('Error: ' + data.message, 'error');
                 }
             })
             .catch(error => {
@@ -241,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         Error de conexión
                     </div>
                 `;
-                showNotification('Error de conexión', 'error');
+                window.showNotification('Error de conexión', 'error');
             })
             .finally(() => {
                 // Rehabilitar el botón
@@ -438,8 +452,8 @@ document.addEventListener('hide.bs.modal', () => { if (window.limpiarBackdrops) 
 const qrModalEl = document.getElementById('qrModal');
 let qrModalInstance = null;
 if (qrModalEl) {
-    qrModalEl.addEventListener('hidden.bs.modal', limpiarBackdrops);
-    qrModalEl.addEventListener('hide.bs.modal', limpiarBackdrops);
+    qrModalEl.addEventListener('hidden.bs.modal', () => { if (window.limpiarBackdrops) window.limpiarBackdrops(); });
+    qrModalEl.addEventListener('hide.bs.modal', () => { if (window.limpiarBackdrops) window.limpiarBackdrops(); });
     // Asocia todos los botones que abren el modal de QR
     document.querySelectorAll('[data-bs-target="#qrModal"]').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -447,7 +461,7 @@ if (qrModalEl) {
                 qrModalInstance = new bootstrap.Modal(qrModalEl);
             }
             qrModalInstance.show();
-            setTimeout(limpiarBackdrops, 500);
+            setTimeout(() => { if (window.limpiarBackdrops) window.limpiarBackdrops(); }, 500);
         });
     });
 }
@@ -459,7 +473,7 @@ function cerrarModalQR() {
         let modal = bootstrap.Modal.getInstance(qrModalEl);
         if (!modal) modal = new bootstrap.Modal(qrModalEl);
         modal.hide();
-        limpiarBackdrops();
+        if (window.limpiarBackdrops) window.limpiarBackdrops();
     }
 }
 </script> 

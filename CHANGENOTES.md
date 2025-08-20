@@ -53,6 +53,9 @@ Warning: Cannot modify header information - headers already sent by (output star
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
 
+## Version 0.3.1.2 - GPT Review
+- Las listas de difusion ahora son globales
+
 ## Version 0.3.1.1 - GPT Review
 - Reparado errores de visualización de notas
 - Se movio archivos a tools

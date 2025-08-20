@@ -64,7 +64,7 @@ $stats = $data['stats'];
     <!-- Lista de listas -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="bi bi-list"></i> Mis Listas de Difusión</h5>
+            <h5 class="mb-0"><i class="bi bi-list"></i> Listas de Difusión</h5>
             <div class="d-flex gap-2">
                 <form class="d-flex" method="GET">
                     <input type="hidden" name="action" value="list">

@@ -115,7 +115,7 @@ class BroadcastListController {
             return ['error' => 'El nombre de la lista es requerido'];
         }
         
-        if (!$this->broadcastListModel->canAccessList($listId, $this->currentUser['id'])) {
+        if (!$this->broadcastListModel->isOwner($listId, $this->currentUser['id'])) {
             return ['error' => 'No tienes permisos para editar esta lista'];
         }
         
@@ -138,7 +138,7 @@ class BroadcastListController {
     private function deleteList() {
         $listId = (int)($_POST['list_id'] ?? 0);
         
-        if (!$this->broadcastListModel->canAccessList($listId, $this->currentUser['id'])) {
+        if (!$this->broadcastListModel->isOwner($listId, $this->currentUser['id'])) {
             return ['error' => 'No tienes permisos para eliminar esta lista'];
         }
         
@@ -159,7 +159,7 @@ class BroadcastListController {
         $listId = (int)($_POST['list_id'] ?? 0);
         $contactIds = $_POST['contact_ids'] ?? [];
         
-        if (!$this->broadcastListModel->canAccessList($listId, $this->currentUser['id'])) {
+        if (!$this->broadcastListModel->isOwner($listId, $this->currentUser['id'])) {
             return ['error' => 'No tienes permisos para modificar esta lista'];
         }
         
@@ -177,7 +177,7 @@ class BroadcastListController {
         $listId = (int)($_POST['list_id'] ?? 0);
         $contactIds = $_POST['contact_ids'] ?? [];
         
-        if (!$this->broadcastListModel->canAccessList($listId, $this->currentUser['id'])) {
+        if (!$this->broadcastListModel->isOwner($listId, $this->currentUser['id'])) {
             return ['error' => 'No tienes permisos para modificar esta lista'];
         }
         
@@ -196,7 +196,7 @@ class BroadcastListController {
         $number = trim($_POST['manual_number'] ?? '');
         $name = trim($_POST['manual_name'] ?? '');
         
-        if (!$this->broadcastListModel->canAccessList($listId, $this->currentUser['id'])) {
+        if (!$this->broadcastListModel->isOwner($listId, $this->currentUser['id'])) {
             return ['error' => 'No tienes permisos para modificar esta lista'];
         }
         
@@ -278,10 +278,14 @@ class BroadcastListController {
             case 'edit':
             case 'view':
                 $listId = (int)($_GET['id'] ?? 0);
-                $data['currentList'] = $this->broadcastListModel->getListById($listId, $this->currentUser['id']);
-                
+                $data['currentList'] = $this->broadcastListModel->getListById($listId);
                 if (!$data['currentList']) {
-                    return ['error' => 'Lista no encontrada o no tienes permisos para acceder'];
+                    return ['error' => 'Lista no encontrada'];
+                }
+                if ($action === 'edit' && !$this->broadcastListModel->isOwner($listId, $this->currentUser['id'])) {
+                    $_SESSION['error_message'] = 'No puedes editar esta lista. Abierta en modo vista.';
+                    header('Location: ?action=view&id=' . $listId);
+                    exit;
                 }
                 
                 $data['contactsInList'] = $this->broadcastListModel->getContactsInList($listId);
@@ -323,11 +327,10 @@ class BroadcastListController {
             return ['redirect' => '?action=list'];
         }
 
-        // 1) Último número usado en nombres tipo "Difusion N" o "Difusionen N"
+        // 1) Último número usado en nombres tipo "Difusion N" o "Difusionen N" (global)
         $lastNumber = 0;
-        $sqlLast = "SELECT name FROM broadcast_lists WHERE user_id = ? AND (name REGEXP '^[Dd]ifusion(en)? [0-9]+$') ORDER BY created_at DESC, id DESC LIMIT 200";
+        $sqlLast = "SELECT name FROM broadcast_lists WHERE (name REGEXP '^[Dd]ifusion(en)? [0-9]+$') ORDER BY created_at DESC, id DESC LIMIT 200";
         $stmt = mysqli_prepare($this->conn, $sqlLast);
-        mysqli_stmt_bind_param($stmt, 'i', $userId);
         mysqli_stmt_execute($stmt);
         $res = mysqli_stmt_get_result($stmt);
         while ($row = mysqli_fetch_assoc($res)) {
@@ -361,8 +364,8 @@ class BroadcastListController {
             while (true) {
                 $nameA = "Difusion $candidate";
                 $nameB = "Difusionen $candidate";
-                $check = mysqli_prepare($this->conn, "SELECT COUNT(*) as cnt FROM broadcast_lists WHERE name IN (?, ?) AND user_id = ?");
-                mysqli_stmt_bind_param($check, 'ssi', $nameA, $nameB, $userId);
+                $check = mysqli_prepare($this->conn, "SELECT COUNT(*) as cnt FROM broadcast_lists WHERE name IN (?, ?)");
+                mysqli_stmt_bind_param($check, 'ss', $nameA, $nameB);
                 mysqli_stmt_execute($check);
                 $rchk = mysqli_stmt_get_result($check);
                 $rowc = mysqli_fetch_assoc($rchk);

@@ -8,9 +8,13 @@
     <script src="assets/js/helpers/ios-fixes.js"></script>
     <!-- Cargar utilidades de UI y exponer funciones globales para scripts inline -->
     <script type="module">
-        import { showNotification, limpiarBackdrops } from './assets/js/modules/ui.js';
-        window.showNotification = window.showNotification || showNotification;
-        window.limpiarBackdrops = window.limpiarBackdrops || limpiarBackdrops;
+        import * as ui from './assets/js/modules/ui.js';
+        if (ui && typeof ui.showNotification === 'function') {
+            window.showNotification = window.showNotification || ui.showNotification;
+        }
+        if (ui && typeof ui.limpiarBackdrops === 'function') {
+            window.limpiarBackdrops = window.limpiarBackdrops || ui.limpiarBackdrops;
+        }
     </script>
     <?php if (isAuthenticated()): ?>
     <!-- Scripts de autenticación JWT -->
