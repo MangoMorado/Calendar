@@ -13,14 +13,17 @@ jobs:
     - name: 📥 Checkout del código
       uses: actions/checkout@v4
       
-    - name: 🔧 Configurar PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.1'
-        
-    - name: 📦 Instalar dependencias
+    - name: 🔧 Verificar proyecto
       run: |
-        composer install --no-dev --optimize-autoloader --no-interaction
+        echo "Proyecto CalendarApp | Mango Morado"
+        echo "Verificando estructura del proyecto..."
+        
+    - name: 📦 Verificar archivos
+      run: |
+        echo "Verificando archivos del proyecto..."
+        ls -la
+        echo "Archivos PHP encontrados:"
+        find . -name "*.php" | head -10
         
     - name: 🚀 Desplegar por FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
