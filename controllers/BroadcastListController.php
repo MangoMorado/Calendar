@@ -5,6 +5,7 @@ require_once 'includes/auth.php';
 require_once 'models/BroadcastListModel.php';
 require_once 'models/BroadcastHistoryModel.php';
 require_once 'includes/evolution_api.php';
+require_once 'includes/chatbot/contactos-validation.php';
 
 class BroadcastListController {
     private $broadcastListModel;
@@ -200,9 +201,11 @@ class BroadcastListController {
             return ['error' => 'No tienes permisos para modificar esta lista'];
         }
         
-        // Validar formato del número
-        if (empty($number) || !preg_match('/^\d{10,15}$/', $number)) {
-            return ['error' => 'El número debe tener entre 10 y 15 dígitos numéricos'];
+        // Validar formato del número usando la función robusta
+        $numeroCompleto = $number . '@s.whatsapp.net';
+        $validacion = limpiarYValidarNumeroWhatsApp($numeroCompleto);
+        if (!$validacion['valid']) {
+            return ['error' => 'El número no es válido: ' . $validacion['error']];
         }
         
         // Agregar sufijo de WhatsApp
@@ -318,7 +321,7 @@ class BroadcastListController {
     }
 
     /**
-     * Crea listas de difusión en lotes de 500 contactos con nombres secuenciales sin repetir
+     * Actualiza las listas de difusión automáticas eliminando las anteriores y creando nuevas
      */
     private function autoCreateBatches() {
         $userId = $this->currentUser['id'] ?? null;
@@ -327,20 +330,19 @@ class BroadcastListController {
             return ['redirect' => '?action=list'];
         }
 
-        // 1) Último número usado en nombres tipo "Difusion N" o "Difusionen N" (global)
-        $lastNumber = 0;
-        $sqlLast = "SELECT name FROM broadcast_lists WHERE (name REGEXP '^[Dd]ifusion(en)? [0-9]+$') ORDER BY created_at DESC, id DESC LIMIT 200";
-        $stmt = mysqli_prepare($this->conn, $sqlLast);
-        mysqli_stmt_execute($stmt);
-        $res = mysqli_stmt_get_result($stmt);
-        while ($row = mysqli_fetch_assoc($res)) {
-            if (preg_match('/[0-9]+$/', $row['name'], $m)) {
-                $n = intval($m[0]);
-                if ($n > $lastNumber) $lastNumber = $n;
-            }
+        // 1) Eliminar todas las difusiones automáticas existentes
+        $deleted = 0;
+        $sqlDelete = "DELETE bl FROM broadcast_lists bl 
+                     WHERE bl.description LIKE 'Creada automáticamente%' 
+                     AND bl.user_id = ?";
+        $stmtDelete = mysqli_prepare($this->conn, $sqlDelete);
+        mysqli_stmt_bind_param($stmtDelete, 'i', $userId);
+        
+        if (mysqli_stmt_execute($stmtDelete)) {
+            $deleted = mysqli_affected_rows($this->conn);
         }
 
-        // 2) Contactos no asignados a ninguna lista aún
+        // 2) Obtener contactos no asignados a ninguna lista
         $contactIds = [];
         $sqlContacts = "SELECT c.id FROM contacts c WHERE c.id NOT IN (SELECT contact_id FROM broadcast_list_contacts) ORDER BY c.id";
         if ($rc = mysqli_query($this->conn, $sqlContacts)) {
@@ -352,9 +354,11 @@ class BroadcastListController {
             return ['redirect' => '?action=list'];
         }
 
-        // 3) Crear lotes de 500
+        // 3) Crear nuevas difusiones en lotes de 500
         $batchSize = 500;
         $created = 0;
+        $lastNumber = 0;
+        
         for ($i = 0; $i < count($contactIds); $i += $batchSize) {
             $batch = array_slice($contactIds, $i, $batchSize);
             if (empty($batch)) break;
@@ -374,9 +378,9 @@ class BroadcastListController {
             }
             $lastNumber = $uniqueNumber; // reservar
 
-            // Crear lista
+            // Crear lista con nueva descripción
             $name = "Difusion $uniqueNumber";
-            $desc = "Creada automáticamente con hasta $batchSize contactos";
+            $desc = "Creada automáticamente";
             $stmtIns = mysqli_prepare($this->conn, "INSERT INTO broadcast_lists (name, description, user_id) VALUES (?, ?, ?)");
             mysqli_stmt_bind_param($stmtIns, 'ssi', $name, $desc, $userId);
             if (!mysqli_stmt_execute($stmtIns)) { continue; }
@@ -395,7 +399,7 @@ class BroadcastListController {
             $created++;
         }
 
-        $_SESSION['success_message'] = "Listas creadas: $created";
+        $_SESSION['success_message'] = "Difusiones actualizadas: $deleted eliminadas, $created nuevas creadas";
         return ['redirect' => '?action=list'];
     }
 

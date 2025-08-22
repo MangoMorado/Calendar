@@ -1,6 +1,7 @@
 <?php
 require_once '../config/database.php';
 require_once '../includes/auth.php';
+require_once '../includes/chatbot/contactos-validation.php';
 
 // Verificar autenticación y devolver JSON en lugar de redirigir
 if (!isAuthenticated()) {
@@ -79,7 +80,16 @@ $errores = [];
 foreach ($data as $contact) {
     $remoteJid = $contact['remoteJid'] ?? '';
     $pushName = $contact['pushName'] ?? null;
+    
+    // Validaciones básicas
     if (!$remoteJid || str_ends_with($remoteJid, '@g.us') || str_contains($remoteJid, '@lid')) {
+        $skipped++;
+        continue;
+    }
+    
+    // Validación robusta del número de WhatsApp
+    $validacion = limpiarYValidarNumeroWhatsApp($remoteJid);
+    if (!$validacion['valid']) {
         $skipped++;
         continue;
     }

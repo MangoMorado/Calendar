@@ -53,6 +53,13 @@ Warning: Cannot modify header information - headers already sent by (output star
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
 
+## Version 0.3.2 - GPT Review
+- **Sistema de validación robusto**: Implementada validación robusta de números de WhatsApp para evitar números inválidos como "718584497008509@s.whatsapp.net"
+- **Herramienta de limpieza**: Nueva herramienta `cleanup_invalid_contacts.php` para identificar y eliminar contactos inválidos existentes
+- **Actualización de difusiones automáticas**: Botón "Actualizar Difusiones Automáticas" que elimina difusiones existentes y crea nuevas con descripción simplificada
+- **Validación en importación**: Todas las funciones de importación de contactos ahora usan el sistema de validación robusto
+- **Corrección de recursión**: Solucionado error de "Maximum call stack size exceeded" en notificaciones 
+
 ## Version 0.3.1.3 - GPT Review
 - Nueva tool permite generar json de las listas de difusion [generate_broadcast_json.php]
 

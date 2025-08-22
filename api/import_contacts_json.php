@@ -1,6 +1,7 @@
 <?php
 require_once '../config/database.php';
 require_once '../includes/auth.php';
+require_once '../includes/chatbot/contactos-validation.php';
 
 if (!isAuthenticated()) {
     http_response_code(401);
@@ -78,10 +79,10 @@ foreach ($contactos as $index => $contact) {
         continue;
     }
 
-    // Limpiar el número de teléfono si es necesario
-    $cleanNumber = preg_replace('/[^0-9]/', '', $remoteJid);
-    if (strlen($cleanNumber) < 10) {
-        $errores[] = "Número de teléfono inválido: $remoteJid";
+    // Validar número de WhatsApp usando la nueva función robusta
+    $validacion = limpiarYValidarNumeroWhatsApp($remoteJid);
+    if (!$validacion['valid']) {
+        $errores[] = "Número de WhatsApp inválido: $remoteJid - " . $validacion['error'];
         $invalid_structure++;
         continue;
     }

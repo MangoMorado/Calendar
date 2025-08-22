@@ -56,6 +56,86 @@ function validarNumeroTelefono($numero) {
 }
 
 /**
+ * Valida si un número de WhatsApp es válido (número + dominio)
+ * @param string $numeroCompleto Número completo con dominio WhatsApp
+ * @return bool True si es válido, False si no
+ */
+function validarNumeroWhatsApp($numeroCompleto) {
+    // Verificar que tenga el formato correcto de WhatsApp
+    if (!preg_match('/^(\d+)@s\.whatsapp\.net$/', $numeroCompleto, $matches)) {
+        return false;
+    }
+    
+    $numero = $matches[1];
+    
+    // Validar que el número sea un teléfono válido
+    if (!validarNumeroTelefono($numero)) {
+        return false;
+    }
+    
+    // Validaciones adicionales de seguridad
+    // 1. No puede empezar con 0 (excepto algunos países específicos)
+    if (strlen($numero) > 1 && substr($numero, 0, 1) === '0') {
+        // Solo permitir 0 al inicio para países específicos
+        $indicativo = substr($numero, 1, 2);
+        $paisesConCero = ['57', '52', '54', '58']; // Colombia, México, Argentina, Venezuela
+        if (!in_array($indicativo, $paisesConCero)) {
+            return false;
+        }
+    }
+    
+    // 2. No puede ser un número de prueba o inválido
+    $numerosInvalidos = [
+        '0000000000', '1111111111', '2222222222', '3333333333',
+        '4444444444', '5555555555', '6666666666', '7777777777',
+        '8888888888', '9999999999', '1234567890', '0987654321'
+    ];
+    
+    if (in_array($numero, $numerosInvalidos)) {
+        return false;
+    }
+    
+    // 3. Verificar que no sea un número de sistema o interno
+    if (strlen($numero) > 15 || strlen($numero) < 8) {
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Limpia y valida un número de WhatsApp antes de procesarlo
+ * @param string $numeroCompleto Número completo con dominio
+ * @return array ['valid' => bool, 'clean_number' => string, 'error' => string]
+ */
+function limpiarYValidarNumeroWhatsApp($numeroCompleto) {
+    $resultado = [
+        'valid' => false,
+        'clean_number' => '',
+        'error' => ''
+    ];
+    
+    // Verificar formato básico
+    if (!str_contains($numeroCompleto, '@s.whatsapp.net')) {
+        $resultado['error'] = 'Formato de WhatsApp inválido';
+        return $resultado;
+    }
+    
+    // Extraer solo el número
+    $numero = explode('@', $numeroCompleto)[0];
+    
+    // Validar que sea un número válido
+    if (!validarNumeroWhatsApp($numeroCompleto)) {
+        $resultado['error'] = 'Número de teléfono inválido';
+        return $resultado;
+    }
+    
+    $resultado['valid'] = true;
+    $resultado['clean_number'] = $numeroCompleto;
+    return $resultado;
+}
+
+/**
  * Filtra un array de contactos y devuelve solo los que tienen números válidos
  * @param array $contactos Array de contactos
  * @return array Array con solo contactos válidos
@@ -64,10 +144,8 @@ function filtrarContactosValidos($contactos) {
     $contactosValidos = [];
     
     foreach ($contactos as $contacto) {
-        // Extraer número sin dominio WhatsApp
-        $numero = explode('@', $contacto['number'])[0];
-        
-        if (validarNumeroTelefono($numero)) {
+        // Validar número completo de WhatsApp
+        if (validarNumeroWhatsApp($contacto['number'])) {
             $contactosValidos[] = $contacto;
         }
     }
@@ -86,8 +164,7 @@ function obtenerEstadisticasContactos($contactos) {
     $invalidos = 0;
     
     foreach ($contactos as $contacto) {
-        $numero = explode('@', $contacto['number'])[0];
-        if (validarNumeroTelefono($numero)) {
+        if (validarNumeroWhatsApp($contacto['number'])) {
             $validos++;
         } else {
             $invalidos++;

@@ -86,8 +86,8 @@ $stats = $data['stats'];
                 </a>
                 <form method="POST" onsubmit="return confirmAutoCreate()">
                     <input type="hidden" name="auto_create_batches" value="1">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-collection"></i> Crear difusiones automáticas
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-arrow-clockwise"></i> Actualizar Difusiones Automáticas
                     </button>
                 </form>
             </div>
@@ -218,6 +218,6 @@ document.addEventListener('show.bs.modal', safeGlobalClean);
 window.limpiarBackdrops = window.limpiarBackdrops || safeGlobalClean;
 
 function confirmAutoCreate() {
-    return confirm('¿Crear listas automáticas de 500 contactos sin repetir y con nombres secuenciales?');
+    return confirm('¿Estás seguro de que quieres actualizar las difusiones automáticas? Esto eliminará las existentes y creará nuevas listas con hasta 500 contactos cada una.');
 }
 </script> 

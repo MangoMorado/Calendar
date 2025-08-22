@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/chatbot/contactos-validation.php';
 
 echo "<h2>Prueba de Importación de Contactos - Según Documentación Oficial</h2>";
 
@@ -124,6 +125,13 @@ foreach ($data as $contact) {
     if (!$remoteJid || str_ends_with($remoteJid, '@g.us')) {
         $skipped++;
         continue; // Ignorar grupos
+    }
+    
+    // Validación robusta del número de WhatsApp
+    $validacion = limpiarYValidarNumeroWhatsApp($remoteJid);
+    if (!$validacion['valid']) {
+        $skipped++;
+        continue; // Ignorar números inválidos
     }
     
     // Verificar si el contacto ya existe

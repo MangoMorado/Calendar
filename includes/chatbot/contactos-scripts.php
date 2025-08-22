@@ -41,7 +41,52 @@ function obtenerBanderaPais(numero) {
     return '🌍'; // Bandera genérica si no se encuentra
 }
 
-// Función para validar números de teléfono
+// Función para validar números de WhatsApp completos
+function validarNumeroWhatsApp(numeroCompleto) {
+    // Verificar que tenga el formato correcto de WhatsApp
+    const regex = /^(\d+)@s\.whatsapp\.net$/;
+    if (!regex.test(numeroCompleto)) {
+        return false;
+    }
+    
+    const numero = numeroCompleto.split('@')[0];
+    
+    // Validar que el número sea un teléfono válido
+    if (!validarNumeroTelefono(numero)) {
+        return false;
+    }
+    
+    // Validaciones adicionales de seguridad
+    // 1. No puede empezar con 0 (excepto algunos países específicos)
+    if (numero.length > 1 && numero.charAt(0) === '0') {
+        // Solo permitir 0 al inicio para países específicos
+        const indicativo = numero.substring(1, 3);
+        const paisesConCero = ['57', '52', '54', '58']; // Colombia, México, Argentina, Venezuela
+        if (!paisesConCero.includes(indicativo)) {
+            return false;
+        }
+    }
+    
+    // 2. No puede ser un número de prueba o inválido
+    const numerosInvalidos = [
+        '0000000000', '1111111111', '2222222222', '3333333333',
+        '4444444444', '5555555555', '6666666666', '7777777777',
+        '8888888888', '9999999999', '1234567890', '0987654321'
+    ];
+    
+    if (numerosInvalidos.includes(numero)) {
+        return false;
+    }
+    
+    // 3. Verificar que no sea un número de sistema o interno
+    if (numero.length > 15 || numero.length < 8) {
+        return false;
+    }
+    
+    return true;
+}
+
+// Función para validar números de teléfono (mantenida para compatibilidad)
 function validarNumeroTelefono(numero) {
     // Remover espacios, guiones y otros caracteres
     const numeroLimpio = numero.replace(/[\s\-\(\)]/g, '');
@@ -168,12 +213,12 @@ function obtenerContactos() {
 }
 
 function aplicarFiltrosYRenderizar() {
-    // Filtrar contactos válidos y que NO tengan @lid después del número
+    // Filtrar contactos válidos usando la nueva validación robusta
     const contactosValidos = todosLosContactos.filter(c => {
         // Excluir si el número contiene '@lid' después del número principal
         if (typeof c.number === 'string' && c.number.includes('@lid')) return false;
-        const numero = c.number.split('@')[0];
-        return validarNumeroTelefono(numero);
+        // Usar la nueva validación robusta de WhatsApp
+        return validarNumeroWhatsApp(c.number);
     });
     
     // Aplicar búsqueda

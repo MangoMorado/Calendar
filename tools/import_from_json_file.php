@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/chatbot/contactos-validation.php';
 
 // Verificar autenticación
 if (session_status() == PHP_SESSION_NONE) {
@@ -103,6 +104,14 @@ foreach ($contactos as $index => $contact) {
     if (str_ends_with($remoteJid, '@g.us')) {
         $skipped++;
         echo "⏭️ Omitido (grupo): " . htmlspecialchars($remoteJid) . "<br>";
+        continue;
+    }
+    
+    // Validación robusta del número de WhatsApp
+    $validacion = limpiarYValidarNumeroWhatsApp($remoteJid);
+    if (!$validacion['valid']) {
+        $skipped++;
+        echo "⏭️ Omitido (número inválido): " . htmlspecialchars($remoteJid) . " - " . $validacion['error'] . "<br>";
         continue;
     }
 
