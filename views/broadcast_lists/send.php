@@ -240,7 +240,7 @@ function showPreviewModal(html) {
 // Función de notificación simplificada
 // Usar showNotification centralizado si está disponible
 function showNotification(message, type) {
-    if (window.showNotification) {
+    if (window.showNotification && window.showNotification !== showNotification) {
         return window.showNotification(message, type);
     }
     // Fallback mínimo si aún no cargó el bundle

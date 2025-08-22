@@ -53,6 +53,9 @@ Warning: Cannot modify header information - headers already sent by (output star
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
 
+## Version 0.3.1.3 - GPT Review
+- Nueva tool permite generar json de las listas de difusion [generate_broadcast_json.php]
+
 ## Version 0.3.1.2 - GPT Review
 - Las listas de difusion ahora son globales
 
