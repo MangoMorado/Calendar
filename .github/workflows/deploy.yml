@@ -32,7 +32,7 @@ jobs:
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
         port: ${{ secrets.FTP_PORT }}
-        protocol: sftp
+        protocol: ftp
         local-dir: ./
         server-dir: ./
         exclude: |
