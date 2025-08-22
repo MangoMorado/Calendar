@@ -1,4 +1,4 @@
-name: 🚀 Despliegue por FTP a Producción
+name: 🚀 Despliegue por SFTP a Producción
 
 on:
   push:
@@ -25,12 +25,14 @@ jobs:
         echo "Archivos PHP encontrados:"
         find . -name "*.php" | head -10
         
-    - name: 🚀 Desplegar por FTP
+    - name: 🚀 Desplegar por SFTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
-        server: ${{ secrets.FTP_SERVER }}
-        username: ${{ secrets.FTP_USERNAME }}
-        password: ${{ secrets.FTP_PASSWORD }}
+        server: ${{ secrets.SFTP_SERVER }}
+        username: ${{ secrets.SFTP_USERNAME }}
+        password: ${{ secrets.SFTP_PASSWORD }}
+        port: ${{ secrets.SFTP_PORT }}
+        protocol: sftp
         local-dir: ./
         server-dir: ./
         exclude: |
@@ -102,7 +104,7 @@ jobs:
         
         if (!$conn) {
             error_log("Error en la conexión de producción: " . mysqli_connect_error());
-            die("Error en la conexión de producción: " . mysqli_connect_error());
+            die("Error en la conexión de producción: " . mysqli_error($conn));
         }
         
         if (!mysqli_select_db($conn, $dbName)) {
@@ -113,17 +115,17 @@ jobs:
         error_log("Conexión a base de datos de producción establecida correctamente");
         EOF
         
-        # Subir configuración por FTP
-        curl -T config/database.prod.php ftp://${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}@${{ secrets.FTP_SERVER }}/config/
+        # Subir configuración por SFTP
+        curl -T config/database.prod.php sftp://${{ secrets.SFTP_USERNAME }}:${{ secrets.SFTP_PASSWORD }}@${{ secrets.SFTP_SERVER }}/config/
         
     - name: 📧 Notificación de éxito
       if: success()
       run: |
-        echo "🎉 Despliegue por FTP completado exitosamente!"
+        echo "🎉 Despliegue por SFTP completado exitosamente!"
         echo "✅ La aplicación ha sido actualizada en producción"
         
     - name: ❌ Notificación de error
       if: failure()
       run: |
-        echo "❌ El despliegue por FTP ha fallado!"
+        echo "❌ El despliegue por SFTP ha fallado!"
         echo "🔍 Revisa los logs para más detalles"
