@@ -26,15 +26,14 @@ jobs:
         find . -name "*.php" | head -10
         
     - name: 🚀 Desplegar por SFTP
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      uses: wlixcc/SFTP-Deploy-Action@v1.2.4
       with:
-        server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
+        server: ${{ secrets.FTP_SERVER }}
         port: ${{ secrets.FTP_PORT }}
-        protocol: ftp
-        local-dir: ./
-        server-dir: ./
+        local_path: ./
+        remote_path: ./
         exclude: |
           **/.git*
           **/.git*/**
@@ -116,7 +115,7 @@ jobs:
         EOF
         
         # Subir configuración por SFTP
-        curl -T config/database.prod.php sftp://${{ secrets.SFTP_USERNAME }}:${{ secrets.SFTP_PASSWORD }}@${{ secrets.SFTP_SERVER }}/config/
+        # Nota: La configuración se sube automáticamente con el despliegue principal
         
     - name: 📧 Notificación de éxito
       if: success()
