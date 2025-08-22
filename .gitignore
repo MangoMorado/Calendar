@@ -1,12 +1,59 @@
-.vscode/
+# Archivos de configuración de producción
+config/database.prod.php
+
+# Archivos de configuración local
+config/database.local.php
+
+# Archivos de entorno
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.development
-.env.test
 .env.production
-.env.local
-.env.development.local
+
+# Archivos de log
+*.log
 php_error.log
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Archivos de caché
+cache/
+tmp/
+
+# Archivos de sesión
+sessions/
+
+# Archivos de uploads (excepto estructura)
+uploads/*
+!uploads/.gitkeep
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de backup
+*.bak
+*.backup
+
+# Archivos de configuración de servidor
+.htaccess.local
+nginx.conf.local
+
+# Archivos de certificados SSL
+*.pem
+*.key
+*.crt
+
+# Archivos de base de datos
+*.sql
+*.db
+
+# Archivos de configuración de XAMPP
+xampp/

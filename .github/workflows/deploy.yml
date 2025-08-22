@@ -1,0 +1,126 @@
+name: 🚀 Despliegue por FTP a Producción
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout del código
+      uses: actions/checkout@v4
+      
+    - name: 🔧 Configurar PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        
+    - name: 📦 Instalar dependencias
+      run: |
+        composer install --no-dev --optimize-autoloader --no-interaction
+        
+    - name: 🚀 Desplegar por FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./
+        server-dir: ./
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/vendor/**
+          **/*.log
+          **/.env.local
+          **/config/database.local.php
+          **/.github/**
+          **/tools/**
+          **/test/**
+          **/docs/**
+          **/README.md
+          **/CHANGENOTES.md
+          **/ROADMAP.md
+          **/LICENSE
+          **/favicon.ico
+          **/prompt.md
+          **/config/create_tables.sql
+          **/config/mundi_usuarios.sql
+          **/config/safe_database_update.sql
+          **/config/simple_database_update.sql
+          **/config/database.local.php
+          **/config/database.prod.php
+          **/.gitignore
+          **/.env*
+          **/deploy_temp/**
+          **/php_error.log
+          **/uploads/*
+          **/cache/**
+          **/tmp/**
+          **/sessions/**
+          **/.vscode/**
+          **/.idea/**
+          **/*.swp
+          **/*.swo
+          **/.DS_Store
+          **/Thumbs.db
+          **/*.bak
+          **/*.backup
+          **/.htaccess.local
+          **/nginx.conf.local
+          **/*.pem
+          **/*.key
+          **/*.crt
+          **/*.sql
+          **/*.db
+          **/xampp/**
+        
+    - name: 🔧 Crear configuración de producción
+      run: |
+        # Crear archivo de configuración de producción
+        cat > config/database.prod.php << 'EOF'
+        <?php
+        // Configuración de la base de datos PRODUCCIÓN
+        $dbServer = getenv('DB_HOST_PROD') ?: 'localhost';
+        $dbUsername = getenv('DB_USER_PROD') ?: 'root';
+        $dbPassword = getenv('DB_PASS_PROD') ?: '';
+        $dbName = getenv('DB_NAME_PROD') ?: 'calendar_app';
+        
+        define('DB_SERVER', $dbServer);
+        define('DB_USERNAME', $dbUsername);
+        define('DB_PASSWORD', $dbPassword);
+        define('DB_NAME', $dbName);
+        
+        $conn = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD);
+        
+        if (!$conn) {
+            error_log("Error en la conexión de producción: " . mysqli_connect_error());
+            die("Error en la conexión de producción: " . mysqli_connect_error());
+        }
+        
+        if (!mysqli_select_db($conn, $dbName)) {
+            error_log("Error al seleccionar base de datos de producción: " . mysqli_error($conn));
+            die("Error al seleccionar base de datos de producción: " . mysqli_error($conn));
+        }
+        
+        error_log("Conexión a base de datos de producción establecida correctamente");
+        EOF
+        
+        # Subir configuración por FTP
+        curl -T config/database.prod.php ftp://${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}@${{ secrets.FTP_SERVER }}/config/
+        
+    - name: 📧 Notificación de éxito
+      if: success()
+      run: |
+        echo "🎉 Despliegue por FTP completado exitosamente!"
+        echo "✅ La aplicación ha sido actualizada en producción"
+        
+    - name: ❌ Notificación de error
+      if: failure()
+      run: |
+        echo "❌ El despliegue por FTP ha fallado!"
+        echo "🔍 Revisa los logs para más detalles"

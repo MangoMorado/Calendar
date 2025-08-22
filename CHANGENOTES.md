@@ -53,6 +53,9 @@ Warning: Cannot modify header information - headers already sent by (output star
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
 
+## Version 0.3.3 - GPT Review
+- **Sistema de integración continua con GitHub Actions:** Ahora hace deploy FTP automaticamente con github
+
 ## Version 0.3.2 - GPT Review
 - **Sistema de validación robusto**: Implementada validación robusta de números de WhatsApp para evitar números inválidos como "718584497008509@s.whatsapp.net"
 - **Herramienta de limpieza**: Nueva herramienta `cleanup_invalid_contacts.php` para identificar y eliminar contactos inválidos existentes
