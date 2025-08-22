@@ -114,8 +114,15 @@ jobs:
         error_log("Conexión a base de datos de producción establecida correctamente");
         EOF
         
-        # Subir configuración por SFTP
-        # Nota: La configuración se sube automáticamente con el despliegue principal
+        echo "✅ Archivo database.prod.php creado localmente"
+        echo "📁 Contenido del archivo:"
+        cat config/database.prod.php
+        
+    - name: 📤 Subir configuración de producción
+      run: |
+        echo "🚀 Subiendo archivo de configuración de producción..."
+        # Usar scp para subir el archivo
+        echo "scp -P ${{ secrets.FTP_PORT }} config/database.prod.php ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER }}:${{ secrets.FTP_PATH }}/config/"
         
     - name: 📧 Notificación de éxito
       if: success()
