@@ -6,6 +6,14 @@ $res = mysqli_query($conn, $sql);
 if ($res && $row = mysqli_fetch_assoc($res)) {
     $notifTime = $row['setting_value'] ?: $notifTime;
 }
+
+// Cargar estado del recordatorio diario (por defecto OFF)
+$dailyReminderEnabled = false;
+$sql = "SELECT setting_value FROM settings WHERE setting_key = 'notifications_daily_appointments_enabled' LIMIT 1";
+$res = mysqli_query($conn, $sql);
+if ($res && $row = mysqli_fetch_assoc($res)) {
+    $dailyReminderEnabled = ($row['setting_value'] == '1');
+}
 ?>
 
 <div class="form-section">
@@ -19,8 +27,20 @@ if ($res && $row = mysqli_fetch_assoc($res)) {
             <div class="form-text">Formato 24h. Ej: 09:00</div>
         </div>
         <div class="col-12">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="daily_reminder_enabled" name="daily_reminder_enabled" <?php echo $dailyReminderEnabled ? 'checked' : ''; ?>>
+                <label class="form-check-label" for="daily_reminder_enabled">
+                    Recordatorio: Citas del día
+                </label>
+            </div>
+            <div class="form-text">Envía un recordatorio diario con las citas del día.</div>
+        </div>
+        <div class="col-12">
             <button id="btnGuardarNotif" class="btn btn-success" type="submit">
                 <i class="bi bi-save"></i> Guardar
+            </button>
+            <button id="btnEnviarAhora" class="btn btn-primary ms-2" type="button">
+                <i class="bi bi-send"></i> Enviar ahora
             </button>
         </div>
     </form>
@@ -35,10 +55,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const alertBox = document.getElementById('notifAlert');
     form.addEventListener('submit', function() {
         const time = document.getElementById('notifications_send_time').value;
+        const enabled = document.getElementById('daily_reminder_enabled').checked ? '1' : '0';
         btn.disabled = true;
         const fd = new FormData();
         fd.append('action', 'save_notifications_settings');
         fd.append('notifications_send_time', time);
+        fd.append('notifications_daily_appointments_enabled', enabled);
         fetch('chatbot_actions.php', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(data => {
@@ -51,6 +73,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 alertBox.innerHTML = `<div class="alert alert-danger">Error de conexión</div>`;
             })
             .finally(() => { btn.disabled = false; });
+    });
+
+    // Enviar ahora (forzar ejecución del cron)
+    document.getElementById('btnEnviarAhora').addEventListener('click', function() {
+        this.disabled = true;
+        const fd = new FormData();
+        fd.append('action', 'trigger_notifications_now');
+        fetch('chatbot_actions.php', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                const ok = !!data.success;
+                const msg = data.message || (ok ? 'Enviado' : 'Error al enviar');
+                alertBox.innerHTML = `<div class="alert alert-${ok?'success':'danger'}">${msg}</div>`;
+                if (window.showNotification) window.showNotification(msg, ok ? 'success' : 'error');
+            })
+            .catch(() => {
+                alertBox.innerHTML = `<div class="alert alert-danger">Error de conexión</div>`;
+            })
+            .finally(() => { this.disabled = false; });
     });
 });
 </script>

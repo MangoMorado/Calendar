@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $timezone = $_POST['timezone'] ?? 'America/Bogota';
     $n8nApiKey = $_POST['n8n_api_key'] ?? '';
     $n8nUrl = $_POST['n8n_url'] ?? '';
+    $notificationsWebhookUrl = $_POST['notifications_webhook_url'] ?? '';
     $selectedWorkflow = $_POST['selected_workflow'] ?? '';
     $selectedNotificationsWorkflow = $_POST['selected_notifications_workflow'] ?? '';
     $evolutionApiUrl = $_POST['evolution_api_url'] ?? '';
@@ -71,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ('timezone', ?),
                 ('n8n_api_key', ?),
                 ('n8n_url', ?),
+                ('notifications_webhook_url', ?),
                 ('selected_workflow', ?),
                 ('selected_notifications_workflow', ?),
                 ('evolution_api_url', ?),
@@ -85,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)";
         
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sssssssssssssssssss", $slotMinTime, $slotMaxTime, $slotDuration, $timeFormat, $businessDaysJson, $timezone, $n8nApiKey, $n8nUrl, $selectedWorkflow, $selectedNotificationsWorkflow, $evolutionApiUrl, $evolutionApiKey, $selectedEvolutionInstance, $evolutionInstanceName, $sessionTimeout, $rememberMeTimeout, $maxSessionsPerUser, $requireLoginOnVisit, $sessionCleanupInterval);
+        mysqli_stmt_bind_param($stmt, "ssssssssssssssssssss", $slotMinTime, $slotMaxTime, $slotDuration, $timeFormat, $businessDaysJson, $timezone, $n8nApiKey, $n8nUrl, $notificationsWebhookUrl, $selectedWorkflow, $selectedNotificationsWorkflow, $evolutionApiUrl, $evolutionApiKey, $selectedEvolutionInstance, $evolutionInstanceName, $sessionTimeout, $rememberMeTimeout, $maxSessionsPerUser, $requireLoginOnVisit, $sessionCleanupInterval);
         
         if (mysqli_stmt_execute($stmt)) {
             $success = true;
@@ -112,6 +114,7 @@ $timeFormat = $settings['timeFormat'] ?? '12h';
 $timezone = $settings['timezone'] ?? 'America/Bogota';
 $n8nApiKey = $settings['n8n_api_key'] ?? '';
 $n8nUrl = $settings['n8n_url'] ?? '';
+$notificationsWebhookUrl = $settings['notifications_webhook_url'] ?? 'https://n8n.mangomorado.com/webhook/notificaciones_mundoanimal';
 $selectedWorkflow = $settings['selected_workflow'] ?? '';
 $selectedNotificationsWorkflow = $settings['selected_notifications_workflow'] ?? '';
 $evolutionApiUrl = $settings['evolution_api_url'] ?? '';
@@ -414,6 +417,18 @@ include 'includes/header.php';
                         <?php endforeach; ?>
                     </select>
                     <small class="form-text text-muted">Flujo n8n para notificaciones del sistema</small>
+                </div>
+                <div class="form-group">
+                    <label for="notifications_webhook_url">Webhook de Notificaciones:</label>
+                    <input type="url" id="notifications_webhook_url" name="notifications_webhook_url" class="form-control" 
+                           value="<?php echo htmlspecialchars($notificationsWebhookUrl); ?>" placeholder="https://.../webhook/..." required>
+                    <small class="form-text text-muted">URL del webhook a donde se enviará el JSON de citas del día</small>
+                </div>
+                <div class="form-group">
+                    <button type="button" id="btnTestWebhook" class="btn btn-success">
+                        <i class="bi bi-bug"></i> Probar Webhook
+                    </button>
+                    <div id="testWebhookResult" class="mt-2"></div>
                 </div>
                 <?php elseif (!empty($n8nUrl) && !empty($n8nApiKey)): ?>
                 <div class="alert alert-warning">
@@ -725,6 +740,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     addQuickSelectionButtons();
+
+    // Probar webhook de notificaciones
+    const btnTest = document.getElementById('btnTestWebhook');
+    const resultBox = document.getElementById('testWebhookResult');
+    if (btnTest) {
+        btnTest.addEventListener('click', function() {
+            btnTest.disabled = true;
+            resultBox.innerHTML = '';
+            const fd = new FormData();
+            fd.append('action', 'test_notifications_webhook');
+            fetch('chatbot_actions.php', { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(data => {
+                    const ok = !!data.success;
+                    const msg = data.message || (ok ? 'OK' : 'Error');
+                    resultBox.innerHTML = `<div class="alert alert-${ok?'success':'danger'}">${msg}</div>`;
+                })
+                .catch(() => {
+                    resultBox.innerHTML = '<div class="alert alert-danger">Error de conexión</div>';
+                })
+                .finally(() => { btnTest.disabled = false; });
+        });
+    }
 });
 </script>
 

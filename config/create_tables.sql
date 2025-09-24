@@ -61,10 +61,20 @@ INSERT INTO settings (setting_key, setting_value)
 SELECT * FROM (SELECT 'selected_notifications_workflow', '') AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM settings WHERE setting_key = 'selected_notifications_workflow');
 
+-- URL del webhook de notificaciones (editable)
+INSERT INTO settings (setting_key, setting_value)
+SELECT * FROM (SELECT 'notifications_webhook_url', 'https://n8n.mangomorado.com/webhook/notificaciones_mundoanimal') AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM settings WHERE setting_key = 'notifications_webhook_url');
+
 -- Semilla para hora de envío de notificaciones (por defecto 09:00)
 INSERT INTO settings (setting_key, setting_value)
 SELECT * FROM (SELECT 'notifications_send_time', '09:00') AS tmp
 WHERE NOT EXISTS (SELECT 1 FROM settings WHERE setting_key = 'notifications_send_time');
+
+-- Semilla para toggle de recordatorio diario (por defecto 0 / OFF)
+INSERT INTO settings (setting_key, setting_value)
+SELECT * FROM (SELECT 'notifications_daily_appointments_enabled', '0') AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM settings WHERE setting_key = 'notifications_daily_appointments_enabled');
 
 -- Tabla de sesiones de usuario
 CREATE TABLE IF NOT EXISTS user_sessions (

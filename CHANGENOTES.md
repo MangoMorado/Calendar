@@ -1,23 +1,5 @@
 # CHANGENOTES - Calendario MundoAnimal
 
-## Lista de Cambios por implementar:
-- Revisar linea 67 de Appointments.php / API
-- reparar bug: (no modifiques nada solo explicame porque sale esto:
-
-Warning: ini_set(): Session ini settings cannot be changed after headers have already been sent in /includes/session_config.php on line 17
-
-Warning: session_set_cookie_params(): Session cookie parameters cannot be changed after headers have already been sent in includes/session_config.php on line 18
-
-Warning: ini_set(): Session ini settings cannot be changed after headers have already been sent in includes/session_config.php on line 17
-
-Warning: session_set_cookie_params(): Session cookie parameters cannot be changed after headers have already been sent in includes/session_config.php on line 18
-
-Warning: session_start(): Session cannot be started after headers have already been sent in includes/auth.php on line 10
-
-Warning: session_start(): Session cannot be started after headers have already been sent in includes/auth.php on line 299
-
-Warning: Cannot modify header information - headers already sent by (output started at config/database.php:296) in includes/auth.php on line 110)
-
 - Agregar retroalimentación del estado de envio de las difusiones
 - Estado de las citas según código de color (Verde, Amarillo: reprogramar, Rojo)
 - Sistema de cola de citas, que el sistema reciba citas del chatbot y que un humano las programe
@@ -28,7 +10,6 @@ Warning: Cannot modify header information - headers already sent by (output star
 - Mejoras de velocidad de carga
 - Optimización de Consultas: Para mejor rendimiento con grandes volúmenes de datos
 - Mejora de Responsividad: Para mejorar la experiencia en dispositivos móviles
-- Dashboard con estadísticas 🥭
 - Integración con Google Calendar
 - Integración con Vetesoft (https://app.vetesoft.org/login/)
 - Organizar el sistema bajo el modelo MVC
@@ -52,6 +33,9 @@ Warning: Cannot modify header information - headers already sent by (output star
   - Agregar Testing: Implementar pruebas unitarias y de integración
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
+
+## Version 0.4.2 - Charts
+- **Notificaciones integradas y operativas con n8n:** El sistema ahora es capaz de enviar notificaciones via n8n
 
 ## Version 0.4.1 - Charts
 - **Nuevas estadisticas:** Ahora incluye Promedio de citas x dia, Horas y Dia Pico, Distribución de la semana, Dia de mayor actividad
