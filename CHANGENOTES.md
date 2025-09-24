@@ -53,6 +53,10 @@ Warning: Cannot modify header information - headers already sent by (output star
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
 
+## Version 0.4 - Charts
+- **Sistema estadistico:** Ahora en /estadisticas.php se puede consultar información del total de citas agendadas
+- **Documentación actualizada:** Se documento en features_and_db.md la información de la app
+
 ## Version 0.3.3 - GPT Review
 - **Sistema de integración continua con GitHub Actions:** Ahora hace deploy FTP automaticamente con github
 

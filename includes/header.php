@@ -54,6 +54,9 @@ $pageTitle = isset($pageTitle) ? $pageTitle : 'Agenda de Citas | Mundo Animal';
                             <a href="profile.php" class="dropdown-item">
                                 <i class="bi bi-person"></i> Mi Perfil
                             </a>
+                            <a href="estadisticas.php" class="dropdown-item">
+                                <i class="bi bi-graph-up"></i> Estadísticas
+                            </a>
                             <?php if ($currentUser['role'] === 'admin') : ?>
                             <a href="historial.php" class="dropdown-item">
                                 <i class="bi bi-clock-history"></i> Historial
@@ -106,6 +109,9 @@ $pageTitle = isset($pageTitle) ? $pageTitle : 'Agenda de Citas | Mundo Animal';
             </a>
             <a href="chatbot.php" class="mobile-nav-item" title="Chatbot">
                 <i class="bi bi-robot"></i> Chatbot
+            </a>
+            <a href="estadisticas.php" class="mobile-nav-item" title="Estadísticas">
+                <i class="bi bi-graph-up"></i> Estadísticas
             </a>
         </nav>
     </div>
