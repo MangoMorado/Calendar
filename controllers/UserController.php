@@ -32,6 +32,7 @@ class UserController {
             $name = $_POST['name'] ?? '';
             $email = $_POST['email'] ?? '';
             $password = $_POST['password'] ?? '';
+            $phone = $_POST['phone'] ?? '57';
             $role = $_POST['role'] ?? 'user';
             $color = $_POST['color'] ?? '#0d6efd';
             
@@ -45,7 +46,7 @@ class UserController {
             } elseif (!preg_match('/^#[a-fA-F0-9]{6}$/', $color)) {
                 $error = "El color debe ser un código hexadecimal válido";
             } else {
-                if ($this->model->createUser($name, $email, $password, $role, $color)) {
+                if ($this->model->createUser($name, $email, $password, $role, $color, $phone)) {
                     // Registrar la acción en el historial del usuario
                     $this->model->updateUserHistory($this->currentUser['id'], "Creó un nuevo usuario: '$name'", [
                         'extra' => "Email: $email, Rol: $role"
@@ -81,6 +82,7 @@ class UserController {
             $role = $_POST['role'] ?? null;
             $color = $_POST['color'] ?? null;
             $password = $_POST['password'] ?? '';
+            $phone = $_POST['phone'] ?? null;
             
             // Validaciones básicas
             if (empty($name) || empty($email)) {
@@ -90,7 +92,7 @@ class UserController {
             } elseif ($color !== null && !preg_match('/^#[a-fA-F0-9]{6}$/', $color)) {
                 $error = "El color debe ser un código hexadecimal válido";
             } else {
-                if ($this->model->updateUser($id, $name, $email, $role, $color)) {
+                if ($this->model->updateUser($id, $name, $email, $role, $color, $phone)) {
                     if (!empty($password)) {
                         if (strlen($password) < 6) {
                             $error = "La contraseña debe tener al menos 6 caracteres";

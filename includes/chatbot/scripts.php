@@ -108,6 +108,41 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Manejar toggle del workflow de notificaciones
+    const notifToggle = document.querySelector('.workflow-toggle[data-notifications-workflow-id]');
+    if (notifToggle) {
+        notifToggle.addEventListener('click', function() {
+            if (this.disabled) return;
+            const workflowId = this.getAttribute('data-notifications-workflow-id');
+            const currentStatus = this.getAttribute('data-current-status');
+            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            this.disabled = true;
+            const formData = new FormData();
+            formData.append('action', 'toggle_workflow');
+            formData.append('workflow_id', workflowId);
+            formData.append('new_status', newStatus);
+            fetch('chatbot_actions.php', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    this.classList.toggle('active', newStatus === 'active');
+                    this.setAttribute('data-current-status', newStatus);
+                    const toggleLabel = this.querySelector('.toggle-label');
+                    toggleLabel.textContent = newStatus === 'active' ? 'ON' : 'OFF';
+                    const led = this.closest('.status-content').querySelector('.led-indicator');
+                    const statusText = this.closest('.status-content').querySelector('.status-text small');
+                    led.className = 'led-indicator ' + newStatus;
+                    statusText.innerHTML = newStatus === 'active' ? '<i class="bi bi-check-circle"></i> Activo y funcionando' : '<i class="bi bi-pause-circle"></i> Inactivo';
+                    window.showNotification('Notificaciones ' + (newStatus === 'active' ? 'activadas' : 'desactivadas'), 'success');
+                } else {
+                    window.showNotification('Error: ' + (data.message || 'No se pudo cambiar el estado del workflow de notificaciones'), 'error');
+                }
+            })
+            .catch(err => { console.error(err); window.showNotification('Error de conexión', 'error'); })
+            .finally(() => { this.disabled = false; });
+        });
+    }
+
     // Manejar toggle de Evolution API
     const evolutionToggle = document.querySelector('.workflow-toggle[data-instance-token]');
     if (evolutionToggle) {

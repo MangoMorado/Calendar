@@ -18,6 +18,7 @@ $action = $_POST['action'] ?? '';
 $workflowId = $_POST['workflow_id'] ?? '';
 $newStatus = $_POST['new_status'] ?? '';
 $instanceToken = $_POST['instance_token'] ?? '';
+$notificationsSendTime = $_POST['notifications_send_time'] ?? '';
 
 // Verificar que los datos necesarios estén presentes
 if (empty($action)) {
@@ -250,6 +251,21 @@ elseif ($action === 'connect_evolution_instance') {
             }
         }
         echo json_encode(['success' => false, 'message' => $errorMessage]);
+    }
+}
+// Guardar configuración de notificaciones
+elseif ($action === 'save_notifications_settings') {
+    if (empty($notificationsSendTime)) {
+        echo json_encode(['success' => false, 'message' => 'Hora inválida']);
+        exit;
+    }
+    $sql = "INSERT INTO settings (setting_key, setting_value) VALUES ('notifications_send_time', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, 's', $notificationsSendTime);
+    if (mysqli_stmt_execute($stmt)) {
+        echo json_encode(['success' => true, 'message' => 'Configuración guardada']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'No se pudo guardar']);
     }
 } else {
     echo json_encode(['success' => false, 'message' => 'Acción no reconocida']);

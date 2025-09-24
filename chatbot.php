@@ -29,6 +29,9 @@ include 'includes/header.php';
             <button class="nav-link" id="tab-config-btn" data-bs-toggle="pill" data-bs-target="#tab-config" type="button" role="tab">
                 <i class="bi bi-gear"></i> Configuración
             </button>
+            <button class="nav-link" id="tab-notificaciones-btn" data-bs-toggle="pill" data-bs-target="#tab-notificaciones" type="button" role="tab">
+                <i class="bi bi-bell"></i> Notificaciones
+            </button>
         </nav>
         <div class="chatbot-layout">
             <div class="chatbot-content-panel tab-content" id="chatbotTabsContent">
@@ -39,6 +42,9 @@ include 'includes/header.php';
                         <h2><i class="bi bi-gear"></i> Configuración</h2>
                         <div class="text-muted">Aquí podrás ajustar la configuración del chatbot.</div>
                     </div>
+                </div>
+                <div class="tab-pane fade" id="tab-notificaciones" role="tabpanel">
+                    <?php include 'includes/chatbot/notificaciones.php'; ?>
                 </div>
             </div>
         </div>

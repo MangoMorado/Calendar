@@ -53,6 +53,10 @@ Warning: Cannot modify header information - headers already sent by (output star
 - Agregar CI/CD autodeploy en server y vps
 - Modificar arquitectura para SAAS
 
+## Version 0.4.1 - Charts
+- **Nuevas estadisticas:** Ahora incluye Promedio de citas x dia, Horas y Dia Pico, Distribución de la semana, Dia de mayor actividad
+- **Nuevo sistema de notificaciones:** Ahora envia via n8n un JSON para envio de notificaciones de citas o agendas
+
 ## Version 0.4 - Charts
 - **Sistema estadistico:** Ahora en /estadisticas.php se puede consultar información del total de citas agendadas
 - **Documentación actualizada:** Se documento en features_and_db.md la información de la app

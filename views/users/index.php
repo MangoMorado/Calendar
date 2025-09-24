@@ -38,6 +38,7 @@ include 'includes/header.php';
                         <th>Nombre</th>
                         <th>Email</th>
                         <th>Rol</th>
+                        <th>Teléfono</th>
                         <th>Color</th>
                         <th>Calendario</th>
                         <th>Fecha de Registro</th>
@@ -55,6 +56,7 @@ include 'includes/header.php';
                                     <?php echo $user['role'] === 'admin' ? 'Administrador' : 'Usuario'; ?>
                                 </span>
                             </td>
+                            <td><?php echo htmlspecialchars($user['phone'] ?? ''); ?></td>
                             <td>
                                 <div class="color-preview">
                                     <span class="color-circle" style="background-color: <?php echo htmlspecialchars($user['color']); ?>"></span>

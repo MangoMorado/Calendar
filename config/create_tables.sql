@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NOT NULL DEFAULT '57',
     role ENUM('admin', 'user') NOT NULL DEFAULT 'user',
     history TEXT,
     color VARCHAR(7) DEFAULT '#3788d8',
@@ -54,6 +55,16 @@ CREATE TABLE IF NOT EXISTS settings (
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+-- Clave de configuración para n8n: flujo de notificaciones (si no existe)
+INSERT INTO settings (setting_key, setting_value)
+SELECT * FROM (SELECT 'selected_notifications_workflow', '') AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM settings WHERE setting_key = 'selected_notifications_workflow');
+
+-- Semilla para hora de envío de notificaciones (por defecto 09:00)
+INSERT INTO settings (setting_key, setting_value)
+SELECT * FROM (SELECT 'notifications_send_time', '09:00') AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM settings WHERE setting_key = 'notifications_send_time');
 
 -- Tabla de sesiones de usuario
 CREATE TABLE IF NOT EXISTS user_sessions (

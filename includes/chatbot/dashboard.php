@@ -5,7 +5,7 @@
         <!-- Indicador de estado del workflow -->
         <div class="status-card">
             <div class="status-header">
-                <h5><i class="bi bi-diagram-3"></i> Estado del Workflow</h5>
+                <h5><i class="bi bi-diagram-3"></i> Estado del Chatbot</h5>
             </div>
             <div class="status-content">
                 <div class="status-indicator">
@@ -79,6 +79,43 @@
                         <i class="bi bi-qr-code"></i> Conectar
                     </button>
                     <?php endif; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Indicador de estado de Notificaciones -->
+        <div class="status-card">
+            <div class="status-header">
+                <h5><i class="bi bi-bell"></i> Notificaciones</h5>
+            </div>
+            <div class="status-content">
+                <div class="status-indicator">
+                    <div class="led-indicator <?php echo $notificationsWorkflowStatus; ?>"></div>
+                    <div class="status-text">
+                        <strong>Workflow:</strong> <?php echo htmlspecialchars($notificationsWorkflowName); ?>
+                        <br>
+                        <small class="text-muted">
+                            <?php if ($notificationsWorkflowStatus === 'active'): ?>
+                                <i class="bi bi-check-circle"></i> Activo y funcionando
+                            <?php elseif ($notificationsWorkflowStatus === 'inactive'): ?>
+                                <i class="bi bi-pause-circle"></i> Inactivo
+                            <?php else: ?>
+                                <i class="bi bi-exclamation-triangle"></i> No configurado o error
+                            <?php endif; ?>
+                        </small>
+                    </div>
+                </div>
+                <?php if ($notificationsWorkflowStatus !== 'error' && !empty($notificationsWorkflowId)): ?>
+                <div class="toggle-container">
+                    <button type="button" class="workflow-toggle <?php echo $notificationsWorkflowStatus === 'active' ? 'active' : ''; ?>" 
+                            data-notifications-workflow-id="<?php echo htmlspecialchars($notificationsWorkflowId); ?>" 
+                            data-current-status="<?php echo $notificationsWorkflowStatus; ?>">
+                        <div class="toggle-slider"></div>
+                        <span class="toggle-label">
+                            <?php echo $notificationsWorkflowStatus === 'active' ? 'ON' : 'OFF'; ?>
+                        </span>
+                    </button>
                 </div>
                 <?php endif; ?>
             </div>

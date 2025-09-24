@@ -7,13 +7,13 @@ class UserModel {
     }
     
     public function getAllUsers() {
-        $sql = "SELECT id, name, email, role, color, calendar_visible, created_at FROM users ORDER BY created_at DESC";
+        $sql = "SELECT id, name, email, phone, role, color, calendar_visible, created_at FROM users ORDER BY created_at DESC";
         $result = mysqli_query($this->conn, $sql);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
     
     public function getUserById($id) {
-        $sql = "SELECT id, name, email, role, color, calendar_visible FROM users WHERE id = ?";
+        $sql = "SELECT id, name, email, phone, role, color, calendar_visible FROM users WHERE id = ?";
         $stmt = mysqli_prepare($this->conn, $sql);
         mysqli_stmt_bind_param($stmt, "i", $id);
         mysqli_stmt_execute($stmt);
@@ -21,15 +21,15 @@ class UserModel {
         return mysqli_fetch_assoc($result);
     }
     
-    public function createUser($name, $email, $password, $role = 'user', $color = '#0d6efd') {
+    public function createUser($name, $email, $password, $role = 'user', $color = '#0d6efd', $phone = '57') {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        $sql = "INSERT INTO users (name, email, password, role, color) VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO users (name, email, phone, password, role, color) VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = mysqli_prepare($this->conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sssss", $name, $email, $hashedPassword, $role, $color);
+        mysqli_stmt_bind_param($stmt, "ssssss", $name, $email, $phone, $hashedPassword, $role, $color);
         return mysqli_stmt_execute($stmt);
     }
     
-    public function updateUser($id, $name, $email, $role = null, $color = null) {
+    public function updateUser($id, $name, $email, $role = null, $color = null, $phone = null) {
         $sql = "UPDATE users SET name = ?, email = ?";
         $params = [$name, $email];
         $types = "ss";
@@ -43,6 +43,12 @@ class UserModel {
         if ($color !== null) {
             $sql .= ", color = ?";
             $params[] = $color;
+            $types .= "s";
+        }
+
+        if ($phone !== null) {
+            $sql .= ", phone = ?";
+            $params[] = $phone;
             $types .= "s";
         }
         

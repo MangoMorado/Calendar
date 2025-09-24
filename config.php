@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $n8nApiKey = $_POST['n8n_api_key'] ?? '';
     $n8nUrl = $_POST['n8n_url'] ?? '';
     $selectedWorkflow = $_POST['selected_workflow'] ?? '';
+    $selectedNotificationsWorkflow = $_POST['selected_notifications_workflow'] ?? '';
     $evolutionApiUrl = $_POST['evolution_api_url'] ?? '';
     $evolutionApiKey = $_POST['evolution_api_key'] ?? '';
     $selectedEvolutionInstance = $_POST['selected_evolution_instance'] ?? '';
@@ -71,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ('n8n_api_key', ?),
                 ('n8n_url', ?),
                 ('selected_workflow', ?),
+                ('selected_notifications_workflow', ?),
                 ('evolution_api_url', ?),
                 ('evolution_api_key', ?),
                 ('selected_evolution_instance', ?),
@@ -83,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)";
         
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssssssssssssssssss", $slotMinTime, $slotMaxTime, $slotDuration, $timeFormat, $businessDaysJson, $timezone, $n8nApiKey, $n8nUrl, $selectedWorkflow, $evolutionApiUrl, $evolutionApiKey, $selectedEvolutionInstance, $evolutionInstanceName, $sessionTimeout, $rememberMeTimeout, $maxSessionsPerUser, $requireLoginOnVisit, $sessionCleanupInterval);
+        mysqli_stmt_bind_param($stmt, "sssssssssssssssssss", $slotMinTime, $slotMaxTime, $slotDuration, $timeFormat, $businessDaysJson, $timezone, $n8nApiKey, $n8nUrl, $selectedWorkflow, $selectedNotificationsWorkflow, $evolutionApiUrl, $evolutionApiKey, $selectedEvolutionInstance, $evolutionInstanceName, $sessionTimeout, $rememberMeTimeout, $maxSessionsPerUser, $requireLoginOnVisit, $sessionCleanupInterval);
         
         if (mysqli_stmt_execute($stmt)) {
             $success = true;
@@ -111,6 +113,7 @@ $timezone = $settings['timezone'] ?? 'America/Bogota';
 $n8nApiKey = $settings['n8n_api_key'] ?? '';
 $n8nUrl = $settings['n8n_url'] ?? '';
 $selectedWorkflow = $settings['selected_workflow'] ?? '';
+$selectedNotificationsWorkflow = $settings['selected_notifications_workflow'] ?? '';
 $evolutionApiUrl = $settings['evolution_api_url'] ?? '';
 $evolutionApiKey = $settings['evolution_api_key'] ?? '';
 $selectedEvolutionInstance = $settings['selected_evolution_instance'] ?? '';
@@ -398,6 +401,19 @@ include 'includes/header.php';
                         <?php endforeach; ?>
                     </select>
                     <small class="form-text text-muted">Workflow de n8n que se utilizará para el chatbot</small>
+                </div>
+                <div class="form-group">
+                    <label for="selected_notifications_workflow">Workflow de Notificaciones:</label>
+                    <select id="selected_notifications_workflow" name="selected_notifications_workflow" class="form-control">
+                        <option value="">Selecciona un workflow</option>
+                        <?php foreach ($workflows as $workflow): ?>
+                            <option value="<?php echo htmlspecialchars($workflow['id'] . '|' . $workflow['name']); ?>" 
+                                    <?php echo $selectedNotificationsWorkflow === ($workflow['id'] . '|' . $workflow['name']) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($workflow['name']); ?> (ID: <?php echo $workflow['id']; ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small class="form-text text-muted">Flujo n8n para notificaciones del sistema</small>
                 </div>
                 <?php elseif (!empty($n8nUrl) && !empty($n8nApiKey)): ?>
                 <div class="alert alert-warning">

@@ -77,6 +77,61 @@ if ($resTop = mysqli_query($conn, $sqlTop)) {
     mysqli_free_result($resTop);
 }
 
+// Promedio de citas por día (desde la primera cita hasta hoy)
+$avgPerDay = 0;
+$avgFirstDate = null;
+$avgDaysSpan = 0;
+$sqlAvg = "SELECT MIN(DATE(start_time)) AS first_day, COUNT(*) AS total FROM appointments";
+if ($resAvg = mysqli_query($conn, $sqlAvg)) {
+    if ($row = mysqli_fetch_assoc($resAvg)) {
+        $avgFirstDate = $row['first_day'];
+        $totalCount = (int)$row['total'];
+        if ($avgFirstDate) {
+            $startDt = new DateTime($avgFirstDate);
+            $endDt = new DateTime('today');
+            $diff = $startDt->diff($endDt);
+            $avgDaysSpan = ((int)$diff->days) + 1; // incluir hoy
+            if ($avgDaysSpan > 0) {
+                $avgPerDay = $totalCount / $avgDaysSpan;
+            }
+        }
+    }
+    mysqli_free_result($resAvg);
+}
+
+// Distribución por día de la semana (promedio por semana)
+$weekdayAverages = [];
+$weekdayCounts = array_fill(1, 7, 0); // 1=Domingo ... 7=Sábado (MySQL DAYOFWEEK)
+$weeksSpan = max(1, (int)ceil(($avgDaysSpan ?: 1) / 7));
+
+$sqlDows = "SELECT DAYOFWEEK(start_time) AS dow, COUNT(*) AS total FROM appointments GROUP BY dow";
+if ($resDow = mysqli_query($conn, $sqlDows)) {
+    while ($row = mysqli_fetch_assoc($resDow)) {
+        $dow = (int)$row['dow'];
+        if ($dow >= 1 && $dow <= 7) {
+            $weekdayCounts[$dow] = (int)$row['total'];
+        }
+    }
+    mysqli_free_result($resDow);
+}
+
+// Mapa MySQL 1..7 -> texto Lun..Dom (queremos Lunes..Domingo)
+$dowOrder = [2,3,4,5,6,7,1]; // L a D
+$dowNames = [
+    1 => 'Domingo', 2 => 'Lunes', 3 => 'Martes', 4 => 'Miércoles', 5 => 'Jueves', 6 => 'Viernes', 7 => 'Sábado'
+];
+
+$maxAvg = 0;
+foreach ($dowOrder as $dow) {
+    $avg = $weeksSpan > 0 ? ($weekdayCounts[$dow] / $weeksSpan) : 0;
+    $weekdayAverages[] = [
+        'name' => $dowNames[$dow],
+        'avg' => $avg,
+        'total' => $weekdayCounts[$dow]
+    ];
+    if ($avg > $maxAvg) $maxAvg = $avg;
+}
+
 // Series para el segundo gráfico (controlado por botones)
 // 12 meses (por mes)
 $labels12m = [];
@@ -155,6 +210,81 @@ $values7d = [];
     $values7d = array_values($map);
 }
 
+// Distribución por hora (0-23) y hora pico
+$hourLabels = [];
+$hourValues = [];
+$peakHour = null;
+$peakHourCount = 0;
+{
+    $map = array_fill(0, 24, 0);
+    $sqlH = "SELECT HOUR(start_time) h, COUNT(*) total FROM appointments GROUP BY h";
+    if ($rs = mysqli_query($conn, $sqlH)) {
+        while ($r = mysqli_fetch_assoc($rs)) {
+            $h = (int)$r['h'];
+            if ($h >= 0 && $h <= 23) {
+                $map[$h] = (int)$r['total'];
+            }
+        }
+        mysqli_free_result($rs);
+    }
+    for ($h = 0; $h < 24; $h++) {
+        $hourLabels[] = str_pad((string)$h, 2, '0', STR_PAD_LEFT) . ':00';
+        $hourValues[] = $map[$h];
+        if ($map[$h] > $peakHourCount) { $peakHourCount = $map[$h]; $peakHour = $h; }
+    }
+}
+
+// Día de mayor actividad (por total de citas)
+$busiestDay = null;        // 'Y-m-d'
+$busiestDayTotal = 0;
+$busiestDayTypeTotals = [ 'general' => 0, 'veterinario' => 0, 'estetico' => 0 ];
+$busiestDayHours = [];     // array [['label'=>HH:00,'count'=>N]] top 5
+{
+    // Obtener día con más citas
+    $sqlBD = "SELECT DATE(start_time) d, COUNT(*) total
+              FROM appointments
+              GROUP BY d
+              ORDER BY total DESC, d DESC
+              LIMIT 1";
+    if ($rs = mysqli_query($conn, $sqlBD)) {
+        if ($r = mysqli_fetch_assoc($rs)) {
+            $busiestDay = $r['d'];
+            $busiestDayTotal = (int)$r['total'];
+        }
+        mysqli_free_result($rs);
+    }
+
+    if ($busiestDay) {
+        // Totales por tipo en ese día
+        $sqlBDT = "SELECT calendar_type, COUNT(*) total
+                   FROM appointments
+                   WHERE DATE(start_time) = '" . mysqli_real_escape_string($conn, $busiestDay) . "'
+                   GROUP BY calendar_type";
+        if ($rs = mysqli_query($conn, $sqlBDT)) {
+            while ($r = mysqli_fetch_assoc($rs)) {
+                $t = $r['calendar_type'] ?: 'general';
+                if (isset($busiestDayTypeTotals[$t])) $busiestDayTypeTotals[$t] = (int)$r['total'];
+            }
+            mysqli_free_result($rs);
+        }
+
+        // Top 5 horas de ese día
+        $sqlBDH = "SELECT HOUR(start_time) h, COUNT(*) total
+                   FROM appointments
+                   WHERE DATE(start_time) = '" . mysqli_real_escape_string($conn, $busiestDay) . "'
+                   GROUP BY h
+                   ORDER BY total DESC, h ASC
+                   LIMIT 5";
+        if ($rs = mysqli_query($conn, $sqlBDH)) {
+            while ($r = mysqli_fetch_assoc($rs)) {
+                $label = str_pad((string)((int)$r['h']), 2, '0', STR_PAD_LEFT) . ':00';
+                $busiestDayHours[] = [ 'label' => $label, 'count' => (int)$r['total'] ];
+            }
+            mysqli_free_result($rs);
+        }
+    }
+}
+
 // Incluir header
 include __DIR__ . '/includes/header.php';
 ?>
@@ -196,6 +326,23 @@ include __DIR__ . '/includes/header.php';
                     </div>
                     <div class="w-100" style="position: relative; height: 340px;">
                         <canvas id="appointmentsRangeChart" class="w-100 h-100"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-body">
+                    <div class="mb-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="h5 mb-1">Horas pico</h3>
+                            <p class="text-muted small mb-0">Distribución por hora del día</p>
+                        </div>
+                        <?php if ($peakHour !== null): ?>
+                            <span class="badge bg-success">Pico: <?php echo str_pad((string)$peakHour, 2, '0', STR_PAD_LEFT) . ':00'; ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="w-100" style="position: relative; height: 280px;">
+                        <canvas id="appointmentsHourChart" class="w-100 h-100"></canvas>
                     </div>
                 </div>
             </div>
@@ -250,6 +397,94 @@ include __DIR__ . '/includes/header.php';
                     </div>
                 </div>
             </div>
+
+            <div class="card mt-3">
+                <div class="card-body">
+                    <div class="mb-2">
+                        <h3 class="h5 mb-1">Promedio de citas por día</h3>
+                        <p class="text-muted small mb-0">
+                            <?php if ($avgFirstDate): ?>
+                                Desde <?php echo date('d/m/Y', strtotime($avgFirstDate)); ?> hasta hoy (<?php echo (int)$avgDaysSpan; ?> días)
+                            <?php else: ?>
+                                Sin datos de citas
+                            <?php endif; ?>
+                        </p>
+                    </div>
+                    <div class="d-flex align-items-baseline justify-content-between">
+                        <div class="fs-3 fw-bold text-dark"><?php echo number_format($avgPerDay, 2, ',', '.'); ?></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-body">
+                    <div class="mb-2">
+                        <h3 class="h5 mb-1">Distribución por día de la semana</h3>
+                        <p class="text-muted small mb-0">Promedio por semana (día pico resaltado)</p>
+                    </div>
+                    <?php if (empty($weekdayAverages)): ?>
+                        <p class="text-muted mb-0">Sin datos suficientes</p>
+                    <?php else: ?>
+                        <div class="list-group">
+                            <?php foreach ($weekdayAverages as $w): ?>
+                                <?php $pct = ($maxAvg > 0) ? min(100, ($w['avg'] / $maxAvg) * 100) : 0; ?>
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span><?php echo htmlspecialchars($w['name']); ?></span>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <?php if ($maxAvg > 0 && abs($w['avg'] - $maxAvg) < 1e-9): ?>
+                                                <span class="badge bg-success">Pico</span>
+                                            <?php endif; ?>
+                                            <span class="badge bg-primary"><?php echo number_format($w['avg'], 2, ',', '.'); ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: <?php echo (int)$pct; ?>%" aria-valuenow="<?php echo (int)$pct; ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-body">
+                    <div class="mb-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="h5 mb-1">Día de mayor actividad</h3>
+                            <p class="text-muted small mb-0">Fecha con más citas</p>
+                        </div>
+                        <?php if ($busiestDay): ?>
+                            <span class="badge bg-success"><?php echo date('d/m/Y', strtotime($busiestDay)); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <?php if (!$busiestDay): ?>
+                        <p class="text-muted mb-0">Sin datos</p>
+                    <?php else: ?>
+                        <div class="d-flex align-items-baseline justify-content-between mb-3">
+                            <div class="fs-3 fw-bold text-dark"><?php echo number_format($busiestDayTotal, 0, ',', '.'); ?></div>
+                            <span class="text-muted small">citas</span>
+                        </div>
+                        <div class="d-grid gap-2 mb-3">
+                            <div class="d-flex justify-content-between"><span>General</span><strong><?php echo (int)$busiestDayTypeTotals['general']; ?></strong></div>
+                            <div class="d-flex justify-content-between"><span>Veterinario</span><strong><?php echo (int)$busiestDayTypeTotals['veterinario']; ?></strong></div>
+                            <div class="d-flex justify-content-between"><span>Estético</span><strong><?php echo (int)$busiestDayTypeTotals['estetico']; ?></strong></div>
+                        </div>
+                        <?php if (!empty($busiestDayHours)): ?>
+                            <div class="mb-2"><span class="text-muted small">Horas más concurridas</span></div>
+                            <div class="list-group">
+                                <?php foreach ($busiestDayHours as $hh): ?>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span><?php echo htmlspecialchars($hh['label']); ?></span>
+                                        <span class="badge bg-primary"><?php echo (int)$hh['count']; ?></span>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
 </main>
@@ -274,6 +509,11 @@ $extraScripts = (
     "\ndocument.getElementById('btnRange12m').addEventListener('click', function(){ setActive(this); switchRange('12m'); });\n" .
     "\ndocument.getElementById('btnRange30d').addEventListener('click', function(){ setActive(this); switchRange('30d'); });\n" .
     "\ndocument.getElementById('btnRange7d').addEventListener('click', function(){ setActive(this); switchRange('7d'); });\n" .
+    "\n// Tercer gráfico: distribución por hora\n" .
+    'const hourCtx = document.getElementById("appointmentsHourChart").getContext("2d");' .
+    "\nconst hourData = { labels: " . json_encode($hourLabels, JSON_UNESCAPED_UNICODE) . ", datasets: [{\n  label: 'Citas',\n  data: " . json_encode($hourValues) . ",\n  backgroundColor: 'rgba(46, 134, 193, 0.5)',\n  borderColor: '#2E86C1',\n  borderWidth: 1,\n  maxBarThickness: 20,\n  borderRadius: 4\n}]};\n" .
+    "\nconst hourOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { precision: 0 } } } };\n" .
+    "\nnew Chart(hourCtx, { type: 'bar', data: hourData, options: hourOptions });\n" .
     "</script>\n"
 );
 

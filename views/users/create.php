@@ -35,6 +35,14 @@ include 'includes/header.php';
                 </div>
 
                 <div class="form-group">
+                    <label for="phone">Teléfono (con indicativo):</label>
+                    <input type="tel" id="phone" name="phone" class="form-control" 
+                           value="<?php echo isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : '57'; ?>" 
+                           pattern="^\d{7,20}$" required>
+                    <small class="form-text text-muted">Ej: 57XXXXXXXXXX (Colombia por defecto)</small>
+                </div>
+
+                <div class="form-group">
                     <label for="password">Contraseña:</label>
                     <input type="password" id="password" name="password" class="form-control" required>
                     <small class="form-text text-muted">La contraseña debe tener al menos 6 caracteres</small>

@@ -33,6 +33,14 @@ include 'includes/header.php';
                 </div>
 
                 <div class="form-group">
+                    <label for="phone">Teléfono (con indicativo):</label>
+                    <input type="tel" id="phone" name="phone" class="form-control" 
+                           value="<?php echo htmlspecialchars($user['phone'] ?? '57'); ?>" 
+                           pattern="^\d{7,20}$">
+                    <small class="form-text text-muted">Ej: 57XXXXXXXXXX</small>
+                </div>
+
+                <div class="form-group">
                     <label for="password">Nueva Contraseña:</label>
                     <input type="password" id="password" name="password" class="form-control">
                     <small class="form-text text-muted">Deja en blanco para mantener la contraseña actual</small>
