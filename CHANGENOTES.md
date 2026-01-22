@@ -1,38 +1,10 @@
 # CHANGENOTES - Calendario MundoAnimal
 
-- Agregar retroalimentación del estado de envio de las difusiones
-- Estado de las citas según código de color (Verde, Amarillo: reprogramar, Rojo)
-- Sistema de cola de citas, que el sistema reciba citas del chatbot y que un humano las programe
-- Mejoras de seguridad: Mover la JWT_SECRET fuera del código fuente. Restringir Access-Control-Allow-Origin en producción. Revisar posibles vulnerabilidades (inyección SQL, XSS - aunque el uso de consultas preparadas y htmlspecialchars ayuda).
-- Bloquear agendas (impedir agendar bajo condiciones personalizables)
-- Agregar sistema CRUD de Calendarios
-- Agregar sistema de notificación por WhatsApp / Correo electrónico
-- Mejoras de velocidad de carga
-- Optimización de Consultas: Para mejor rendimiento con grandes volúmenes de datos
-- Mejora de Responsividad: Para mejorar la experiencia en dispositivos móviles
-- Integración con Google Calendar
-- Integración con Vetesoft (https://app.vetesoft.org/login/)
-- Organizar el sistema bajo el modelo MVC
-- Agregar sistema de pruebas automatizadas
-- Documentación extendida
-- Agregar sistema de personalización "Skins"
-- Agregar sistema de configuración modular, pensando la app para varios tipos de usuarios (debe modificarse, nombre de la app, footer, logo, favicon)
-- Mejoras para PWA
-- Crear estructura de clases para modelos principales (User, Appointment)
-- carga lazy de eventos para calendarios con muchas citas
-- Reparar consistencia: Hay dos formas de manejar las citas (API REST en api/ y el script process_appointment.php). Sería ideal consolidar en una sola (probablemente la API). La eliminación de citas en assets/js/app.js usa el endpoint antiguo y recarga la página, podría mejorarse usando la API y actualizando dinámicamente.
-- Mejorar eficiencia: La obtención y paginación del historial en historial.php podría optimizarse. El sistema de migración automática en config/database.php podría reemplazarse por uno más robusto si la aplicación crece.
-- Mejoras detectas en la 0.0.8:
-  - Consistencia: Dos formas de manejar citas (API y process_appointment.php)
-  - Arquitectura: Migración gradual a MVC en progreso
-  - Rendimiento: Optimización de consultas para grandes volúmenes
-  - Seguridad: JWT_SECRET en código fuente
-  - Testing: Falta sistema de pruebas automatizadas
-  - Optimizar Consultas: Implementar paginación y lazy loading
-  - Mejorar Seguridad: Mover secretos a variables de entorno
-  - Agregar Testing: Implementar pruebas unitarias y de integración
-- Agregar CI/CD autodeploy en server y vps
-- Modificar arquitectura para SAAS
+## Version 0.5 - Restart
+- Iniciando migración de proyecto a Laravel 12
+- Nuevo sistema de roles de usuario: Mango, Admin y User, rol mango para el sistema
+- Nueva documentación y cambios en README, CHANGENOTES y ROADMAP
+- Migración del sistema de Calendario
 
 ## Version 0.4.2 - Charts
 - **Notificaciones integradas y operativas con n8n:** El sistema ahora es capaz de enviar notificaciones via n8n

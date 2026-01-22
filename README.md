@@ -30,82 +30,11 @@ Una aplicación web completa para gestionar citas y reuniones en una clínica ve
 
 ## Tecnologías
 
-- PHP 7.0 o superior
-- MySQL 5.6 o superior
-- JavaScript (ES6+)
-- [FullCalendar](https://fullcalendar.io/) v6.1.17
-- Bootstrap Icons
-- HTML5/CSS3
-
-## Seguridad
-
-- Contraseñas con hash seguro
-- Protección contra inyección SQL y XSS
-- Validación de formularios en cliente y servidor
-- Control de sesiones y roles
-- Recuperación de contraseñas con tokens de un solo uso
-- JWT para autenticación de la API
-
 ## Instalación y uso
-
-1. Clona o descarga el repositorio en tu directorio web (ejemplo: htdocs en XAMPP)
-2. Configura la base de datos en `config/database.php`
-3. Importa la estructura de la base de datos o ejecuta el script de inicialización
-4. Accede a la aplicación en tu navegador (ejemplo: http://localhost/Calendar)
-5. Regístrate o usa las credenciales predeterminadas:
-   - Administrador: admin@example.com / admin123
-   - Usuario: user@example.com / user123
 
 ## Uso
 
-- Inicie sesión con sus credenciales para acceder al sistema
-- Seleccione el tipo de calendario que desea utilizar (General, Estético o Veterinario)
-- Para crear una nueva cita, haga clic en el botón "Nueva Cita" o directamente en una fecha/hora en el calendario
-- Para editar una cita existente, haga clic en la cita que desea modificar
-- Puede mover citas directamente usando el sistema Drag & Drop
-- Cambie la vista del calendario usando los botones de la parte superior
-- Acceda a su perfil para modificar su información personal o cambiar su contraseña
-- Los administradores pueden acceder al historial completo de actividades del sistema
-
-## Configuración del Calendario
-
-El sistema permite configurar:
-- Hora de inicio y fin del calendario
-- Duración de los slots de tiempo
-- Formato de hora (12 horas / 24 horas)
-
-## Seguridad
-
-- Contraseñas almacenadas con hash seguro
-- Protección contra inyección SQL mediante prepared statements
-- Validación de formularios en el cliente y servidor
-- Sesiones seguras y control de acceso basado en roles
-- Sistema de recuperación de contraseñas con tokens de un solo uso
-
-## Estructura de Archivos
-
-- `assets/` - CSS, JS, imágenes
-- `config/` - Configuración y scripts de base de datos
-- `includes/` - Funciones, utilidades y módulos de calendario
-- `api/` - Endpoints RESTful (citas, notas, autenticación)
-- `docs/` - Documentación, OpenAPI, colección Postman
-- `views/` - Vistas adicionales
-
-## API REST con JWT
-
-- Autenticación y endpoints RESTful para citas y notas
-- Documentación OpenAPI (`docs/openapi.yaml`)
-- Colección Postman (`docs/postman_collection.json`)
-
-## Roadmap y mejoras en curso
-
-- Integración Google Calendar y Vetesoft
-- Dashboard con estadísticas
-- Sistema de notificaciones por WhatsApp/email
-- Optimización de consultas y carga lazy
-- Consolidación de manejo de citas en la API REST
-- Migración completa a MVC y pruebas automatizadas
-- Mejoras para PWA y personalización visual
+## Configuración del Calendarios
 
 ## Licencia
 

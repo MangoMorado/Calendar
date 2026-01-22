@@ -1,59 +1,28 @@
-# Archivos de configuración de producción
-config/database.prod.php
-
-# Archivos de configuración local
-config/database.local.php
-
-# Archivos de entorno
-.env
-.env.local
-.env.production
-
-# Archivos de log
-*.log
-php_error.log
-
-# Archivos temporales
-*.tmp
-*.temp
-
-# Archivos de caché
-cache/
-tmp/
-
-# Archivos de sesión
-sessions/
-
-# Archivos de uploads (excepto estructura)
-uploads/*
-!uploads/.gitkeep
-
-# Archivos de IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Archivos de sistema
+/.phpunit.cache
+/bootstrap/ssr
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/resources/js/actions
+/resources/js/routes
+/resources/js/wayfinder
+/storage/*.key
+/storage/pail
+/vendor
 .DS_Store
-Thumbs.db
-
-# Archivos de backup
-*.bak
-*.backup
-
-# Archivos de configuración de servidor
-.htaccess.local
-nginx.conf.local
-
-# Archivos de certificados SSL
-*.pem
-*.key
-*.crt
-
-# Archivos de base de datos
-*.sql
-*.db
-
-# Archivos de configuración de XAMPP
-xampp/
+.env
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+/auth.json
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
