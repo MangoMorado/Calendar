@@ -1,5 +1,11 @@
 # CHANGENOTES - Calendario MundoAnimal
 
+## Version 0.5.1 - Restart
+- Fix: lint a carpeta old, agregada como excepción
+- **Suite completa de tests:** 160 tests implementados cubriendo controladores, modelos, políticas, form requests, middleware y enums. Factories para Calendar y Appointment creadas.
+- **Gestión de usuarios (/users):** CRUD completo de usuarios con restricciones de roles (Admin solo puede crear usuarios con rol User, Mango tiene permisos completos). Política de autorización, Form Requests, vistas React/Inertia (index, create, edit). Integración en sidebar y header solo para roles Admin y Mango. Columnas `color` y `phone` agregadas a la migración de usuarios.
+- **Traducción:** Traducción completa al español.
+
 ## Version 0.5 - Restart
 - Iniciando migración de proyecto a Laravel 12
 - Nuevo sistema de roles de usuario: Mango, Admin y User, rol mango para el sistema

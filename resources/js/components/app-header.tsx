@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Calendar, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
+import { BookOpen, Calendar, Folder, LayoutGrid, Menu, Search, Users } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -36,32 +36,20 @@ import { index as calendarsIndex } from '@/routes/calendars';
 import type { BreadcrumbItem, NavItem, SharedData } from '@/types';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
+import { index as usersIndex } from '@/routes/users';
 
 type Props = {
     breadcrumbs?: BreadcrumbItem[];
 };
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Calendarios',
-        href: calendarsIndex(),
-        icon: Calendar,
-    },
-];
-
 const rightNavItems: NavItem[] = [
     {
-        title: 'Repository',
+        title: 'Repositorio',
         href: 'https://github.com/laravel/react-starter-kit',
         icon: Folder,
     },
     {
-        title: 'Documentation',
+        title: 'Documentación',
         href: 'https://laravel.com/docs/starter-kits#react',
         icon: BookOpen,
     },
@@ -73,6 +61,33 @@ const activeItemStyles =
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage<SharedData>();
     const { auth } = page.props;
+    const user = auth.user;
+
+    // Verificar si el usuario tiene rol Admin o Mango
+    const isAdmin = user?.role === 'admin' || user?.role === 'mango';
+
+    const mainNavItems: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Calendarios',
+            href: calendarsIndex(),
+            icon: Calendar,
+        },
+        ...(isAdmin
+            ? [
+                  {
+                      title: 'Usuarios',
+                      href: usersIndex(),
+                      icon: Users,
+                  },
+              ]
+            : []),
+    ];
+
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
     return (
