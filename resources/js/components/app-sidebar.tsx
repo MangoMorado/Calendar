@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Calendar, LayoutGrid, Users } from 'lucide-react';
+import { Calendar, FileText, LayoutGrid, Users } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -13,9 +13,10 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard as dashboardRoute } from '@/routes';
 import { index as calendarsIndex } from '@/routes/calendars';
+import { index as notesIndex } from '@/routes/notes';
+import { index as usersIndex } from '@/routes/users';
 import type { NavItem, SharedData } from '@/types';
 import AppLogo from './app-logo';
-import { index as usersIndex } from '@/routes/users';
 
 export function AppSidebar() {
     const { auth } = usePage<SharedData>().props;
@@ -34,6 +35,11 @@ export function AppSidebar() {
             title: 'Calendarios',
             href: calendarsIndex(),
             icon: Calendar,
+        },
+        {
+            title: 'Notas',
+            href: notesIndex(),
+            icon: FileText,
         },
         ...(isAdmin
             ? [

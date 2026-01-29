@@ -96,6 +96,8 @@ class UserController extends Controller
      */
     public function update(UserUpdateRequest $request, User $user): RedirectResponse
     {
+        $this->authorize('update', $user);
+
         $data = $request->validated();
 
         // Solo actualizar la contraseña si se proporciona

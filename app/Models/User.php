@@ -2,17 +2,19 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\Role;
+use Illuminate\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmailContract
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, MustVerifyEmail, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -53,6 +55,22 @@ class User extends Authenticatable
             'two_factor_confirmed_at' => 'datetime',
             'role' => Role::class,
         ];
+    }
+
+    /**
+     * Obtener las categorías de notas del usuario
+     */
+    public function noteCategories(): HasMany
+    {
+        return $this->hasMany(NoteCategory::class, 'user_id');
+    }
+
+    /**
+     * Obtener las notas del usuario
+     */
+    public function notes(): HasMany
+    {
+        return $this->hasMany(Note::class, 'user_id');
     }
 
     /**

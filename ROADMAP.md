@@ -34,3 +34,4 @@
 - Sistema Multitenant
 - Sistema PWA
 - Agregar CI/CD autodeploy en server y vps
+- Migración a sistema PAMI

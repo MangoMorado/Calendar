@@ -27,6 +27,14 @@ class CalendarUpdateRequest extends FormRequest
             'color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'user_id' => ['nullable', 'exists:users,id'],
             'is_active' => ['sometimes', 'boolean'],
+            'start_time' => ['sometimes', 'required', 'date_format:H:i'],
+            'end_time' => ['sometimes', 'required', 'date_format:H:i', 'after:start_time'],
+            'slot_duration' => ['sometimes', 'required', 'integer', 'min:5', 'max:120'],
+            'time_format' => ['sometimes', 'required', 'string', 'in:12,24'],
+            'timezone' => ['sometimes', 'required', 'string', 'timezone'],
+            'business_days' => ['sometimes', 'required', 'array'],
+            'business_days.*' => ['integer', 'in:1,2,3,4,5,6,7'],
+            'visibility' => ['sometimes', 'required', 'string', 'in:todos,solo_yo'],
         ];
     }
 }

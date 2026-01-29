@@ -48,3 +48,33 @@ test('correct password must be provided to update password', function () {
         ->assertSessionHasErrors('current_password')
         ->assertRedirect(route('user-password.edit'));
 });
+
+test('password update is throttled', function () {
+    $user = User::factory()->create();
+    $current = 'password';
+
+    for ($i = 0; $i < 6; $i++) {
+        $next = 'new-password-'.$i;
+
+        $this->actingAs($user)
+            ->from(route('user-password.edit'))
+            ->put(route('user-password.update'), [
+                'current_password' => $current,
+                'password' => $next,
+                'password_confirmation' => $next,
+            ])
+            ->assertRedirect(route('user-password.edit'));
+
+        $user->refresh();
+        $current = $next;
+    }
+
+    $this->actingAs($user)
+        ->from(route('user-password.edit'))
+        ->put(route('user-password.update'), [
+            'current_password' => $current,
+            'password' => 'another-password',
+            'password_confirmation' => 'another-password',
+        ])
+        ->assertStatus(429);
+});

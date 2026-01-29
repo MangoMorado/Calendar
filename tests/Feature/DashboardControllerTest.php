@@ -22,6 +22,8 @@ test('authenticated users can view dashboard', function () {
             ->has('events')
             ->has('upcomingAppointments')
             ->has('users')
+            ->has('calendarConfig')
+            ->has('canCreateCalendar')
         );
 });
 
@@ -183,5 +185,100 @@ test('dashboard shows all users for assignment', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->has('users', 3)
+        );
+});
+
+test('dashboard shows calendars with visibility todos to any user', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $calendar = Calendar::factory()->create([
+        'is_active' => true,
+        'visibility' => 'todos',
+        'user_id' => $otherUser->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('calendars', 1)
+            ->where('calendars.0.id', $calendar->id)
+        );
+});
+
+test('dashboard shows solo_yo calendar only to its owner', function () {
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $calendar = Calendar::factory()->create([
+        'is_active' => true,
+        'visibility' => 'solo_yo',
+        'user_id' => $owner->id,
+    ]);
+
+    $this->actingAs($owner)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('calendars', 1)
+            ->where('calendars.0.id', $calendar->id)
+        );
+
+    $this->actingAs($otherUser)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('calendars', 0)
+        );
+});
+
+test('dashboard shows appointments only from visible calendars', function () {
+    $owner = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $visibleCalendar = Calendar::factory()->create([
+        'is_active' => true,
+        'visibility' => 'todos',
+    ]);
+    $soloYoCalendar = Calendar::factory()->create([
+        'is_active' => true,
+        'visibility' => 'solo_yo',
+        'user_id' => $owner->id,
+    ]);
+
+    $visibleAppointment = Appointment::factory()->create(['calendar_id' => $visibleCalendar->id]);
+    $soloYoAppointment = Appointment::factory()->create(['calendar_id' => $soloYoCalendar->id]);
+
+    $this->actingAs($owner)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('events', 2)
+        );
+
+    $this->actingAs($otherUser)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('events', 1)
+            ->where('events.0.id', (string) $visibleAppointment->id)
+        );
+});
+
+test('dashboard returns default calendarConfig when no calendars visible', function () {
+    $user = User::factory()->create();
+    Calendar::factory()->create([
+        'is_active' => true,
+        'visibility' => 'solo_yo',
+        'user_id' => User::factory()->create()->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('calendars', 0)
+            ->where('calendarConfig.start_time', '06:00')
+            ->where('calendarConfig.end_time', '19:00')
+            ->where('calendarConfig.slot_duration', 30)
+            ->where('calendarConfig.business_days', [1, 2, 3, 4, 5, 6])
         );
 });

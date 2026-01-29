@@ -34,7 +34,9 @@ class CalendarController extends Controller
     {
         $this->authorize('create', Calendar::class);
 
-        return Inertia::render('calendars/create');
+        return Inertia::render('calendars/create', [
+            'timezones' => $this->timezonesList(),
+        ]);
     }
 
     /**
@@ -73,6 +75,7 @@ class CalendarController extends Controller
 
         return Inertia::render('calendars/edit', [
             'calendar' => $calendar,
+            'timezones' => $this->timezonesList(),
         ]);
     }
 
@@ -107,5 +110,19 @@ class CalendarController extends Controller
         return redirect()
             ->route('calendars.index')
             ->with('success', 'Calendario eliminado exitosamente.');
+    }
+
+    /**
+     * Lista de zonas horarias para selects (América y UTC).
+     *
+     * @return array<int, string>
+     */
+    private function timezonesList(): array
+    {
+        $identifiers = \DateTimeZone::listIdentifiers(\DateTimeZone::AMERICA);
+        $identifiers[] = 'UTC';
+        sort($identifiers);
+
+        return array_combine($identifiers, $identifiers);
     }
 }

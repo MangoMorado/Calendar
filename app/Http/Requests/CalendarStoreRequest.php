@@ -26,6 +26,14 @@ class CalendarStoreRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:1000'],
             'color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'user_id' => ['nullable', 'exists:users,id'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
+            'slot_duration' => ['required', 'integer', 'min:5', 'max:120'],
+            'time_format' => ['required', 'string', 'in:12,24'],
+            'timezone' => ['required', 'string', 'timezone'],
+            'business_days' => ['required', 'array'],
+            'business_days.*' => ['integer', 'in:1,2,3,4,5,6,7'],
+            'visibility' => ['required', 'string', 'in:todos,solo_yo'],
         ];
     }
 }

@@ -24,6 +24,13 @@ class CalendarFactory extends Factory
             'color' => fake()->hexColor(),
             'user_id' => User::factory(),
             'is_active' => true,
+            'start_time' => '06:00',
+            'end_time' => '19:00',
+            'slot_duration' => 30,
+            'time_format' => '12',
+            'timezone' => 'America/Bogota',
+            'business_days' => [1, 2, 3, 4, 5, 6],
+            'visibility' => 'todos',
         ];
     }
 

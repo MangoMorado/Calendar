@@ -1,5 +1,12 @@
 # CHANGENOTES - Calendario MundoAnimal
 
+## Version 0.5.2 - Restart
+- **Configuración por calendario:** Hora inicio/fin, duración de cita, formato 12/24h, zona horaria y días hábiles en create/edit; solo Admin y Mango pueden ver y editar.
+- **Comando `php artisan mango`:** Crea un usuario con rol Mango; pide correo y contraseña (con confirmación).
+- **Dashboard por visibilidad:** Calendario general muestra solo calendarios visibles (Todos o Solo yo vinculado al usuario). Estado vacío cuando no hay calendarios (mensaje, icono, enlace a crear). Configuración unificada: días hábiles como unión, resto con valores por defecto en conflicto.
+- **Módulo Notas:** CRUD de notas con visibilidad (Todos / Solo yo), categorías propias por usuario, búsqueda y filtrado. Editor Quill con toolbar (alineación, títulos, fuentes). Enlace público para compartir (página plana sin auth). Disponible para todos los usuarios registrados. Tests y políticas incluidas.
+- **Suite de 20+ tests de features:** Nuevos tests para routing (home → login, /settings → profile, appearance), UserController CRUD (guests/user/admin/mango), UserPolicy, UserStoreRequest y UserUpdateRequest (validación y roles), Notes (show propio/ajeno, filtros search/category_id, store con categoría), NoteCategories (show, create, Policy, Request), Calendars (mango puede edit/update/delete) y throttle en actualización de contraseña. User con `MustVerifyEmail`; registro crea usuarios verificados; `Event::fake(Registered)` en test de registro; `Features::emailVerification()` activo; rutas protegidas con `verified`; `authorize('update')` en UserController::update.
+
 ## Version 0.5.1 - Restart
 - Fix: lint a carpeta old, agregada como excepción
 - **Suite completa de tests:** 160 tests implementados cubriendo controladores, modelos, políticas, form requests, middleware y enums. Factories para Calendar y Appointment creadas.

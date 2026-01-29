@@ -4,6 +4,13 @@ use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
+use Laravel\Fortify\Features;
+
+beforeEach(function (): void {
+    if (! in_array(Features::emailVerification(), config('fortify.features', []), true)) {
+        $this->markTestSkipped('Email verification is temporarily disabled');
+    }
+});
 
 test('email verification screen can be rendered', function () {
     $user = User::factory()->unverified()->create();

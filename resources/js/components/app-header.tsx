@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Calendar, Folder, LayoutGrid, Menu, Search, Users } from 'lucide-react';
+import { BookOpen, Calendar, FileText, Folder, LayoutGrid, Menu, Search, Users } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -33,10 +33,11 @@ import { useInitials } from '@/hooks/use-initials';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as calendarsIndex } from '@/routes/calendars';
+import { index as notesIndex } from '@/routes/notes';
+import { index as usersIndex } from '@/routes/users';
 import type { BreadcrumbItem, NavItem, SharedData } from '@/types';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
-import { index as usersIndex } from '@/routes/users';
 
 type Props = {
     breadcrumbs?: BreadcrumbItem[];
@@ -76,6 +77,11 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
             title: 'Calendarios',
             href: calendarsIndex(),
             icon: Calendar,
+        },
+        {
+            title: 'Notas',
+            href: notesIndex(),
+            icon: FileText,
         },
         ...(isAdmin
             ? [

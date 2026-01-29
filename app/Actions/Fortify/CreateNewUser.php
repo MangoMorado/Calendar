@@ -30,6 +30,7 @@ class CreateNewUser implements CreatesNewUsers
             'email' => $input['email'],
             'password' => $input['password'],
             'phone' => $input['phone'] ?? null,
+            'email_verified_at' => now(),
         ]);
     }
 }

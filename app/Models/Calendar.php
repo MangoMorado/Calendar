@@ -22,6 +22,13 @@ class Calendar extends Model
         'color',
         'user_id',
         'is_active',
+        'start_time',
+        'end_time',
+        'slot_duration',
+        'time_format',
+        'timezone',
+        'business_days',
+        'visibility',
     ];
 
     /**
@@ -33,6 +40,7 @@ class Calendar extends Model
     {
         return [
             'is_active' => 'boolean',
+            'business_days' => 'array',
         ];
     }
 

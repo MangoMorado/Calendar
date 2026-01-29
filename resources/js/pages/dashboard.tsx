@@ -3,8 +3,8 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { Head, router, useForm } from '@inertiajs/react';
-import { Calendar as CalendarIcon, Clock, Plus, User } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Calendar as CalendarIcon, CalendarOff, Clock, Plus, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import InputError from '@/components/input-error';
@@ -24,6 +24,7 @@ import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import { store, update } from '@/routes/appointments';
+import { create as createCalendar } from '@/routes/calendars';
 import type { BreadcrumbItem } from '@/types';
 
 /**
@@ -86,9 +87,28 @@ type UpcomingAppointment = {
     user_name: string;
 };
 
+type ViewingAppointment = {
+    title: string;
+    description: string | null;
+    calendarName: string;
+    userName: string;
+    startFormatted: string;
+    endFormatted: string;
+    allDay: boolean;
+};
+
 type User = {
     id: number;
     name: string;
+};
+
+type CalendarConfig = {
+    start_time: string;
+    end_time: string;
+    slot_duration: number;
+    business_days: number[];
+    time_format: string;
+    timezone: string;
 };
 
 type Props = {
@@ -97,6 +117,8 @@ type Props = {
     selectedCalendarId: number | null;
     upcomingAppointments: UpcomingAppointment[];
     users: User[];
+    calendarConfig?: CalendarConfig;
+    canCreateCalendar?: boolean;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -106,12 +128,45 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+const defaultCalendarConfig: CalendarConfig = {
+    start_time: '06:00',
+    end_time: '19:00',
+    slot_duration: 30,
+    business_days: [1, 2, 3, 4, 5, 6],
+    time_format: '12',
+    timezone: 'America/Bogota',
+};
+
+function formatDateTime(iso: string, use24h: boolean): string {
+    const d = new Date(iso);
+    if (use24h) {
+        return d.toLocaleString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        });
+    }
+    return d.toLocaleString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+    });
+}
+
 export default function Dashboard({
     events,
     calendars,
     selectedCalendarId,
     upcomingAppointments,
     users,
+    calendarConfig = defaultCalendarConfig,
+    canCreateCalendar = false,
 }: Props) {
     const isMobile = useIsMobile();
     const [selectedCalendar, setSelectedCalendar] = useState<number | null>(
@@ -119,12 +174,17 @@ export default function Dashboard({
     );
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
+    const [isViewMode, setIsViewMode] = useState(false);
+    const [viewingAppointment, setViewingAppointment] =
+        useState<ViewingAppointment | null>(null);
     const [editingAppointmentId, setEditingAppointmentId] = useState<number | null>(null);
     const [selectedDate, setSelectedDate] = useState<{
         start: string;
         end: string;
     } | null>(null);
     const [allDay, setAllDay] = useState(false);
+
+    const use24h = calendarConfig?.time_format === '24';
 
     const form = useForm({
         title: '',
@@ -159,7 +219,8 @@ export default function Dashboard({
     const handleDateClick = (info: { date: Date; allDay: boolean }) => {
         const start = new Date(info.date);
         const end = new Date(start);
-        end.setHours(start.getHours() + 1);
+        const slotMinutes = calendarConfig?.slot_duration ?? 30;
+        end.setTime(start.getTime() + slotMinutes * 60 * 1000);
 
         const startStr = start.toISOString().slice(0, 16);
         const endStr = end.toISOString().slice(0, 16);
@@ -185,107 +246,123 @@ export default function Dashboard({
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setIsEditMode(false);
+        setIsViewMode(false);
+        setViewingAppointment(null);
         setEditingAppointmentId(null);
         setSelectedDate(null);
         setAllDay(false);
         form.reset();
     };
 
-    const handleEventClick = (info: { event: { id: string; title: string; start: Date | null; end: Date | null; extendedProps?: { calendarId?: number; userId?: number } } }) => {
+    const handleEventClick = (info: { event: { id: string; title: string; start: Date | null; end: Date | null; extendedProps?: { calendarId?: number; calendarName?: string; userId?: number; userName?: string } } }) => {
         const appointmentId = parseInt(info.event.id, 10);
-        
-        // Buscar el evento completo en la lista de eventos
         const event = events.find((e) => e.id === info.event.id);
-        
-        if (event) {
-            const start = info.event.start;
-            const end = info.event.end || start;
-            
-            const startStr = start ? new Date(start).toISOString().slice(0, 16) : '';
-            const endStr = end ? new Date(end).toISOString().slice(0, 16) : '';
-            
-            form.setData({
-                title: event.title || '',
-                description: event.description || '',
-                calendar_id: event.extendedProps?.calendarId?.toString() || '',
-                user_id: event.extendedProps?.userId?.toString() || '',
-                all_day: event.allDay || false,
-                start_time: startStr,
-                end_time: endStr,
-            });
-            
-            setAllDay(event.allDay || false);
-            setIsEditMode(true);
-            setEditingAppointmentId(appointmentId);
-            setIsModalOpen(true);
-        }
+        if (!event) return;
+
+        const start = info.event.start;
+        const end = info.event.end || start;
+        const startStr = start ? new Date(start).toISOString().slice(0, 16) : '';
+        const endStr = end ? new Date(end).toISOString().slice(0, 16) : '';
+
+        form.setData({
+            title: event.title || '',
+            description: event.description || '',
+            calendar_id: event.extendedProps?.calendarId?.toString() || '',
+            user_id: event.extendedProps?.userId?.toString() || '',
+            all_day: event.allDay ?? false,
+            start_time: startStr,
+            end_time: endStr,
+        });
+
+        setAllDay(event.allDay ?? false);
+        setViewingAppointment({
+            title: event.title || '',
+            description: event.description ?? null,
+            calendarName: event.extendedProps?.calendarName ?? '—',
+            userName: event.extendedProps?.userName ?? 'Sin asignar',
+            startFormatted: event.start ? formatDateTime(event.start, use24h) : '—',
+            endFormatted: event.end ? formatDateTime(event.end, use24h) : '—',
+            allDay: event.allDay ?? false,
+        });
+        setIsViewMode(true);
+        setIsEditMode(true);
+        setEditingAppointmentId(appointmentId);
+        setIsModalOpen(true);
     };
 
     const handleUpcomingAppointmentClick = (appointmentId: number) => {
-        // Buscar el evento en la lista de eventos
         const event = events.find((e) => e.id === appointmentId.toString());
-        
+
         if (event) {
             const startDate = new Date(event.start);
             const endDate = new Date(event.end);
-            
             const startStr = startDate.toISOString().slice(0, 16);
             const endStr = endDate.toISOString().slice(0, 16);
-            
+
             form.setData({
                 title: event.title || '',
                 description: event.description || '',
                 calendar_id: event.extendedProps?.calendarId?.toString() || '',
                 user_id: event.extendedProps?.userId?.toString() || '',
-                all_day: event.allDay || false,
+                all_day: event.allDay ?? false,
                 start_time: startStr,
                 end_time: endStr,
             });
-            
-            setAllDay(event.allDay || false);
-            setIsEditMode(true);
-            setEditingAppointmentId(appointmentId);
-            setIsModalOpen(true);
+            setAllDay(event.allDay ?? false);
+            setViewingAppointment({
+                title: event.title || '',
+                description: event.description ?? null,
+                calendarName: event.extendedProps?.calendarName ?? '—',
+                userName: event.extendedProps?.userName ?? 'Sin asignar',
+                startFormatted: formatDateTime(event.start, use24h),
+                endFormatted: formatDateTime(event.end, use24h),
+                allDay: event.allDay ?? false,
+            });
         } else {
-            // Si no se encuentra en events, buscar en upcomingAppointments
-            const upcomingAppointment = upcomingAppointments.find(
-                (apt) => apt.id === appointmentId,
-            );
-            
-            if (upcomingAppointment) {
-                const startDate = new Date(upcomingAppointment.start_time);
-                const endDate = new Date(startDate);
-                endDate.setHours(startDate.getHours() + 1);
-                
-                const startStr = startDate.toISOString().slice(0, 16);
-                const endStr = endDate.toISOString().slice(0, 16);
-                
-                // Buscar el calendar_id del nombre del calendario
-                const calendar = calendars.find(
-                    (cal) => cal.name === upcomingAppointment.calendar_name,
-                );
-                
-                // Buscar el user_id del nombre del usuario
-                const user = users.find(
-                    (usr) => usr.name === upcomingAppointment.user_name,
-                );
-                
-                form.setData({
-                    title: upcomingAppointment.title || '',
-                    description: upcomingAppointment.description || '',
-                    calendar_id: calendar?.id.toString() || '',
-                    user_id: user?.id.toString() || '',
-                    all_day: false,
-                    start_time: startStr,
-                    end_time: endStr,
-                });
-                
-                setAllDay(false);
-                setIsEditMode(true);
-                setEditingAppointmentId(appointmentId);
-                setIsModalOpen(true);
-            }
+            const apt = upcomingAppointments.find((a) => a.id === appointmentId);
+            if (!apt) return;
+
+            const startDate = new Date(apt.start_time);
+            const endDate = new Date(startDate);
+            endDate.setHours(startDate.getHours() + 1);
+            const startStr = startDate.toISOString().slice(0, 16);
+            const endStr = endDate.toISOString().slice(0, 16);
+
+            const calendar = calendars.find((c) => c.name === apt.calendar_name);
+            const user = users.find((u) => u.name === apt.user_name);
+
+            form.setData({
+                title: apt.title || '',
+                description: apt.description || '',
+                calendar_id: calendar?.id.toString() || '',
+                user_id: user?.id.toString() || '',
+                all_day: false,
+                start_time: startStr,
+                end_time: endStr,
+            });
+            setAllDay(false);
+            setViewingAppointment({
+                title: apt.title || '',
+                description: apt.description ?? null,
+                calendarName: apt.calendar_name,
+                userName: apt.user_name,
+                startFormatted: apt.start_time_formatted,
+                endFormatted: endDate.toLocaleString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: !use24h,
+                }),
+                allDay: false,
+            });
         }
+
+        setIsViewMode(true);
+        setIsEditMode(true);
+        setEditingAppointmentId(appointmentId);
+        setIsModalOpen(true);
     };
 
     return (
@@ -293,59 +370,75 @@ export default function Dashboard({
             <Head title="Dashboard - Calendario General" />
 
             <div className="flex h-full flex-1 flex-col gap-4 overflow-hidden rounded-xl p-2 sm:p-4">
-                {/* Header con título y filtro */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h1 className="text-xl font-semibold sm:text-2xl">
-                            Calendario General
-                        </h1>
-                        <p className="text-muted-foreground text-xs sm:text-sm">
-                            Todos los eventos de calendarios activos
+                {calendars.length === 0 ? (
+                    <div className="flex min-h-[400px] flex-1 flex-col items-center justify-center gap-4 rounded-lg border bg-card p-8 sm:min-h-[500px]">
+                        <CalendarOff className="h-16 w-16 text-muted-foreground/50 sm:h-20 sm:w-20" />
+                        <p className="max-w-md text-center text-muted-foreground text-sm sm:text-base">
+                            No hay calendarios disponibles. Crea un
+                            calendario primero para empezar a agendar
+                            citas.
                         </p>
+                        {canCreateCalendar && (
+                            <Button asChild>
+                                <Link href={createCalendar().url}>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Crear calendario
+                                </Link>
+                            </Button>
+                        )}
                     </div>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-                        <div className="flex w-full items-center gap-2 sm:w-auto">
-                            <label
-                                htmlFor="calendar-filter"
-                                className="text-xs font-medium sm:text-sm"
-                            >
-                                Filtrar:
-                            </label>
-                            <select
-                                id="calendar-filter"
-                                value={selectedCalendar?.toString() || 'all'}
-                                onChange={(e) =>
-                                    handleCalendarFilter(e.target.value)
-                                }
-                                className="flex h-9 flex-1 items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-xs shadow-xs ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-[200px] sm:text-sm"
-                            >
-                                <option value="all">Todos</option>
-                                {calendars.map((calendar) => (
-                                    <option
-                                        key={calendar.id}
-                                        value={calendar.id.toString()}
+                ) : (
+                    <>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h1 className="text-xl font-semibold sm:text-2xl">
+                                    Calendario General
+                                </h1>
+                                <p className="text-muted-foreground text-xs sm:text-sm">
+                                    Todos los eventos de calendarios activos
+                                </p>
+                            </div>
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                                <div className="flex w-full items-center gap-2 sm:w-auto">
+                                    <label
+                                        htmlFor="calendar-filter"
+                                        className="text-xs font-medium sm:text-sm"
                                     >
-                                        {calendar.name}
-                                    </option>
-                                ))}
-                            </select>
+                                        Filtrar:
+                                    </label>
+                                    <select
+                                        id="calendar-filter"
+                                        value={selectedCalendar?.toString() || 'all'}
+                                        onChange={(e) =>
+                                            handleCalendarFilter(e.target.value)
+                                        }
+                                        className="flex h-9 flex-1 items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-xs shadow-xs ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-[200px] sm:text-sm"
+                                    >
+                                        <option value="all">Todos</option>
+                                        {calendars.map((calendar) => (
+                                            <option
+                                                key={calendar.id}
+                                                value={calendar.id.toString()}
+                                            >
+                                                {calendar.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <Button
+                                    className="w-full sm:w-auto"
+                                    size={isMobile ? 'sm' : 'default'}
+                                    onClick={handleNewAppointment}
+                                >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Nueva Cita
+                                </Button>
+                            </div>
                         </div>
-                        <Button
-                            className="w-full sm:w-auto"
-                            size={isMobile ? 'sm' : 'default'}
-                            onClick={handleNewAppointment}
-                        >
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nueva Cita
-                        </Button>
-                    </div>
-                </div>
 
-                {/* Grid principal: Calendario (70%) y Próximas Citas (30%) */}
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_350px]">
-                    {/* Calendario Principal */}
-                    <div className="min-h-[400px] rounded-lg border bg-card p-2 sm:min-h-[600px] sm:p-4">
-                        <FullCalendar
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_350px]">
+                            <div className="min-h-[400px] rounded-lg border bg-card p-2 sm:min-h-[600px] sm:p-4">
+                                <FullCalendar
                             plugins={[
                                 dayGridPlugin,
                                 timeGridPlugin,
@@ -369,6 +462,38 @@ export default function Dashboard({
                             expandRows={isMobile}
                             firstDay={1}
                             nowIndicator={true}
+                            eventTimeFormat={
+                                calendarConfig?.time_format === '24'
+                                    ? { hour: '2-digit', minute: '2-digit', hour12: false }
+                                    : { hour: '2-digit', minute: '2-digit', hour12: true }
+                            }
+                            slotLabelFormat={
+                                calendarConfig?.time_format === '24'
+                                    ? { hour: '2-digit', minute: '2-digit', hour12: false }
+                                    : { hour: '2-digit', minute: '2-digit', hour12: true }
+                            }
+                            slotMinTime={
+                                calendarConfig?.start_time != null
+                                    ? `${String(calendarConfig.start_time).slice(0, 5)}:00`
+                                    : '06:00:00'
+                            }
+                            slotMaxTime={
+                                calendarConfig?.end_time != null
+                                    ? `${String(calendarConfig.end_time).slice(0, 5)}:00`
+                                    : '19:00:00'
+                            }
+                            slotDuration={
+                                calendarConfig?.slot_duration != null
+                                    ? { minutes: calendarConfig.slot_duration }
+                                    : { minutes: 30 }
+                            }
+                            hiddenDays={(() => {
+                                const days = calendarConfig?.business_days ?? [1, 2, 3, 4, 5, 6];
+                                return [0, 1, 2, 3, 4, 5, 6].filter(
+                                    (fcDay) =>
+                                        !days.includes(fcDay === 0 ? 7 : fcDay),
+                                );
+                            })()}
                             dateClick={handleDateClick}
                             eventClick={handleEventClick}
                             eventDrop={(info) => {
@@ -486,22 +611,80 @@ export default function Dashboard({
                         </div>
                     </div>
                 </div>
+                    </>
+                )}
             </div>
 
             {/* Modal de Creación/Edición de Cita */}
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <Dialog open={isModalOpen} onOpenChange={(open) => (open ? setIsModalOpen(true) : handleCloseModal())}>
                 <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>
-                            {isEditMode ? 'Editar Cita' : 'Nueva Cita'}
+                            {isViewMode
+                                ? 'Ver Cita'
+                                : isEditMode
+                                    ? 'Editar Cita'
+                                    : 'Nueva Cita'}
                         </DialogTitle>
                         <DialogDescription>
-                            {isEditMode
-                                ? 'Modifica la información de la cita'
-                                : 'Completa el formulario para crear una nueva cita'}
+                            {isViewMode
+                                ? 'Información de la cita'
+                                : isEditMode
+                                    ? 'Modifica la información de la cita'
+                                    : 'Completa el formulario para crear una nueva cita'}
                         </DialogDescription>
                     </DialogHeader>
 
+                    {isViewMode && viewingAppointment ? (
+                        <div className="space-y-4">
+                            <div className="space-y-3 rounded-lg border p-4">
+                                <div>
+                                    <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Título</p>
+                                    <p className="mt-1 text-sm font-medium">{viewingAppointment.title}</p>
+                                </div>
+                                {viewingAppointment.description && (
+                                    <div>
+                                        <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Descripción</p>
+                                        <p className="mt-1 whitespace-pre-wrap text-sm">{viewingAppointment.description}</p>
+                                    </div>
+                                )}
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Calendario</p>
+                                        <p className="mt-1 text-sm">{viewingAppointment.calendarName}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Usuario asignado</p>
+                                        <p className="mt-1 text-sm">{viewingAppointment.userName}</p>
+                                    </div>
+                                </div>
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <div>
+                                        <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Inicio</p>
+                                        <p className="mt-1 text-sm">{viewingAppointment.startFormatted}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Fin</p>
+                                        <p className="mt-1 text-sm">{viewingAppointment.endFormatted}</p>
+                                    </div>
+                                </div>
+                                {viewingAppointment.allDay && (
+                                    <div>
+                                        <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Todo el día</p>
+                                        <p className="mt-1 text-sm">Sí</p>
+                                    </div>
+                                )}
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={handleCloseModal}>
+                                    Cerrar
+                                </Button>
+                                <Button onClick={() => setIsViewMode(false)}>
+                                    Editar
+                                </Button>
+                            </DialogFooter>
+                        </div>
+                    ) : (
                     <form
                         onSubmit={(e) => {
                             e.preventDefault();
@@ -678,6 +861,7 @@ export default function Dashboard({
                                 </DialogFooter>
                             </div>
                     </form>
+                    )}
                 </DialogContent>
             </Dialog>
         </AppLayout>

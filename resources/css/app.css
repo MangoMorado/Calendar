@@ -142,6 +142,13 @@
     }
 }
 
+/* Quill editor: forzar LTR para evitar texto en espejo / al revés */
+.ql-editor {
+    direction: ltr;
+    text-align: left;
+    unicode-bidi: isolate;
+}
+
 /* FullCalendar Styles */
 .fc {
     @apply font-sans;
