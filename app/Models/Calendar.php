@@ -29,6 +29,7 @@ class Calendar extends Model
         'timezone',
         'business_days',
         'visibility',
+        'include_in_analytics',
     ];
 
     /**
@@ -41,6 +42,7 @@ class Calendar extends Model
         return [
             'is_active' => 'boolean',
             'business_days' => 'array',
+            'include_in_analytics' => 'boolean',
         ];
     }
 

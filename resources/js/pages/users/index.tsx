@@ -14,8 +14,8 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem, PaginatedData } from '@/types';
 import { create, destroy, index } from '@/routes/users';
+import type { BreadcrumbItem, PaginatedData } from '@/types';
 
 type User = {
     id: number;

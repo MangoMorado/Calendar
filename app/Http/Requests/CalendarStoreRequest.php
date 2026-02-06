@@ -34,6 +34,7 @@ class CalendarStoreRequest extends FormRequest
             'business_days' => ['required', 'array'],
             'business_days.*' => ['integer', 'in:1,2,3,4,5,6,7'],
             'visibility' => ['required', 'string', 'in:todos,solo_yo'],
+            'include_in_analytics' => ['nullable', 'boolean'],
         ];
     }
 }

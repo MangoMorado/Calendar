@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Calendar, FileText, Folder, LayoutGrid, Menu, Search, Users } from 'lucide-react';
+import { Activity, BarChart3, BookOpen, Calendar, FileText, Folder, LayoutGrid, Menu, Search, Users } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn, toUrl } from '@/lib/utils';
-import { dashboard } from '@/routes';
+import { analytics, dashboard, health } from '@/routes';
 import { index as calendarsIndex } from '@/routes/calendars';
 import { index as notesIndex } from '@/routes/notes';
 import { index as usersIndex } from '@/routes/users';
@@ -64,8 +64,8 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     const { auth } = page.props;
     const user = auth.user;
 
-    // Verificar si el usuario tiene rol Admin o Mango
     const isAdmin = user?.role === 'admin' || user?.role === 'mango';
+    const isMango = user?.role === 'mango';
 
     const mainNavItems: NavItem[] = [
         {
@@ -89,6 +89,20 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                       title: 'Usuarios',
                       href: usersIndex(),
                       icon: Users,
+                  },
+                  {
+                      title: 'Analíticas',
+                      href: analytics(),
+                      icon: BarChart3,
+                  },
+              ]
+            : []),
+        ...(isMango
+            ? [
+                  {
+                      title: 'Salud',
+                      href: health(),
+                      icon: Activity,
                   },
               ]
             : []),

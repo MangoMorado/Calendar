@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Calendar, FileText, LayoutGrid, Users } from 'lucide-react';
+import { Activity, BarChart3, Calendar, FileText, LayoutGrid, Users } from 'lucide-react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -11,7 +11,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard as dashboardRoute } from '@/routes';
+import { analytics, dashboard as dashboardRoute, health } from '@/routes';
 import { index as calendarsIndex } from '@/routes/calendars';
 import { index as notesIndex } from '@/routes/notes';
 import { index as usersIndex } from '@/routes/users';
@@ -22,8 +22,8 @@ export function AppSidebar() {
     const { auth } = usePage<SharedData>().props;
     const user = auth.user;
 
-    // Verificar si el usuario tiene rol Admin o Mango
     const isAdmin = user?.role === 'admin' || user?.role === 'mango';
+    const isMango = user?.role === 'mango';
 
     const mainNavItems: NavItem[] = [
         {
@@ -47,6 +47,20 @@ export function AppSidebar() {
                       title: 'Usuarios',
                       href: usersIndex(),
                       icon: Users,
+                  },
+                  {
+                      title: 'Analíticas',
+                      href: analytics(),
+                      icon: BarChart3,
+                  },
+              ]
+            : []),
+        ...(isMango
+            ? [
+                  {
+                      title: 'Salud',
+                      href: health(),
+                      icon: Activity,
                   },
               ]
             : []),

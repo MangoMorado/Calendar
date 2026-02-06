@@ -1,5 +1,10 @@
 # CHANGENOTES - Calendario MundoAnimal
 
+## Version 0.5.3 - Restart
+- **Panel de salud (/health):** Monitoreo del sistema; solo rol Mango.
+- **Sistema de analíticas (/analytics):** KPIs, gráficos de citas por mes, balances por calendario/usuario, horas pico y distribución por día; solo Admin y Mango.
+- **Opción "Incluir en Analítica" en calendarios:** Permite excluir calendarios personales de las analíticas (create/edit). Calendarios con la opción desactivada quedan fuera de todas las métricas.
+
 ## Version 0.5.2 - Restart
 - **Configuración por calendario:** Hora inicio/fin, duración de cita, formato 12/24h, zona horaria y días hábiles en create/edit; solo Admin y Mango pueden ver y editar.
 - **Comando `php artisan mango`:** Crea un usuario con rol Mango; pide correo y contraseña (con confirmación).

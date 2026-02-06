@@ -35,6 +35,7 @@ class CalendarUpdateRequest extends FormRequest
             'business_days' => ['sometimes', 'required', 'array'],
             'business_days.*' => ['integer', 'in:1,2,3,4,5,6,7'],
             'visibility' => ['sometimes', 'required', 'string', 'in:todos,solo_yo'],
+            'include_in_analytics' => ['sometimes', 'nullable', 'boolean'],
         ];
     }
 }

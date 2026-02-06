@@ -62,8 +62,13 @@ export function NoteEditor({
     }, [onChange]);
 
     useEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
+        const wrapper = containerRef.current;
+        if (!wrapper) return;
+
+        // Usar un contenedor DOM nuevo evita toolbars duplicados con React Strict Mode.
+        const container = document.createElement('div');
+        container.className = 'quill-wrapper';
+        wrapper.appendChild(container);
 
         const quill = new Quill(container, {
             theme: 'snow',
@@ -95,7 +100,9 @@ export function NoteEditor({
         return () => {
             quill.off('text-change', handler);
             quillRef.current = null;
-            container.innerHTML = '';
+            if (container.parentNode) {
+                container.parentNode.removeChild(container);
+            }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps -- value solo para contenido inicial; actualizaciones en el efecto [value]
     }, [placeholder]);

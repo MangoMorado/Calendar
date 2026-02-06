@@ -31,6 +31,11 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['role:admin,mango'])->group(function () {
         Route::resource('users', \App\Http\Controllers\UserController::class);
+        Route::get('analytics', [\App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics');
+    });
+
+    Route::middleware(['role:mango'])->group(function () {
+        Route::get('health', [\App\Http\Controllers\HealthController::class, 'index'])->name('health');
     });
 });
 

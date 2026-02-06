@@ -46,6 +46,10 @@ class CalendarController extends Controller
     {
         $data = $request->validated();
         $data['is_active'] = $data['is_active'] ?? true;
+        $data['include_in_analytics'] = filter_var(
+            $data['include_in_analytics'] ?? true,
+            FILTER_VALIDATE_BOOLEAN
+        );
 
         $calendar = Calendar::create($data);
 
@@ -89,6 +93,9 @@ class CalendarController extends Controller
         // Convertir '1'/'0' a boolean si viene como string
         if (isset($data['is_active']) && is_string($data['is_active'])) {
             $data['is_active'] = $data['is_active'] === '1';
+        }
+        if (isset($data['include_in_analytics']) && is_string($data['include_in_analytics'])) {
+            $data['include_in_analytics'] = $data['include_in_analytics'] === '1';
         }
 
         $calendar->update($data);

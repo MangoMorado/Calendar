@@ -20,6 +20,7 @@ type Calendar = {
     is_active: boolean;
     user_id: number | null;
     visibility: string;
+    include_in_analytics: boolean;
     start_time: string;
     end_time: string;
     slot_duration: number;
@@ -64,6 +65,9 @@ export default function CalendarsEdit({
     timezones = {},
 }: Props) {
     const [isActive, setIsActive] = useState(calendar.is_active);
+    const [includeInAnalytics, setIncludeInAnalytics] = useState(
+        calendar.include_in_analytics ?? true,
+    );
     const businessDays = (
         calendar.business_days ?? [1, 2, 3, 4, 5, 6]
     ).map((d) => Number(d));
@@ -340,6 +344,31 @@ export default function CalendarsEdit({
                                         <InputError
                                             message={errors.business_days}
                                             className="mt-2"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between rounded-lg border p-4">
+                                    <div className="space-y-0.5">
+                                        <Label htmlFor="include_in_analytics">
+                                            Incluir en Analítica
+                                        </Label>
+                                        <p className="text-muted-foreground text-sm">
+                                            Las citas de este calendario se
+                                            incluirán en las estadísticas de
+                                            analíticas
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Switch
+                                            id="include_in_analytics"
+                                            checked={includeInAnalytics}
+                                            onCheckedChange={setIncludeInAnalytics}
+                                        />
+                                        <input
+                                            type="hidden"
+                                            name="include_in_analytics"
+                                            value={includeInAnalytics ? '1' : '0'}
                                         />
                                     </div>
                                 </div>

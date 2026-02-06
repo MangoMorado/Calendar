@@ -17,11 +17,9 @@ Documento de referencia: características del **sistema antiguo** (carpeta `old/
 | Notas (libreta) | ✅ | ✅ | **Migrada, mejorada** |
 | Difusiones (Broadcast) | ✅ | ❌ | **Descontinuada, no migrar** |
 | Chatbot / integraciones UI | ✅ | ❌ | **Descontinuada, no migrar** |
-| Estadísticas | ✅ | ❌ | **Pendiente** |
+| Estadísticas | ✅ | ✅ | **Migrada, mejorada** |
 | Historial de usuarios | ✅ | ❌ | **Pendiente** |
 | API REST (JWT) | ✅ | ❌ | **Pendiente, mejorar** |
-| Sesiones avanzadas | ✅ | ❌ | Parcial (Laravel session) |
-| Cron (limpieza, notificaciones) | ✅ | ❌ | **Pendiente** |
 
 ---
 

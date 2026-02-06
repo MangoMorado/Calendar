@@ -1,9 +1,12 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
+
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/app-layout';
 import { index, store } from '@/routes/calendars';
 import type { BreadcrumbItem } from '@/types';
@@ -34,6 +37,8 @@ type Props = {
 };
 
 export default function CalendarsCreate({ timezones = {} }: Props) {
+    const [includeInAnalytics, setIncludeInAnalytics] = useState(true);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Crear Calendario" />
@@ -150,6 +155,31 @@ export default function CalendarsCreate({ timezones = {} }: Props) {
                                         message={errors.visibility}
                                         className="mt-2"
                                     />
+                                </div>
+
+                                <div className="flex items-center justify-between rounded-lg border p-4">
+                                    <div className="space-y-0.5">
+                                        <Label htmlFor="include_in_analytics">
+                                            Incluir en Analítica
+                                        </Label>
+                                        <p className="text-muted-foreground text-sm">
+                                            Las citas de este calendario se
+                                            incluirán en las estadísticas de
+                                            analíticas
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Switch
+                                            id="include_in_analytics"
+                                            checked={includeInAnalytics}
+                                            onCheckedChange={setIncludeInAnalytics}
+                                        />
+                                        <input
+                                            type="hidden"
+                                            name="include_in_analytics"
+                                            value={includeInAnalytics ? '1' : '0'}
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="space-y-6 border-t pt-6">

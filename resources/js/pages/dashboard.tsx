@@ -227,6 +227,8 @@ export default function Dashboard({
 
         form.setData({
             ...form.data,
+            calendar_id: calendars.length > 0 ? String(calendars[0].id) : '',
+            user_id: users.length > 0 ? String(users[0].id) : '',
             start_time: startStr,
             end_time: endStr,
         });
@@ -240,6 +242,17 @@ export default function Dashboard({
 
     const handleNewAppointment = () => {
         setSelectedDate(null);
+        form.setData({
+            ...form.data,
+            title: '',
+            description: '',
+            calendar_id: calendars.length > 0 ? String(calendars[0].id) : '',
+            user_id: users.length > 0 ? String(users[0].id) : '',
+            all_day: false,
+            start_time: '',
+            end_time: '',
+        });
+        setAllDay(false);
         setIsModalOpen(true);
     };
 
@@ -751,7 +764,9 @@ export default function Dashboard({
                                             }
                                             className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
-                                            <option value="">Selecciona un calendario</option>
+                                            {calendars.length === 0 && (
+                                                <option value="">Selecciona un calendario</option>
+                                            )}
                                             {calendars.map((calendar) => (
                                                 <option key={calendar.id} value={calendar.id}>
                                                     {calendar.name}
@@ -774,7 +789,9 @@ export default function Dashboard({
                                             }
                                             className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
-                                            <option value="">Selecciona un usuario</option>
+                                            {users.length === 0 && (
+                                                <option value="">Selecciona un usuario</option>
+                                            )}
                                             {users.map((user) => (
                                                 <option key={user.id} value={user.id}>
                                                     {user.name}

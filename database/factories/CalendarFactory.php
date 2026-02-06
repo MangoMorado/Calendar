@@ -31,6 +31,7 @@ class CalendarFactory extends Factory
             'timezone' => 'America/Bogota',
             'business_days' => [1, 2, 3, 4, 5, 6],
             'visibility' => 'todos',
+            'include_in_analytics' => true,
         ];
     }
 
