@@ -1,0 +1,30 @@
+# Nixpacks configuration for EasyPanel deployment - PAMI
+
+[phases.setup]
+nixPkgs = [
+    "nodejs_22",
+    "php84",
+    "nginx",
+    "phpPackages.composer",
+    "libmysqlclient"
+]
+
+[phases.install]
+cmds = [
+    "mkdir -p /var/log/nginx && mkdir -p /var/cache/nginx",
+    "composer install --no-dev --optimize-autoloader --ignore-platform-reqs",
+    "npm ci"
+]
+
+[phases.build]
+cmds = [
+    # Create .env from environment variables for Laravel to boot
+    "printenv | grep -E '^(APP_|DB_|CACHE_|SESSION_|QUEUE_|MAIL_|LOG_|BROADCAST_|FILESYSTEM_|VITE_|OPENAI_)' > .env || true",
+    "npm run build",
+    "php artisan config:cache",
+    "php artisan route:cache",
+    "php artisan view:cache"
+]
+
+[start]
+cmd = "bash /app/scripts/start.sh"

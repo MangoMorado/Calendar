@@ -1,5 +1,9 @@
 # CHANGENOTES - Calendario MundoAnimal
 
+## Version 0.5.3.1 - Restart
+- Instrucciones de Nixpacks agregadas para deploy en easypanel
+- Contraseñas a minimo 6 caracteres
+
 ## Version 0.5.3 - Restart
 - **Panel de salud (/health):** Monitoreo del sistema; solo rol Mango.
 - **Sistema de analíticas (/analytics):** KPIs, gráficos de citas por mes, balances por calendario/usuario, horas pico y distribución por día; solo Admin y Mango.
