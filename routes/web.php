@@ -3,10 +3,15 @@
 use App\Http\Controllers\NoteCategoryController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\NoteShareController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
 Route::get('/', function () {
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    }
+
     return redirect()->route('login');
 })->name('home');
 

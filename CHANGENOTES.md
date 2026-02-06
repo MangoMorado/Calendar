@@ -1,5 +1,8 @@
 # CHANGENOTES - Calendario MundoAnimal
 
+## Version 0.5.3.2 - Restart
+- Eliminada vista del wellcome, ahora pasa a login
+
 ## Version 0.5.3.1 - Restart
 - Instrucciones de Nixpacks agregadas para deploy en easypanel
 - Contraseñas a minimo 6 caracteres
